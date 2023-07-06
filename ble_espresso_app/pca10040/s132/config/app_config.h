@@ -44,6 +44,10 @@
 #define APP_CONFIG_H
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
+#define inBREW_PIN      27
+#define inSTEAM_PIN     28
+#define inZEROCROSS_PIN 26
+#define outSSRrelay_PIN 19
 
 #define TWI_ENABLED 1
 // <o> TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
@@ -61,10 +65,12 @@
 #define NRFX_TWI_ENABLED 1
 #define NRFX_TWI_DEFAULT_CONFIG_FREQUENCY 26738688
 
-#define SPI_SCK_PIN 28
-#define SPI_MISO_PIN 30
-#define SPI_MOSI_PIN 29
-#define SPI_SS_PIN 31
+//interface between NRF -> MAX31865
+#define SPI_SCK_PIN   13
+#define SPI_MISO_PIN  11
+#define SPI_MOSI_PIN  14
+#define SPI_SS_PIN    12
+
 #define NRFX_GPIOTE_ENABLED 1
 #define NRFX_PRS_ENABLED 1
 
@@ -76,6 +82,8 @@
 #define NRFX_SPIM1_ENABLED 1
 #define NRFX_SPI_ENABLED 1
 
+#define BLE_NUS_ENABLED 1
+#define NRF_SDH_BLE_VS_UUID_COUNT 1  
 
 
 // <<< end of configuration section >>>

@@ -1,5 +1,5 @@
-#ifndef SPI_SENSORS_H__
-#define SPI_SENSORS_H__
+#ifndef SOLIDSTATERELAY_CONTROLLER_H__
+#define SOLIDSTATERELAY_CONTROLLER_H__
 
 #ifdef __cplusplus
 extern  "C" {
@@ -16,17 +16,6 @@ extern  "C" {
 * - Compiler:           Code Composer Studio (Licensed)								*
 * - Version:			6.1.0.xxxxx													*
 * - Supported devices:  "Microcontroller used" 										*
-* 																					*
-* - AppNote:			"Name of file that help to comprehend the code"				*
-*																					*
-* 	Created by: 		"Your Name"													*
-*   Date Created: 		"date of creation"											*
-*   Contact:			"Email"														*
-* 																					*
-* 	Description: 		"description".												*
-*   Device supported 																*
-*   and tested: 		- MSP430F5529 - 											*
-*   					-  	- 														*
 * 																				2012*
 *************************************************************************************
 
@@ -39,9 +28,7 @@ extern  "C" {
 *  	XX-XX-XXXX		X.X			ABCD		"CHANGE"	
 *
 *************************************************************************************
-*
 * File/
-
 *  "More detail description of the code"
 *
 *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -60,58 +47,81 @@ extern  "C" {
 //			INCLUDE FILE SECTION FOR THIS MODULE
 //
 //*****************************************************************************
-#include "nrf_drv_spi.h"
-#include "x01_StateMachineControls.h"
-//#include "nrf_log.h"
-//#include "nrf_log_ctrl.h"
-//#include "nrf_log_default_backends.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "nrf.h"
+#include "nrf_drv_gpiote.h"
+#include "nrf_gpio.h"
+#include "nrf_drv_timer.h"
+#include "app_error.h"
 
 //*****************************************************************************
 //
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-#define SPI_INSTANCE  1 /**< SPI instance index. */
-
-/* Quadratic formula's coefficients */
-/* Reference links:
- 1- https://www.mouser.com/pdfDocs/AN7186.pdf
- 2- https://www.ti.com/lit/an/sbaa275a/sbaa275a.pdf?ts=1688395022605&ref_url=https%253A%252F%252Fwww.google.com%252F
- */
-#define rtdAcoeff     +0.0039083f
-#define rtdBcoeff     -0.000000577500f
-#define rtdCcoeff     -0.00000000000418301f
-
-#define rtdAxAcoeff   (float)(rtdAcoeff * rtdAcoeff)
-#define rtd4xBcoeff   (float)(4.0f * rtdBcoeff)
-#define rtd2xBcoeff   (float)(2.0f * rtdBcoeff)
-
-
+#define AC_CYCLE_PERIOD   20000
+#define AC_PERCENT_STEP   50
+#define POWER_MAX_VALUE   1000
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+/**
+ * @brief Timer driver instance data structure.
+ */
+typedef struct
+{
+    uint16_t    tStep;
+    uint16_t    tPeriod;
+    uint16_t    tTrigger;
+    uint16_t    tZCdelay;
+    uint32_t    cPeriod;
+    uint32_t    cTrigger;
+    uint32_t    cZCdelay;
+}struct_ssrTiming;
 
+typedef struct
+{
+    nrf_drv_timer_t             hwTmr;              ///HW-Timer that will control Relay trigger
+    nrfx_timer_event_handler_t  hwTmr_isr_handler;
+    uint8_t                     in_zCross;    ///AC Zero-cross input pin
+    uint8_t                     out_SSRelay;     ///controller output pin
+    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
+    struct_ssrTiming            sSRR_timing_us;
+    uint8_t                     smTrigStatus;
+    bool                        status;
+    uint16_t                    srrPower;
+} struct_ssrController;
+
+enum{
+  smS_Release=0,
+  smS_Engage
+};
+
+enum{
+  ssrBUSY=0,
+  ssrREADY_TO_UPDATE
+};
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern float rtdTemperature;
+extern volatile struct_ssrController sSSRdrvConfig;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void spim_init (void);
-void spim_initRTDconverter(void);
+void fcn_initSsrController(struct_ssrController * ptr_instance);
+extern void isr_SSRcontroller_EventHandler(nrf_timer_event_t event_type, void* p_context);
+extern void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
-void spim_ReadRTDconverter(void);
-bool spim_operation_done(void);
-
-
+void fcn_SSR_pwrUpdate(struct_ssrController * ptr_instance, uint16_t outputPower);
+void fcn_SSR_ctrlUpdate(struct_ssrController * ptr_instance);
 
 
 

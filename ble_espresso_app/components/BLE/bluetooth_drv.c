@@ -15,6 +15,9 @@
 //			PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
 //
 //*****************************************************************************
+#define UART_TX_BUF_SIZE                128                                        /**< UART TX buffer size. */
+#define UART_RX_BUF_SIZE                128                                         /**< UART RX buffer size. */
+BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
 
 //*****************************************************************************
 //
@@ -46,7 +49,7 @@ static ble_uuid_t m_adv_uuids[] =                                               
     {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
-static uint8_t m_alert_msg_buf[MESSAGE_BUFFER_SIZE];                         /**< Message buffer for optional notify messages. */
+static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 
 //*****************************************************************************
 //
@@ -71,6 +74,8 @@ static void delete_bonds(void);
 static void advertising_init(void);
 static void power_management_init(void);
 
+//NUS service
+static void nus_data_handler(ble_nus_evt_t * p_evt);
 
 
 //***********************************************************************************************************
@@ -324,28 +329,14 @@ static void services_init(void)
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
-    /* YOUR_JOB: Add code to initialize the services used by the application.
-       ble_xxs_init_t                     xxs_init;
-       ble_yys_init_t                     yys_init;
+    // Initialize NUS.
+    ble_nus_init_t     nus_init = {0};
+    memset(&nus_init, 0, sizeof(nus_init));
 
-       // Initialize XXX Service.
-       memset(&xxs_init, 0, sizeof(xxs_init));
+    nus_init.data_handler = nus_data_handler;
 
-       xxs_init.evt_handler                = NULL;
-       xxs_init.is_xxx_notify_supported    = true;
-       xxs_init.ble_xx_initial_value.level = 100;
-
-       err_code = ble_bas_init(&m_xxs, &xxs_init);
-       APP_ERROR_CHECK(err_code);
-
-       // Initialize YYY Service.
-       memset(&yys_init, 0, sizeof(yys_init));
-       yys_init.evt_handler                  = on_yys_evt;
-       yys_init.ble_yy_initial_value.counter = 0;
-
-       err_code = ble_yy_service_init(&yys_init, &yy_init);
-       APP_ERROR_CHECK(err_code);
-     */
+    err_code = ble_nus_init(&m_nus, &nus_init);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -581,7 +572,9 @@ static void advertising_init(void)
 
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
+    #ifdef APP_ADV_DURATION
     init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
+    #endif
 
     init.evt_handler = on_adv_evt;
 
@@ -599,6 +592,44 @@ static void power_management_init(void)
     ret_code_t err_code;
     err_code = nrf_pwr_mgmt_init();
     APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Function for handling the data from the Nordic UART Service.
+ *
+ * @details This function will process the data received from the Nordic UART BLE Service and send
+ *          it to the UART module.
+ *
+ * @param[in] p_evt       Nordic UART Service event.
+ */
+/**@snippet [Handling the data received over BLE] */
+static void nus_data_handler(ble_nus_evt_t * p_evt)
+{
+
+    if (p_evt->type == BLE_NUS_EVT_RX_DATA)
+    {
+        uint32_t err_code;
+
+        NRF_LOG_INFO("Received data from BLE NUS. Writing data on UART.");
+        NRF_LOG_HEXDUMP_INFO(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
+
+        //for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
+        //{
+        //    do
+        //    {
+        //        err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
+        //        if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
+        //        {
+        //            NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
+        //            APP_ERROR_CHECK(err_code);
+        //        }
+        //    } while (err_code == NRF_ERROR_BUSY);
+        //}
+        //if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
+        //{
+        //    while (app_uart_put('\n') == NRF_ERROR_BUSY);
+        //}
+    }
+
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef SPI_SENSORS_H__
-#define SPI_SENSORS_H__
+#ifndef AC_INPUTS_DRV_H__
+#define AC_INPUTS_DRV_H__
 
 #ifdef __cplusplus
 extern  "C" {
@@ -14,20 +14,7 @@ extern  "C" {
 * - Driver:   			"Name of file".												*
 * 																					*
 * - Compiler:           Code Composer Studio (Licensed)								*
-* - Version:			6.1.0.xxxxx													*
-* - Supported devices:  "Microcontroller used" 										*
-* 																					*
-* - AppNote:			"Name of file that help to comprehend the code"				*
-*																					*
-* 	Created by: 		"Your Name"													*
-*   Date Created: 		"date of creation"											*
-*   Contact:			"Email"														*
-* 																					*
-* 	Description: 		"description".												*
-*   Device supported 																*
-*   and tested: 		- MSP430F5529 - 											*
-*   					-  	- 														*
-* 																				2012*
+										2012*
 *************************************************************************************
 
 *************************************************************************************
@@ -60,59 +47,61 @@ extern  "C" {
 //			INCLUDE FILE SECTION FOR THIS MODULE
 //
 //*****************************************************************************
-#include "nrf_drv_spi.h"
-#include "x01_StateMachineControls.h"
-//#include "nrf_log.h"
-//#include "nrf_log_ctrl.h"
-//#include "nrf_log_default_backends.h"
+#include "boards.h"
+#include "nrf.h"
+#include "nrf_drv_gpiote.h"
+#include "nrf_gpio.h"
+#include "app_error.h"
 
 //*****************************************************************************
 //
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-#define SPI_INSTANCE  1 /**< SPI instance index. */
-
-/* Quadratic formula's coefficients */
-/* Reference links:
- 1- https://www.mouser.com/pdfDocs/AN7186.pdf
- 2- https://www.ti.com/lit/an/sbaa275a/sbaa275a.pdf?ts=1688395022605&ref_url=https%253A%252F%252Fwww.google.com%252F
- */
-#define rtdAcoeff     +0.0039083f
-#define rtdBcoeff     -0.000000577500f
-#define rtdCcoeff     -0.00000000000418301f
-
-#define rtdAxAcoeff   (float)(rtdAcoeff * rtdAcoeff)
-#define rtd4xBcoeff   (float)(4.0f * rtdBcoeff)
-#define rtd2xBcoeff   (float)(2.0f * rtdBcoeff)
-
 
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+typedef struct
+{
+  uint8_t     pinID;
+  uint16_t    Counter;
+  bool        Status;
+  bool        prevStatus;
+  uint8_t     smEvent;
+  uint16_t    nCycles;
+  nrfx_gpiote_evt_handler_t ext_isr_handler;
+}struct_AcInputPin;
+
+typedef struct
+{
+  struct_AcInputPin  Brew;
+  struct_AcInputPin  Steam;
+}struct_ControllerInputs;
+
+enum{
+  smS_NoChange=0,
+  smS_Change
+};
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern float rtdTemperature;
+extern struct_ControllerInputs sControllerInputs;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void spim_init (void);
-void spim_initRTDconverter(void);
-
-void spim_ReadRTDconverter(void);
-bool spim_operation_done(void);
-
-
-
+void fcn_initACinput_drv(struct_ControllerInputs *ptr_instance);
+void fcn_ACinput_drv(struct_ControllerInputs *ptr_instance);
+extern void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
+extern void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 
 #ifdef __cplusplus
