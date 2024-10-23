@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/drv_rtc.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\timer\drv_rtc.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\timer\drv_rtc.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/nrfx.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/nrfx_config.h \
  ../config/sdk_config.h ../config/app_config.h \

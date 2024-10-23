@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/nrfx_prs.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\prs\nrfx_prs.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\prs\nrfx_prs.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/nrfx.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/nrfx_config.h \
  ../config/sdk_config.h ../config/app_config.h \
@@ -52,7 +52,7 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/nrfx_prs.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_sd_def.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_soc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/nrfx_errors.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\prs\nrfx_prs.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\prs\nrfx_prs.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/nrfx_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \

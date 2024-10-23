@@ -1,7 +1,7 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_drv_clock.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\integration\nrfx\legacy\nrf_drv_clock.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\integration\nrfx\legacy\nrf_drv_clock.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nordic_common.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\integration\nrfx\legacy\nrf_drv_clock.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\integration\nrfx\legacy\nrf_drv_clock.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_clock.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/nrfx.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/nrfx_config.h \

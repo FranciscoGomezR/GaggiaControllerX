@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/main.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\main\main.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\main\main.c \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \
@@ -109,6 +109,8 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/main.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/nrf_ble_gatt/nrf_ble_gatt.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/nrf_ble_qwr/nrf_ble_qwr.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/pwr_mgmt/nrf_pwr_mgmt.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_services/ble_nus/ble_nus.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.h \
  ../../../components/Log/include/log_drv.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
@@ -129,4 +131,11 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/main.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_twim.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_twi.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_twi.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/delay/nrf_delay.h
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/delay/nrf_delay.h \
+ ../../../components/Utilities/x01_StateMachineControls.h \
+ ../../../components/Peripherals/include/spi_sensors.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_spi.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_spim.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_spim.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_spi.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_spi.h

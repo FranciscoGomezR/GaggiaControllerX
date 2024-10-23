@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_log_frontend.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_frontend.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_frontend.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
@@ -48,7 +48,7 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_log_frontend.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_internal.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_ctrl.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_ctrl_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \

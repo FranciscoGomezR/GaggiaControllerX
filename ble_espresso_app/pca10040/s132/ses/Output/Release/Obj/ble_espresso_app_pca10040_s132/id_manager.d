@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/id_manager.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\id_manager.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\id_manager.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
@@ -29,7 +29,7 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/id_manager.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\id_manager.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\id_manager.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_errors.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
@@ -44,7 +44,7 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/id_manager.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gattc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gatts.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gap.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_manager_types.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_manager_types.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_hci.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_gatt_db.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gattc.h \
@@ -56,10 +56,10 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/id_manager.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdio.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error_weak.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_manager_internal.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_manager_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_err.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_database.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_data_storage.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_database.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\peer_manager\peer_data_storage.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_conn_state.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/atomic/nrf_atomic.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \

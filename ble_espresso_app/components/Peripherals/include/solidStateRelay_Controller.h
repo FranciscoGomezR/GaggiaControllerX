@@ -55,6 +55,7 @@ extern  "C" {
 #include "nrf_drv_timer.h"
 #include "app_error.h"
 
+
 //*****************************************************************************
 //
 //			PUBLIC DEFINES SECTION
@@ -91,9 +92,16 @@ typedef struct
     nrfx_gpiote_evt_handler_t   zcross_isr_handler;
     struct_ssrTiming            sSRR_timing_us;
     uint8_t                     smTrigStatus;
-    bool                        status;
     uint16_t                    srrPower;
-} struct_ssrController;
+    uint8_t                     ssrPWRstatus;
+} struct_SSRinstance;
+
+typedef struct
+{
+    uint8_t                     in_zCross;    ///AC Zero-cross input pin
+    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
+    bool                        status;
+} struct_SSRcontroller;
 
 enum{
   smS_Release=0,
@@ -101,28 +109,37 @@ enum{
 };
 
 enum{
-  ssrBUSY=0,
-  ssrREADY_TO_UPDATE
+  OFF=0,
+  MIDPWR,
+  FULLPWR
 };
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern volatile struct_ssrController sSSRdrvConfig;
+extern volatile struct_SSRcontroller sSSRcontroller;
+extern struct_SSRinstance sBoilderSSRdrv;
+extern struct_SSRinstance sPumpSSRdrv;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initSsrController(struct_ssrController * ptr_instance);
-extern void isr_SSRcontroller_EventHandler(nrf_timer_event_t event_type, void* p_context);
+void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
+void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
+void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
+void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
+
+//External interrupt ISR has to be created in the main thread 
+
 extern void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
-void fcn_SSR_pwrUpdate(struct_ssrController * ptr_instance, uint16_t outputPower);
-void fcn_SSR_ctrlUpdate(struct_ssrController * ptr_instance);
+//Timers' ISRs are created in the main thread 
 
+extern void isr_BoilderSSR_EventHandler(nrf_timer_event_t event_type, void* p_context);
+extern void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context);
 
 
 #ifdef __cplusplus

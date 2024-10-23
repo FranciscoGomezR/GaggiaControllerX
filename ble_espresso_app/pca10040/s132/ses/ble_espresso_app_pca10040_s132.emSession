@@ -2,8 +2,9 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
+  <BreakpointListItem trigger="" line="84" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../../../components/Peripherals/include/ac_inputs_drv.h" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="86" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../../../components/Peripherals/include/ac_inputs_drv.h" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="95" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../../../components/Board/include/board_comp_drv.h" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="206" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../../main/main.c" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="91" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../../../../nRF5_SDK_17.1.0_ddde560/components/boards/pca10040.h" useHWbreakpoint="false"/>
   <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
@@ -13,7 +14,7 @@
  </FrameBufferWindow>
  <Memory1>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_espresso_app_pca10040_s132" radix="16" sizeText="" addressText=""/>
-  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_espresso_pca10040_s132" radix="16" sizeText="" addressText=""/>
+  <MemoryWindow addressSpace="" dataSize="4" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_espresso_pca10040_s132" radix="16" sizeText="66" addressText="0x3e000"/>
  </Memory1>
  <Memory2>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_espresso_app_pca10040_s132" radix="16" sizeText="" addressText=""/>
@@ -32,15 +33,16 @@
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;Application"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;BLE"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;BLE_Services"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;Log"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;Peripherals"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;Utilities"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;config"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;main"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Board Definition"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Drivers"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Libraries"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Log"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;UTF8/UTF16 converter"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/BASEPRI;CPU/FAULTMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="ble_espresso_app_pca10040_s132" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -68,16 +70,16 @@
   <Watches active="1" update="Twice a Second">
    <Watchpoint expression="m_sample" name="m_sample" radix="-1" linenumber="131" filename="../../../components/Peripherals/i2c_sensors.c"/>
    <Watchpoint expression="TempSample" name="TempSample" radix="-1" linenumber="127" filename="../../../components/Peripherals/i2c_sensors.c"/>
-   <Watchpoint expression="tickCounter" name="tickCounter" radix="-1" linenumber="163" filename="../../../main/main.c"/>
+   <Watchpoint expression="tickCounter" name="tickCounter" radix="-1" linenumber="318" filename="../../../main/main.c"/>
    <Watchpoint expression="m_rx_buf" name="m_rx_buf" radix="-1" linenumber="150" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="CoupleVolt" name="CoupleVolt" radix="-1" linenumber="150" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="Temp" name="Temp" radix="-1" linenumber="0" filename="../ses"/>
-   <Watchpoint expression="sControllerACinputs" name="sControllerACinputs" radix="-1" linenumber="98" filename="../../../main/main.c"/>
-   <Watchpoint expression="sACinputs" name="sACinputs" radix="-1" linenumber="234" filename="../../../main/main.c"/>
+   <Watchpoint expression="sControllerACinputs" name="sControllerACinputs" radix="-1" linenumber="185" filename="../../../main/main.c"/>
+   <Watchpoint expression="sACinputs" name="sACinputs" radix="-1" linenumber="442" filename="../../../main/main.c"/>
    <Watchpoint expression="eThermocoupleTemp" name="eThermocoupleTemp" radix="-1" linenumber="150" filename="../../../components/Peripherals/spi_sensors.c"/>
-   <Watchpoint expression="zeroCrossing" name="zeroCrossing" radix="10" linenumber="255" filename="../../../main/main.c"/>
-   <Watchpoint expression="ssrPower" name="ssrPower" radix="10" linenumber="48" filename="../../../main/main.c"/>
-   <Watchpoint expression="sSSRdrvConfig" name="sSSRdrvConfig" radix="-1" linenumber="52" filename="../../../main/main.c"/>
+   <Watchpoint expression="zeroCrossing" name="zeroCrossing" radix="10" linenumber="476" filename="../../../main/main.c"/>
+   <Watchpoint expression="iTagertTemp2" name="iTagertTemp2" radix="-1" linenumber="133" filename="../../../main/main.c"/>
+   <Watchpoint expression="ssrPump" name="ssrPump" radix="10" linenumber="128" filename="../../../main/main.c"/>
    <Watchpoint expression="hwreg_SensorConfig" name="hwreg_SensorConfig" radix="-1" linenumber="114" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="m_tx_buf" name="m_tx_buf" radix="-1" linenumber="96" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="resistanceRTD" name="resistanceRTD" radix="-1" linenumber="149" filename="../../../components/Peripherals/spi_sensors.c"/>
@@ -86,6 +88,31 @@
    <Watchpoint expression="Numerator" name="Numerator" radix="-1" linenumber="150" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="rtdTemp" name="rtdTemp" radix="-1" linenumber="151" filename="../../../components/Peripherals/spi_sensors.c"/>
    <Watchpoint expression="rtdTemperature" name="rtdTemperature" radix="-1" linenumber="152" filename="../../../components/Peripherals/spi_sensors.c"/>
+   <Watchpoint expression="startFlag" name="startFlag" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="sBoilerTempCtrl" name="sBoilerTempCtrl" radix="-1" linenumber="27" filename="../../../components/Application/tempController.c"/>
+   <Watchpoint expression="sPIDtimer" name="sPIDtimer" radix="-1" linenumber="66" filename="../../../components/Application/tempController.c"/>
+   <Watchpoint expression="Block" name="Block" radix="10" linenumber="69" filename="../../../components/Utilities/x205_PID_Block.c"/>
+   <Watchpoint expression="ptr_instance" name="ptr_instance" radix="-1" linenumber="83" filename="../../../components/Peripherals/solidStateRelay_Controller.c"/>
+   <Watchpoint expression="sBoilderSSRdrv" name="sBoilderSSRdrv" radix="-1" linenumber="380" filename="../../../main/main.c"/>
+   <Watchpoint expression="sPumpSSRdrv" name="sPumpSSRdrv" radix="10" linenumber="219" filename="nrfx_timer.c"/>
+   <Watchpoint expression="smPumpCtrl" name="smPumpCtrl" radix="10" linenumber="77" filename="../../../components/Application/PumpController.h"/>
+   <Watchpoint expression="smPumpCtrl.PumpPower" name="smPumpCtrl.PumpPower" radix="10" linenumber="199" filename="../../../components/Application/PumpController.c"/>
+   <Watchpoint expression="sPumpTiming" name="sPumpTiming" radix="10" linenumber="107" filename="../../../components/Application/PumpController.c"/>
+   <Watchpoint expression="err_code" name="err_code" radix="-1" linenumber="267" filename="../../../components/BLE_Services/ble_cus.c"/>
+   <Watchpoint expression="ble_uuid" name="ble_uuid" radix="-1" linenumber="235" filename="../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/common/nrf_sdh_ble.c"/>
+   <Watchpoint expression="p_cus" name="p_cus" radix="-1" linenumber="235" filename="../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/common/nrf_sdh_ble.c"/>
+   <Watchpoint expression="p_cus_init" name="p_cus_init" radix="-1" linenumber="145" filename="../../../components/BLE/include/bluetooth_drv.h"/>
+   <Watchpoint expression="iTagertTemp" name="iTagertTemp" radix="10" linenumber="145" filename="../../../components/BLE/include/bluetooth_drv.h"/>
+   <Watchpoint expression="dataLen" name="dataLen" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="BLEspressoVar" name="BLEspressoVar" radix="10" linenumber="96" filename="../../../components/BLE/include/BLEspressoServices.h"/>
+   <Watchpoint expression="rc" name="rc" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="bootloader_addr" name="bootloader_addr" radix="16" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="m_data" name="m_data" radix="-1" linenumber="451" filename="../../../main/main.c"/>
+   <Watchpoint expression="endFlashMem" name="endFlashMem" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="fstorage" name="fstorage" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="r_data" name="r_data" radix="10" linenumber="452" filename="../../../main/main.c"/>
+   <Watchpoint expression="BLEspressoVar.TargetBoilerTemp" name="BLEspressoVar.TargetBoilerTemp" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="rTemp" name="rTemp" radix="-1" linenumber="0" filename="../ses"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -98,28 +125,23 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="4" y="216" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/boards/boards.c" selected="0" top="154" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="113" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/include/spi_sensors.h" useBinaryEdit="0" left="0" path="../../../components/Peripherals/spi_sensors.c" selected="0" top="116" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="57" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Peripherals/ac_inputs_drv.c" selected="0" top="54" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="61" y="137" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../components/Peripherals/solidStateRelay_Controller.c" selected="0" top="115" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="81" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_timer.h" selected="0" top="62" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="54" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../components/Log/log_drv.c" selected="0" top="35" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="169" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/spi_sensors.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_spi.h" selected="0" top="157" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="99" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error_weak.c" selected="0" top="67" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="104" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/boards/boards.h" selected="0" top="87" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="205" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/solidStateRelay_Controller.c" useBinaryEdit="0" left="0" path="../../../main/main.c" selected="1" top="189" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="275" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h" selected="0" top="248" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="757" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_frontend.c" selected="0" top="740" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="51" y="112" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/solidStateRelay_Controller.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_gpiote.h" selected="0" top="77" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="33" y="648" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_gpiote.h" useBinaryEdit="0" left="0" path="nrfx_gpiote.c" selected="0" top="612" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="781" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_gpio.h" selected="0" top="764" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="274" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nrfx_timer.c" selected="0" top="257" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="159" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_gpiote.h" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_gpiote.h" selected="0" top="137" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="2" y="71" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/boards/pca10040.h" selected="0" top="39" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="27" y="100" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/spi_sensors.c" useBinaryEdit="0" left="0" path="../../../components/Peripherals/include/spi_sensors.h" selected="0" top="87" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="40" y="94" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../components/Peripherals/include/solidStateRelay_Controller.h" selected="0" top="78" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="0" y="83" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/ac_inputs_drv.c" useBinaryEdit="0" left="0" path="../../../components/Peripherals/include/ac_inputs_drv.h" selected="0" top="66" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="23" y="49" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/spi_sensors.c" useBinaryEdit="0" left="0" path="../config/app_config.h" selected="0" top="31" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="0" y="127" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/GaggiaControllerX/ble_espresso_app/components/BLE/bluetooth_drv.c" useBinaryEdit="0" left="0" path="../../../components/BLE/include/bluetooth_drv.h" selected="0" top="117" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="6" y="71" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/BLE_Services/ble_cus.c" useBinaryEdit="0" left="0" path="../../../components/BLE/include/BLEspressoServices.h" selected="0" top="48" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="0" y="92" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/BLE/bluetooth_drv.c" useBinaryEdit="0" left="0" path="../../../components/BLE_Services/include/ble_cus.h" selected="0" top="57" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="36" y="94" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Utilities/x04_Numbers.c" useBinaryEdit="0" left="0" path="../../../components/Utilities/x04_Numbers.h" selected="0" top="48" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="9" y="609" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../components/BLE_Services/ble_cus.c" selected="0" top="588" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="121" y="654" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="55" path="../../../components/BLE/bluetooth_drv.c" selected="0" top="636" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="303" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../main/main.c" selected="1" top="281" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="28" y="111" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage.c" selected="0" top="100" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="23" y="198" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Utilities/x04_Numbers.c" selected="0" top="172" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Application/PumpController.c" selected="0" top="207" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="34" y="52" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Application/tempController.c" selected="0" top="45" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="36" y="120" useTextEdit="1" openedFrom="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c" useBinaryEdit="0" left="0" path="../../../components/Peripherals/include/x205_PID_Block.h" selected="0" top="108" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="36" y="66" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Utilities/x205_PID_Block.c" selected="0" top="59" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="83" y="129" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="32" path="../../../components/Peripherals/spi_sensors.c" selected="0" top="104" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="523" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_spi.h" selected="0" top="485" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="728" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_frontend.c" selected="0" top="721" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../components/Application/BLEspresso.c" selected="0" top="0" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_espresso_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="D:/30_WS/10_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/spi_sensors.c&#xa;&#xa;D:/30_WS/10_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c&#xa;" fileDialogInitialDirectory="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="ble_espresso_pca10040_s132" fileDialogDefaultFilter="*" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/GaggiaControllerX/nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/ses_startup_nrf_common.s&#xa;&#xa;D:/30_WS/10_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Peripherals/spi_sensors.c&#xa;&#xa;D:/30_WS/10_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/main/main.c&#xa;" fileDialogInitialDirectory="D:/02_WS/11_Nordic/WS_SES/GaggiaControllerX/ble_espresso_app/components/Application" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/hardfault_implementation.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\hardfault\hardfault_implementation.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\hardfault\hardfault_implementation.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \

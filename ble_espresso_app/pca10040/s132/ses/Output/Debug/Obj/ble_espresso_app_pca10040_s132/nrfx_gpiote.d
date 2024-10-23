@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrfx_gpiote.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\nrfx_gpiote.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\modules\nrfx\drivers\src\nrfx_gpiote.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/nrfx.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/nrfx_config.h \
  ../config/sdk_config.h ../config/app_config.h \

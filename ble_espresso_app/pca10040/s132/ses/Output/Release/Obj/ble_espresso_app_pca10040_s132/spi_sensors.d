@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/spi_sensors.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\Peripherals\spi_sensors.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Peripherals\spi_sensors.c \
  ../../../components/Peripherals/include/spi_sensors.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_spi.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/nrfx.h \

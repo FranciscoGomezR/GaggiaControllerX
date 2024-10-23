@@ -88,14 +88,16 @@ extern  "C" {
 #include "nrf_pwr_mgmt.h"
 
 #include "ble_nus.h"
+#include "ble_cus.h"
+#include "BLEspressoServices.h"
 
 //*****************************************************************************
 //
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-#define DEVICE_NAME                     "Nordic_Template"                       /**< Name of device. Will be included in the advertising data. */
-#define MANUFACTURER_NAME               "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                     "BLEspresso"                       /**< Name of device. Will be included in the advertising data. */
+#define MANUFACTURER_NAME               "PaxsElectronics"                   /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 
 //#define APP_ADV_DURATION                18000                                   /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
@@ -128,8 +130,6 @@ NRF_BLE_GATT_DEF(m_gatt);                                                       
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */
 
-
-
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
@@ -141,7 +141,10 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-
+extern volatile uint8_t DataReceived[];
+extern volatile uint32_t iTagertTemp;
+extern volatile uint8_t dataLen;
+extern volatile uint8_t flg_BrewCfg,flg_PidCfg,flg_ReadCfg;
 
 //*****************************************************************************
 //
@@ -153,6 +156,8 @@ void advertising_start(bool erase_bonds);
 void sleep_mode_enter(void);
 void ble_disconnect(void);
 void ble_restart_without_whitelist(void);
+
+void ble_update_boilerWaterTemp(float waterTemp);
 
 #ifdef __cplusplus
 }

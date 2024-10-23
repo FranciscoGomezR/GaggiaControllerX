@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_log_backend_serial.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_backend_serial.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_backend_serial.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
@@ -29,7 +29,7 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_log_backend_serial.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_backend_serial.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_backend_serial.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/memobj/nrf_memobj.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdlib.h \
@@ -54,5 +54,5 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/nrf_log_backend_serial.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_ctrl.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_ctrl_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_internal.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\log\src\nrf_log_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h

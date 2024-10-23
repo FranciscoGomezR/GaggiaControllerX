@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/nrf_atfifo.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo.c \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/__crossworks.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
@@ -22,7 +22,7 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/nrf_atfifo.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/compiler_abstraction.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf52/nrf_mbr.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo.h \
  ../config/sdk_config.h ../config/app_config.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nordic_common.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
@@ -31,7 +31,7 @@ Output/Release/Obj/ble_espresso_app_pca10040_s132/nrf_atfifo.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars/nrf_section.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo_internal.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\atomic_fifo\nrf_atfifo_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_os.h \

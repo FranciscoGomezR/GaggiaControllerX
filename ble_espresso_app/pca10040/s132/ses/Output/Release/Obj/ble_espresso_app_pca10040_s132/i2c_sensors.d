@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/i2c_sensors.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\Peripherals\i2c_sensors.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Peripherals\i2c_sensors.c \
  ../../../components/Peripherals/include/i2c_sensors.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \

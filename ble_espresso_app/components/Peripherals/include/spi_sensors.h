@@ -98,7 +98,7 @@ extern  "C" {
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern float rtdTemperature;
+extern volatile float rtdTemperature;
 
 //*****************************************************************************
 //
@@ -110,10 +110,6 @@ void spim_initRTDconverter(void);
 
 void spim_ReadRTDconverter(void);
 bool spim_operation_done(void);
-
-
-
-
 
 #ifdef __cplusplus
 }

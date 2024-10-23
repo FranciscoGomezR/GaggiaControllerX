@@ -1,6 +1,6 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/bsp.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp.c \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/boards/boards.h \
@@ -58,7 +58,7 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/bsp.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/boards/pca10040.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/button/app_button.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp_config.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\libraries\bsp\bsp_config.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/timer/app_timer.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars/nrf_section.h \

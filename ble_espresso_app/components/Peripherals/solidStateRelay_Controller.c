@@ -24,7 +24,9 @@
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-volatile struct_ssrController sSSRdrvConfig;
+volatile struct_SSRcontroller sSSRcontroller;
+ struct_SSRinstance sBoilderSSRdrv;
+ struct_SSRinstance sPumpSSRdrv;
 
 //*****************************************************************************
 //
@@ -47,21 +49,45 @@ volatile struct_ssrController sSSRdrvConfig;
 //
 //*****************************************************************************
 /*****************************************************************************
- * Function: 	fcn_initSsrController
- * Description: This function will GPIO for: ZeroCross-Input and SSR-Output.
+ * Function: 	fcn_initSSRController
+ * Description: This function will init GPIO for: ZeroCross-Input
+                Init the external interrupt for AC zero-crossing
+ * Caveats:     optimize for 50Hz
+ * Parameters:	
+ * Return:
+ *****************************************************************************/
+void fcn_initSSRController(struct_SSRcontroller * ptr_instance)
+{
+    ret_code_t err_code_gpio;
+    //Zero Cross input with external interrupt enable
+    //------------------------------------------------------------------------
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    in_config.pull = NRF_GPIO_PIN_NOPULL;
+    in_config.sense = GPIOTE_CONFIG_POLARITY_LoToHi;
+    err_code_gpio = nrf_drv_gpiote_in_init(ptr_instance->in_zCross,
+                                       &in_config, 
+                                       ptr_instance->zcross_isr_handler);
+    APP_ERROR_CHECK(err_code_gpio);
+    nrf_drv_gpiote_in_event_enable(ptr_instance->in_zCross, true);
+}
+
+/*****************************************************************************
+ * Function: 	fcn_createSSRinstance
+ * Description: This function will init. GPIO for:  SSR-Output.
                 It init HW-timer to control SSrelay trigger.
                 It contains the functions to drive SSrelay from 0% to 100% AC cycle.
  * Caveats:     optimize for 50Hz
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_initSsrController(struct_ssrController * ptr_instance)
+void fcn_createSSRinstance(struct_SSRinstance * ptr_instance)
 {
     ptr_instance->smTrigStatus            = smS_Release;
     ptr_instance->sSRR_timing_us.tStep    = POWER_MAX_VALUE/AC_PERCENT_STEP;
     ptr_instance->sSRR_timing_us.tZCdelay = 200;
     ptr_instance->sSRR_timing_us.tTrigger = 0;  //50% of power
     ptr_instance->sSRR_timing_us.tPeriod  = AC_CYCLE_PERIOD;
+    ptr_instance->ssrPWRstatus            = OFF; 
     //TIMER SECTION
     //------------------------------------------------------------------------------
     uint32_t err_code = NRF_SUCCESS;
@@ -97,20 +123,8 @@ void fcn_initSsrController(struct_ssrController * ptr_instance)
     nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
     err_code_gpio = nrf_drv_gpiote_out_init(ptr_instance->out_SSRelay, &out_config);
     APP_ERROR_CHECK(err_code_gpio);
-
     //err_code_gpio = nrf_drv_gpiote_out_init(31, &out_config);
     //APP_ERROR_CHECK(err_code_gpio);
-
-    //Zero Cross input with external interrupt enable
-    //------------------------------------------------------------------------
-    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-    in_config.pull = NRF_GPIO_PIN_NOPULL;
-    in_config.sense = GPIOTE_CONFIG_POLARITY_LoToHi;
-    err_code_gpio = nrf_drv_gpiote_in_init(ptr_instance->in_zCross,
-                                       &in_config, 
-                                       ptr_instance->zcross_isr_handler);
-    APP_ERROR_CHECK(err_code_gpio);
-    nrf_drv_gpiote_in_event_enable(ptr_instance->in_zCross, true);
 }
 
 /*****************************************************************************
@@ -120,32 +134,38 @@ void fcn_initSsrController(struct_ssrController * ptr_instance)
  * Parameters:	outputPower range: 0% - 100% = 0 - 1000
  * Return:
  *****************************************************************************/
-void fcn_SSR_pwrUpdate(struct_ssrController * ptr_instance, uint16_t outputPower)
+void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
 {
     //nrf_drv_timer_pause(&ptr_instance->hwTmr);
     //nrf_drv_timer_disable(&ptr_instance->hwTmr);
-    if(outputPower >0 && outputPower <1000)
+    if(outputPower > 0 && outputPower <1000)
     {
+      ptr_instance->srrPower = outputPower;
+      ptr_instance->ssrPWRstatus = MIDPWR;
       ptr_instance->sSRR_timing_us.tTrigger = ptr_instance->sSRR_timing_us.tPeriod - 
                                               ( ptr_instance->sSRR_timing_us.tStep * outputPower);
 
       ptr_instance->sSRR_timing_us.cTrigger = nrf_drv_timer_us_to_ticks(&ptr_instance->hwTmr, 
                                               ptr_instance->sSRR_timing_us.tTrigger );
+      //nrfx_timer_clear(&ptr_instance->hwTmr); /*Testing Code line*/
       nrf_drv_timer_enable(&ptr_instance->hwTmr);
       nrf_drv_gpiote_in_event_enable(ptr_instance->in_zCross, true);
     }else{
-      nrf_drv_timer_disable(&ptr_instance->hwTmr);
-      nrf_drv_gpiote_in_event_disable(ptr_instance->in_zCross);
-      if(outputPower == 1000)
-      {
-          nrf_drv_gpiote_out_set(ptr_instance->out_SSRelay);
-          
-      }else{
-        if(outputPower == 0)
+        //nrf_drv_timer_disable(&ptr_instance->hwTmr);
+        //nrf_drv_gpiote_in_event_disable(ptr_instance->in_zCross);
+        if(outputPower >= 1000)
         {
-          nrf_drv_gpiote_out_clear(ptr_instance->out_SSRelay);
-        }else{}
-      }
+            ptr_instance->srrPower = 1000;
+            ptr_instance->ssrPWRstatus = FULLPWR;
+            //nrf_drv_gpiote_out_clear(ptr_instance->out_SSRelay); 
+        }else{
+          if(outputPower == 0)
+          {
+            ptr_instance->srrPower = 0;
+            ptr_instance->ssrPWRstatus = OFF;
+            //nrf_drv_gpiote_out_set(ptr_instance->out_SSRelay); 
+          }else{}
+        }
     }
     //nrf_drv_timer_resume(&ptr_instance->hwTmr);
     //nrf_drv_timer_enable(&ptr_instance->hwTmr);
@@ -158,9 +178,10 @@ void fcn_SSR_pwrUpdate(struct_ssrController * ptr_instance, uint16_t outputPower
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_SSR_ctrlUpdate(struct_ssrController * ptr_instance)
+void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance)
 {
     nrf_drv_timer_disable(&ptr_instance->hwTmr);
+    //nrfx_timer_clear(&ptr_instance->hwTmr); /*Testing Code line*/
     nrf_drv_timer_extended_compare(&ptr_instance->hwTmr, 
                                     NRF_TIMER_CC_CHANNEL0, 
                                     ptr_instance->sSRR_timing_us.cTrigger, 

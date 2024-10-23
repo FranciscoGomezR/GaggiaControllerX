@@ -44,10 +44,17 @@
 #define APP_CONFIG_H
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
-#define inBREW_PIN      27
-#define inSTEAM_PIN     28
-#define inZEROCROSS_PIN 26
-#define outSSRrelay_PIN 19
+#define inBREW_PIN          27
+#define inSTEAM_PIN         28
+#define inZEROCROSS_PIN     26
+#define outSSRboiler_PIN    19
+#define outSSRpump_PIN      20
+#define enSelenoidRelay_PIN 25
+#define enDC12Voutput_PIN   3
+
+#define outSTATE__ON        1
+#define outSTATE_OFF        0
+
 
 #define TWI_ENABLED 1
 // <o> TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
@@ -83,7 +90,7 @@
 #define NRFX_SPI_ENABLED 1
 
 #define BLE_NUS_ENABLED 1
-#define NRF_SDH_BLE_VS_UUID_COUNT 1  
+#define NRF_SDH_BLE_VS_UUID_COUNT 2  
 
 
 // <<< end of configuration section >>>

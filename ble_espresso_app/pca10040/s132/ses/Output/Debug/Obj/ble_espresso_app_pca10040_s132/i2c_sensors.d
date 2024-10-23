@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/i2c_sensors.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\Peripherals\i2c_sensors.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Peripherals\i2c_sensors.c \
  ../../../components/Peripherals/include/i2c_sensors.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \
@@ -64,21 +64,4 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/i2c_sensors.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_twi.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/hal/nrf_twi.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/delay/nrf_delay.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_os.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars/nrf_section.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_ctrl.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_ctrl_internal.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/memobj/nrf_memobj.h \
- C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdlib.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/balloc/nrf_balloc.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_default_backends.h
+ ../../../components/Utilities/x01_StateMachineControls.h

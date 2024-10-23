@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/board_comp_drv.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\Peripherals\board_comp_drv.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Peripherals\board_comp_drv.c \
  ../../../components/Peripherals/include/board_comp_drv.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \

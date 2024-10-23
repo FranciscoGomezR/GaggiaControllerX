@@ -1,6 +1,6 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/ble_advdata.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_advdata.c \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_advdata.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_advdata.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_advdata.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \
@@ -43,7 +43,7 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/ble_advdata.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gap.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_srv_common.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_srv_common.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_types.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gatt.h

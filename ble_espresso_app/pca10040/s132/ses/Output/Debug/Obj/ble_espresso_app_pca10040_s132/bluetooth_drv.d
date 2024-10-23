@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/bluetooth_drv.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\BLE\bluetooth_drv.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\BLE\bluetooth_drv.c \
  ../../../components/BLE/include/bluetooth_drv.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
@@ -109,6 +109,8 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/bluetooth_drv.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/nrf_ble_gatt/nrf_ble_gatt.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/nrf_ble_qwr/nrf_ble_qwr.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/pwr_mgmt/nrf_pwr_mgmt.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_services/ble_nus/ble_nus.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \

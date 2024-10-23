@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/log_drv.o: \
- D:\30_WS\10_Nordic\WS_SES\ble_espresso_app\components\Log\log_drv.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Log\log_drv.c \
  ../../../components/Log/include/log_drv.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \

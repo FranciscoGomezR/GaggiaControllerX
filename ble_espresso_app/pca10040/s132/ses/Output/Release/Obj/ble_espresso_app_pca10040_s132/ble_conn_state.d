@@ -1,6 +1,6 @@
 Output/Release/Obj/ble_espresso_app_pca10040_s132/ble_conn_state.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_conn_state.c \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_conn_state.h \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_conn_state.c \
+ D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\common\ble_conn_state.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble.h \

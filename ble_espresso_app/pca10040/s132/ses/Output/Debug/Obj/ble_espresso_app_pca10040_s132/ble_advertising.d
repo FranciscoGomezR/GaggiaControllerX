@@ -1,5 +1,5 @@
 Output/Debug/Obj/ble_espresso_app_pca10040_s132/ble_advertising.o: \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\ble_advertising\ble_advertising.c \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\ble_advertising\ble_advertising.c \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
@@ -42,7 +42,7 @@ Output/Debug/Obj/ble_espresso_app_pca10040_s132/ble_advertising.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gatt.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gattc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gatts.h \
- D:\30_WS\10_Nordic\WS_SES\nRF5_SDK_17.1.0_ddde560\components\ble\ble_advertising\ble_advertising.h \
+ D:\30_WS\10_Nordic\WS_SES\GaggiaControllerX\nRF5_SDK_17.1.0_ddde560\components\ble\ble_advertising\ble_advertising.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gap.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gattc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_soc.h \

@@ -5,33 +5,38 @@
 //
 //*****************************************************************************
 #include "bluetooth_drv.h"
-
+#include "BLEspressoServices.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+#include "x04_Numbers.h"
 
 //*****************************************************************************
 //
 //			PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
 //
 //*****************************************************************************
-#define UART_TX_BUF_SIZE                128                                        /**< UART TX buffer size. */
-#define UART_RX_BUF_SIZE                128                                         /**< UART RX buffer size. */
-BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
+BLE_CUS_DEF(m_cus);
+//BLE_CUS_DEF(m_PIDcus);
 
 //*****************************************************************************
 //
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+volatile uint8_t DataReceived[4];
+volatile uint32_t iTagertTemp;
+volatile float iTagertTemp2;
+volatile uint8_t dataLen;
 
+volatile uint8_t flg_BrewCfg,flg_PidCfg,flg_ReadCfg;
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-
+volatile BLEspressoVariable_struct read_NvmData;
 
 //*****************************************************************************
 //
@@ -48,8 +53,6 @@ static ble_uuid_t m_adv_uuids[] =                                               
 {
     {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
 };
-
-static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 
 //*****************************************************************************
 //
@@ -74,9 +77,8 @@ static void delete_bonds(void);
 static void advertising_init(void);
 static void power_management_init(void);
 
-//NUS service
-static void nus_data_handler(ble_nus_evt_t * p_evt);
-
+//CUS service
+static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt);
 
 //***********************************************************************************************************
 //
@@ -100,6 +102,10 @@ void BLE_bluetooth_init(void)
     advertising_init();
     conn_params_init();
     peer_manager_init();
+
+    flg_BrewCfg=0;
+    flg_PidCfg=0;
+    flg_ReadCfg=0;
 }
 
 
@@ -175,8 +181,8 @@ void sleep_mode_enter(void)
 {
     ret_code_t err_code;
 
-    err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-    APP_ERROR_CHECK(err_code);
+    //err_code = bsp_indication_set(BSP_INDICATE_IDLE);
+    //APP_ERROR_CHECK(err_code);
 
     // Prepare wakeup buttons.
     err_code = bsp_btn_ble_sleep_mode_prepare();
@@ -329,13 +335,11 @@ static void services_init(void)
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize NUS.
-    ble_nus_init_t     nus_init = {0};
-    memset(&nus_init, 0, sizeof(nus_init));
+    // Initialize CUS.
+    ble_cus_init_t    cus_init = {0};
+    cus_init.evt_handler  = cus_evt_handler;
 
-    nus_init.data_handler = nus_data_handler;
-
-    err_code = ble_nus_init(&m_nus, &nus_init);
+    err_code = ble_cus_init(&m_cus, &cus_init);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -361,7 +365,6 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
     }
 }
 
-
 /**@brief Function for handling a Connection Parameters error.
  *
  * @param[in] nrf_error  Error code containing information about what went wrong.
@@ -370,8 +373,6 @@ static void conn_params_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
-
-
 
 /**@brief Function for initializing the Connection Parameters module.
  */
@@ -409,8 +410,8 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
             NRF_LOG_INFO("Fast advertising.");
-            err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-            APP_ERROR_CHECK(err_code);
+            //err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+            //APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_ADV_EVT_IDLE:
@@ -441,8 +442,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
-            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
-            APP_ERROR_CHECK(err_code);
+            //err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
+            //APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
@@ -575,12 +576,9 @@ static void advertising_init(void)
     #ifdef APP_ADV_DURATION
     init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
     #endif
-
     init.evt_handler = on_adv_evt;
-
     err_code = ble_advertising_init(&m_advertising, &init);
     APP_ERROR_CHECK(err_code);
-
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
@@ -594,43 +592,189 @@ static void power_management_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for handling the data from the Nordic UART Service.
- *
- * @details This function will process the data received from the Nordic UART BLE Service and send
- *          it to the UART module.
- *
- * @param[in] p_evt       Nordic UART Service event.
- */
-/**@snippet [Handling the data received over BLE] */
-static void nus_data_handler(ble_nus_evt_t * p_evt)
+
+/*****************************************************************************
+ * Function: 	ble_cuse_evt
+ * Description: Event that wil be forwarded from BLE stack too this service
+ * Caveats:     timeStamp < 1:30
+ * Parameters:	
+ * Return:
+ *****************************************************************************/
+static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
 {
-
-    if (p_evt->type == BLE_NUS_EVT_RX_DATA)
+    ret_code_t  err_code;
+    NRF_LOG_DEBUG("Event %d",p_evt->evt_type);
+    switch(p_evt->evt_type)
     {
-        uint32_t err_code;
+    //Event -> New target temperature for the boiler
+        case BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE:
+            //Youtube-TimeStamp: 2:33:00
+            NRF_LOG_DEBUG("BLE -> New target Temperature");
+            BLEspressoVar.TargetBoilerTemp = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);              
+            NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)BLEspressoVar.TargetBoilerTemp);
+        break;
+     //Event -> Enable notification to get water temperature
+        case BLE_BOILER_TEMP_CHAR_NOTIFICATION_ENABLED:
+            NRF_LOG_DEBUG("BLE -> Boiler Water Temp Notifications ENABLE");
+        break;
+    //Event -> Disable notification to get water temperature
+        case BLE_BOILER_TEMP_CHAR_NOTIFICATION_DISABLED:
+            NRF_LOG_DEBUG("BLE -> Boiler Water Temp Notifications DISABLE");
+        break;
+    //Event -> Enable notification to get machine status
+        case BLESPRESSO_STATUS_CHAR_NOTIFICATION_ENABLED:
+            NRF_LOG_DEBUG("BLE -> Blespresso Status Notifications ENABLE");
+        break;
+    //Event -> Disbale notification to get machine status
+        case BLESPRESSO_STATUS_CHAR_NOTIFICATION_DISABLED:
+            NRF_LOG_DEBUG("BLE -> Blespresso Status Notifications DISABLE");
+        break;
+    //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_POWER
+        case BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT:
+            BLEspressoVar.BrewPreInfussionPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewPreInfussionPwr.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m PreInfusion POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewPreInfussionPwr);
+        break;
+    //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_TIME
+        case BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT:
+            BLEspressoVar.BrewPreInfussionTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewPreInfussionTmr.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m PreInfusion TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewPreInfussionTmr);
+        break;
+    //Event -> Get new value from mobile for char:  BREW_INFUSION_POWER
+        case BLE_BREW_INFUSION_POWER_CHAR_RX_EVT:   
+            BLEspressoVar.BrewInfussionPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewInfussionPwr.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m Infusion POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewInfussionPwr);
+        break;
+     //Event -> Get new value from mobile for char:  BREW_INFUSION_TIME
+        case BLE_BREW_INFUSION_TIME__CHAR_RX_EVT:
+            BLEspressoVar.BrewInfussionTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewInfussionTmr.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m Infusion TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewInfussionTmr);
+        break;
+    //Event -> Get new value from mobile for char:  BREW_DECLINING_PR_POWER
+        case BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT:
+            BLEspressoVar.BrewDecliningPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewDecliningPwr.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m Declining Pressure POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewDecliningPwr);
+        break;
+    //Event -> Get new value from mobile for char:  BREW_DECLINING_PR_TIME
+        case BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT:
+            BLEspressoVar.BrewDecliningTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewDecliningTmr.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m Declining Pressure TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewDecliningTmr);
+            flg_BrewCfg =1;
+        break;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Event -> Get new value from mobile for char:  PID_P_TERM
+        case PID_P_TERM_CHAR_RX_EVT:
+            BLEspressoVar.Pid_P_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_P_term.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m P Term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_P_term);
+        break;
+    //Event -> Get new value from mobile for char:  PID_I_TERM
+        case PID_I_TERM_CHAR_RX_EVT:
+            BLEspressoVar.Pid_I_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_I_term.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m I term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_I_term);
+        break;
+    //Event -> Get new value from mobile for char:  PID_I_TERM
+        case PID_I_TERM_INT_CHAR_RX_EVT:
+            BLEspressoVar.Pid_Imax_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Imax_term.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m Imax Term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Imax_term);
+        break;
+     //Event -> Get new value from mobile for char:  PID_I_TERM_WINDUP
+        case PID_I_TERM_WINDUP_CHAR_RX_EVT:
+            if(iTagertTemp == 0)
+            {
+              BLEspressoVar.Pid_Iwindup_term = false;
+              NRF_LOG_INFO("\033[0;36m I windup Term: FALSE \r\n \033[0;40m");
+            }else if (iTagertTemp == 1)
+            {
+              BLEspressoVar.Pid_Iwindup_term = true;
+              NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
+            }else{
+              BLEspressoVar.Pid_Iwindup_term = true;
+              NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
+            } 
+            
+        break;
+     //Event -> Get new value from mobile for char:  PID_D_TERM
+        case PID_D_TERM_CHAR_RX_EVT:
+            BLEspressoVar.Pid_D_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_D_term.ptr_data,2,1);
+            NRF_LOG_INFO("\033[0;36m D term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_D_term);
+        break;
+     //Event -> Get new value from mobile for char:  PID_D_TERM_LPF
+        case PID_D_TERM_LPF_CHAR_RX_EVT:
+            BLEspressoVar.Pid_Dlpf_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Dlpf_term.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m D Low-Pass Filter: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Dlpf_term);
+        break;
+     //Event -> Get new value from mobile for char:  PID_GAIN
+        case PID_GAIN___CHAR_RX_EVT:
+            BLEspressoVar.Pid_Gain_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Gain_term.ptr_data,3,1);
+            NRF_LOG_INFO("\033[0;36m PID Gain: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Gain_term);
+            flg_PidCfg = 1;
+        break;
 
-        NRF_LOG_INFO("Received data from BLE NUS. Writing data on UART.");
-        NRF_LOG_HEXDUMP_INFO(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-
-        //for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-        //{
-        //    do
-        //    {
-        //        err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-        //        if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-        //        {
-        //            NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-        //            APP_ERROR_CHECK(err_code);
-        //        }
-        //    } while (err_code == NRF_ERROR_BUSY);
-        //}
-        //if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-        //{
-        //    while (app_uart_put('\n') == NRF_ERROR_BUSY);
-        //}
+        default:
+            // No implementation needed.
+            NRF_LOG_INFO("\033[0;36m ble_cuse_evt  un-recognize cus service \r\n \033[0;40m");
+            break;
     }
 
 }
+
+/*****************************************************************************
+* Function: 	ble_update_boilerWaterTemp
+* Description:  Sen data: boilerWaterTemp to Mobile
+* Caveats:      Youtube-TimeStamp: 2:10:00  - 2:26:00
+* Parameters:	
+* Return:       
+*****************************************************************************/
+void ble_update_boilerWaterTemp(float waterTemp)
+{
+      ret_code_t err_code;
+      uint32_t intTemperature = (uint32_t)(waterTemp * 10.0f); 
+      uint8_t sTemp[4] = {0};
+      uint8_t sbleTemp[4] = {'0','0','0','0'};
+      sprintf(sTemp, "%d", intTemperature);
+      uint8_t len;
+      len = strlen(sTemp);
+      switch(len)
+      {
+          case 1:
+            sbleTemp[3] = sTemp[0];
+          break;
+
+          case 2:
+            sbleTemp[2] = sTemp[0];
+            sbleTemp[3] = sTemp[1];
+          break;
+
+          case 3:
+            sbleTemp[1] = sTemp[0];
+            sbleTemp[2] = sTemp[1];
+            sbleTemp[3] = sTemp[2];
+          break;
+
+          case 4:
+            sbleTemp[0] = sTemp[0];
+            sbleTemp[1] = sTemp[1];
+            sbleTemp[2] = sTemp[2];
+            sbleTemp[3] = sTemp[3];
+          break;
+      }
+      err_code = ble_cus_BoilerWaterTemperature_update(&m_cus, sbleTemp, m_conn_handle);
+
+}
+
+
+/*
+iTagertTemp = 0;
+iTagertTemp2 = fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);
+iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48) * 1000);
+p_evt->param_command.sBoilerTempTarget.ptr_data++;
+iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48) * 100);
+p_evt->param_command.sBoilerTempTarget.ptr_data++;
+iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48) * 10);
+p_evt->param_command.sBoilerTempTarget.ptr_data++;
+iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48));
+BLEspressoVar.TargetBoilerTemp = (float) iTagertTemp/10.0f;
+*/
+
 
 
 
