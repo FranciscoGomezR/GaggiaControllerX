@@ -1,6 +1,6 @@
 Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o: \
- D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Application\StorageController.c \
- D:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Application\StorageController.h \
+ W:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Application\StorageController.c \
+ W:\02_WS\11_Nordic\WS_SES\GaggiaControllerX\ble_espresso_app\components\Application\StorageController.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdint.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdbool.h \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/string.h \
@@ -28,39 +28,13 @@ Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars/nrf_section.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage_sd.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
- ../config/sdk_config.h ../config/app_config.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nordic_common.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/compiler_abstraction.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_os.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_errors.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
- C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stddef.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf52/nrf_mbr.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_ctrl.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_ctrl_internal.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/memobj/nrf_memobj.h \
- C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdlib.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/balloc/nrf_balloc.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util_platform.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_nvic.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error.h \
- C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdio.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error_weak.h \
- ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_default_backends.h \
+ ../../../components/BLE/include/BLEspressoServices.h \
  ../../../components/BLE/include/bluetooth_drv.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error.h \
+ C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdio.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_errors.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nordic_common.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error_weak.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_err.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gap.h \
@@ -74,9 +48,20 @@ Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_hci.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_srv_common.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_types.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
+ C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stddef.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/compiler_abstraction.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf52/nrf_mbr.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_svc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gap.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gatt.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_advdata.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_common.h \
+ ../config/sdk_config.h ../config/app_config.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_os.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/sdk_macros.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/nrf_assert.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_advertising/ble_advertising.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/ble_gattc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_conn_params.h \
@@ -88,8 +73,13 @@ Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/common/nrf_sdh_soc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/common/nrf_sdh_ble.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/timer/app_timer.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_instance.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/sortlist/nrf_sortlist.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fds/fds.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_util_platform.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers/nrf_nvic.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/peer_manager/peer_manager.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/peer_manager/peer_manager_types.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_gatt_db.h \
@@ -128,4 +118,15 @@ Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.h \
  ../../../components/BLE_Services/include/ble_cus.h \
  ../../../components/BLE/include/BLEspressoServices.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_ctrl.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_ctrl_internal.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_backend_interface.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/memobj/nrf_memobj.h \
+ C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdlib.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/balloc/nrf_balloc.h \
+ ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_default_backends.h \
  ../../../components/BLE/include/bluetooth_drv.h

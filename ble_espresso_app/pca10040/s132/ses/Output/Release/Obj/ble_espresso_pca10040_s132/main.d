@@ -119,10 +119,10 @@ Output/Release/Obj/ble_espresso_pca10040_s132/main.o: \
  ../../../components/BLE/include/BLEspressoServices.h \
  ../../../components/BLE/include/bluetooth_drv.h \
  ../../../components/BLE/include/BLEspressoServices.h \
+ ../../../components/Application/StorageController.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage_sd.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage.h \
- ../../../components/Log/include/log_drv.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/strerror/nrf_strerror.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \
@@ -134,6 +134,7 @@ Output/Release/Obj/ble_espresso_pca10040_s132/main.o: \
  C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/stdlib.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/balloc/nrf_balloc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_default_backends.h \
+ ../../../components/Log/include/log_drv.h \
  ../../../components/Peripherals/include/board_comp_drv.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/integration/nrfx/legacy/nrf_drv_timer.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/drivers/include/nrfx_timer.h \

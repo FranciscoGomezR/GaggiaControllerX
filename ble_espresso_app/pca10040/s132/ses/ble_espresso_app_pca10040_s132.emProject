@@ -134,7 +134,7 @@
           <file file_name="../../../components/Application/tempController.c" />
           <file file_name="../../../components/Application/BLEspresso.c" />
           <file file_name="../../../components/Application/StorageController.c">
-            <configuration Name="Release" build_exclude_from_build="Yes" />
+            <configuration Name="Release" build_exclude_from_build="No" />
           </file>
           <file file_name="../../../components/Application/PumpController.c" />
         </folder>

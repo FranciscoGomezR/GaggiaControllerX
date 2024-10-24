@@ -119,4 +119,5 @@ Output/Release/Obj/ble_espresso_pca10040_s132/ble_cus.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/src/nrf_log_internal.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_types.h \
  ../../../components/Utilities/x04_Numbers.h \
+ C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/math.h \
  ../../../components/Utilities/x03_MathConstants.h

@@ -115,7 +115,7 @@
 	        flag=1;
         }else{
             flag=0;
-            *Number = _IQabs(*Number);
+            *Number = fabsf(*Number);
         }
 	    if( *Number <= OffsetLowerLimit  )
         {

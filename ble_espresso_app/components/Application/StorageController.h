@@ -39,6 +39,7 @@
 #include "nordic_common.h"
 #include "nrf_fstorage.h"
 #include "nrf_fstorage_sd.h"
+#include "BLEspressoServices.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -49,7 +50,11 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
+  #define PARAM_NVM_START_ADDR    0x3e000
+  #define PARAM_NVM_END_ADDR      0x3ffff
+  #define PARAM_NVM_MEM_KEY       0x00aa00aa
 
+  //https://devzone.nordicsemi.com/f/nordic-q-a/31017/fstorage-vs-softdevice-activity-application-halts-when-writing-to-flash-if-waiting-to-write-or-data-not-correctly-written-if-not-waiting
 
 //*****************************************************************************
 //
@@ -58,72 +63,19 @@
 //*****************************************************************************
 
 
-
-//*****************************************************************************
-//
-//			PUBLIC VARIABLES PROTOTYPE
-//
-//*****************************************************************************
-  
-
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-  static void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt);
+  void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt);
 
-  //nrf_fstorage_t
-  NRF_FSTORAGE_DEF(nrf_fstorage_t fstorage) =
-    {
-        /* Set a handler for fstorage events. */
-        .evt_handler = fstorage_evt_handler,
 
-        /* These below are the boundaries of the flash space assigned to this instance of fstorage.
-         * You must set these manually, even at runtime, before nrf_fstorage_init() is called.
-         * The function nrf5_flash_end_addr_get() can be used to retrieve the last address on the
-         * last page of flash available to write data. */
-        .start_addr = 0x3e000,
-        .end_addr   = 0x3ffff,
-    };
-
-static void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt)
-  {
-    if (p_evt->result != NRF_SUCCESS)
-    {
-        NRF_LOG_INFO("--> Event received: ERROR while executing an fstorage operation.");
-        return;
-    }
-
-    switch (p_evt->id)
-    {
-                case NRF_FSTORAGE_EVT_READ_RESULT:
-        {
-            NRF_LOG_INFO("--> Event received: read %d bytes at address 0x%x.",
-                         p_evt->len, p_evt->addr);
-        } break;
-        case NRF_FSTORAGE_EVT_WRITE_RESULT:
-        {
-            NRF_LOG_INFO("--> Event received: wrote %d bytes at address 0x%x.",
-                         p_evt->len, p_evt->addr);
-        } break;
-
-        case NRF_FSTORAGE_EVT_ERASE_RESULT:
-        {
-            NRF_LOG_INFO("--> Event received: erased %d page from address 0x%x.",
-                         p_evt->len, p_evt->addr);
-        } break;
-
-        default:
-            break;
-    }
-  }
-
-  static uint32_t nrf5_flash_end_addr_get();
+  void fstorage_Init(void);
   void wait_for_flash_ready(nrf_fstorage_t const * p_fstorage);
+  void wait_for_flash_ready_noSoftDevice(nrf_fstorage_t const * p_fstorage);
 
-  void fcn_runtest(void);
-
-
+  void fcn_WriteParameterNVM(BLEspressoVariable_struct * ptr_writeParam);
+  void fcn_Read_ParameterNVM(BLEspressoVariable_struct * ptr_ReadParam);
 
 #endif // BLESPRESSOSERVICES_H__

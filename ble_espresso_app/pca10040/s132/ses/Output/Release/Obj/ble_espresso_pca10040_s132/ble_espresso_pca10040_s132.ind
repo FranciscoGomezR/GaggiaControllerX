@@ -70,6 +70,7 @@
 "Output/Release/Obj/ble_espresso_pca10040_s132/x201_DigitalFiltersAlgorithm.o"
 "Output/Release/Obj/ble_espresso_pca10040_s132/tempController.o"
 "Output/Release/Obj/ble_espresso_pca10040_s132/BLEspresso.o"
+"Output/Release/Obj/ble_espresso_pca10040_s132/StorageController.o"
 "Output/Release/Obj/ble_espresso_pca10040_s132/PumpController.o"
 "Output/Release/Obj/ble_espresso_pca10040_s132/ble_cus.o"
 "Output/Release/Obj/ble_espresso_pca10040_s132/main.o"

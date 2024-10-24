@@ -127,4 +127,5 @@ Output/Release/Obj/ble_espresso_pca10040_s132/bluetooth_drv.o: \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/balloc/nrf_balloc.h \
  ../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/log/nrf_log_default_backends.h \
  ../../../components/Utilities/x04_Numbers.h \
+ C:/Program\ Files/arm_segger_embedded_studio_v568_win_x64_nordic/include/math.h \
  ../../../components/Utilities/x03_MathConstants.h
