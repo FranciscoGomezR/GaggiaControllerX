@@ -30,24 +30,195 @@ volatile struct_SSRcontroller sSSRcontroller;
 
 //*****************************************************************************
 //
-//			PRIVATE VARIABLES
+//			ISR HANDLERS FUCNTIONS
 //
 //*****************************************************************************
+/*****************************************************************************
+ * Function: 	isr_BoilderSSR_EventHandler
+ * Description: Controls the SSR timing to trigger SSR 
+ *****************************************************************************/
+void isr_BoilderSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
+{
+    //nrf_drv_timer_pause((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
+    //nrf_drv_timer_clear((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
+      switch (event_type)
+      {
+          case NRF_TIMER_EVENT_COMPARE0:
+              nrf_drv_gpiote_out_set(sBoilderSSRdrv.out_SSRelay);
+              break;
+          default:
+              //Do nothing.
+              break;
+      }
+}
 
+/*****************************************************************************
+ * Function: 	isr_PumpSSR_EventHandler
+ * Description: Controls the SSR timing to trigger SSR 
+ *****************************************************************************/
+void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
+{
+      switch (event_type)
+      {
+          case NRF_TIMER_EVENT_COMPARE0:
+              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+              break;
+          default:
+              //Do nothing.
+              break;
+      }
+}
+
+/*****************************************************************************
+ * Function: 	isr_ZeroCross_EventHandler
+ * Description: 
+ * Parameters:	
+ * Return:
+ *****************************************************************************/
+void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    if( sBoilderSSRdrv.smTrigStatus == smS_Release )
+    {
+      //nrf_drv_gpiote_out_set(31);
+      //fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
+      fcn_boilerSSR_ctrlUpdate();
+      //nrf_drv_timer_enable((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
+      sBoilderSSRdrv.smTrigStatus = smS_Engage;
+      //nrf_drv_gpiote_out_clear(31);
+      nrf_drv_gpiote_out_clear(sBoilderSSRdrv.out_SSRelay);
+    }else{
+      sBoilderSSRdrv.smTrigStatus = smS_Release;
+    }
+
+    if( sPumpSSRdrv.smTrigStatus == smS_Release)
+    {
+        if(sPumpSSRdrv.ssrPWRstatus == MIDPWR)
+        {
+            fcn_pumpSSR_ctrlUpdate();
+            //fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+            sPumpSSRdrv.smTrigStatus = smS_Engage;
+            nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+        }else{
+          if(sPumpSSRdrv.ssrPWRstatus == FULLPWR)
+          {
+              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+          }else{
+              nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+          }
+        }
+    }else{
+      sPumpSSRdrv.smTrigStatus = smS_Release;
+    }
+    /*
+if(sPumpSSRdrv.status == ssrMIDPWR)
+      {
+        fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+        sPumpSSRdrv.smTrigStatus = smS_Engage;
+        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+      }else{
+        if(sPumpSSRdrv.status == ssrFULLPWR)
+        {
+          nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+        }else{
+          nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+        }
+      }
+      */
+}
 
 //*****************************************************************************
 //
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-
-
+void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
+void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
+void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
+void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS SECTION
 //
 //*****************************************************************************
+
+/*****************************************************************************
+ * Function: 	fcn_initSSRController_BLEspresso
+ * Description: This function encapsulate public variable create before for 
+ *              this driver.
+ *              Calling this function simplfies reading in the main loop and 
+ *              will make easy debugging
+ *
+ *****************************************************************************/
+void fcn_initSSRController_BLEspresso(void)
+{
+    sBoilderSSRdrv.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(1);
+    sBoilderSSRdrv.hwTmr_isr_handler   = isr_BoilderSSR_EventHandler;
+    sBoilderSSRdrv.out_SSRelay         = outSSRboiler_PIN;
+    fcn_createSSRinstance((struct_SSRinstance *)&sBoilderSSRdrv);
+    NRF_LOG_DEBUG("DRV INIT: SSR for Boiler");
+    NRF_LOG_FLUSH();
+
+    sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
+    sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
+    sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
+    fcn_createSSRinstance((struct_SSRinstance *)&sPumpSSRdrv);
+    NRF_LOG_DEBUG("DRV INIT: SSR for Pump");
+    NRF_LOG_FLUSH();
+ 
+    sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
+    sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
+    fcn_initSSRController((struct_SSRcontroller *)&sSSRcontroller);
+    NRF_LOG_DEBUG("DRV INIT: AC Zero-cross.");
+    NRF_LOG_FLUSH();
+
+}
+
+/*****************************************************************************
+ * Function: 	fcn_boilerSSR_pwrUpdate
+ * Description: This function encapsulate public function that use public variables
+ *              (now moved to prtivate). will makes it easy to read.
+ *
+ *****************************************************************************/
+void fcn_boilerSSR_pwrUpdate( uint16_t outputPower)
+{
+    fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, outputPower);
+}
+
+/*****************************************************************************
+ * Function: 	fcn_pumpSSR_pwrUpdate
+ * Description: This function encapsulate public function that use public variables
+ *              (now moved to prtivate). will makes it easy to read.
+ *
+ *****************************************************************************/
+void fcn_pumpSSR_pwrUpdate( uint16_t outputPower)
+{
+    fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, outputPower);
+}
+
+/*****************************************************************************
+ * Function: 	fcn_boilerSSR_ctrlUpdate
+ * Description: This function encapsulate public function that use public variables
+ *              (now moved to prtivate). will makes it easy to read.
+ *
+ *****************************************************************************/
+void fcn_boilerSSR_ctrlUpdate(void)
+{
+    fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
+}
+
+/*****************************************************************************
+ * Function: 	fcn_pumpSSR_ctrlUpdate
+ * Description: This function encapsulate public function that use public variables
+ *              (now moved to prtivate). will makes it easy to read.
+ *
+ *****************************************************************************/
+void fcn_pumpSSR_ctrlUpdate(void)
+{
+    fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+}
+
+
 /*****************************************************************************
  * Function: 	fcn_initSSRController
  * Description: This function will init GPIO for: ZeroCross-Input
@@ -173,7 +344,7 @@ void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
 
 /*****************************************************************************
  * Function: 	fcn_SSR_ctrlUpdate
- * Description: 
+ * Description: Stops the timer
  * Caveats:
  * Parameters:	
  * Return:

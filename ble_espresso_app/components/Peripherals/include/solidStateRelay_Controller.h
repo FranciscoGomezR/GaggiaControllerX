@@ -55,6 +55,9 @@ extern  "C" {
 #include "nrf_drv_timer.h"
 #include "app_error.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
 
 //*****************************************************************************
 //
@@ -113,24 +116,17 @@ enum{
   MIDPWR,
   FULLPWR
 };
-//*****************************************************************************
-//
-//			PUBLIC VARIABLES PROTOTYPE
-//
-//*****************************************************************************
-extern volatile struct_SSRcontroller sSSRcontroller;
-extern struct_SSRinstance sBoilderSSRdrv;
-extern struct_SSRinstance sPumpSSRdrv;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
-void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
-void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
-void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
+void fcn_initSSRController_BLEspresso(void);
+void fcn_boilerSSR_pwrUpdate( uint16_t outputPower);
+void fcn_pumpSSR_pwrUpdate( uint16_t outputPower);
+void fcn_boilerSSR_ctrlUpdate(void);
+void fcn_pumpSSR_ctrlUpdate(void);
 
 //External interrupt ISR has to be created in the main thread 
 

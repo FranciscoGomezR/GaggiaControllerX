@@ -58,6 +58,15 @@ extern  "C" {
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
+#define BREW_CFG_PIN_ID       inBREW_PIN
+#define BREW_CFG_STATUS       false
+#define BREW_CFG_THRESHOLD_N  8
+#define BREW_CFG_EVT_HANDLER  acinBrew_eventHandler
+
+#define STEAM_CFG_PIN_ID       inSTEAM_PIN
+#define STEAM_CFG_STATUS       false
+#define STEAM_CFG_THRESHOLD_N  8
+#define STEAM_CFG_EVT_HANDLER  acinSteam_eventHandler
 
 //*****************************************************************************
 //
@@ -91,18 +100,26 @@ enum{
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern struct_ControllerInputs sControllerInputs;
+//extern struct_ControllerInputs sIO_ACinput;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initACinput_drv(struct_ControllerInputs *ptr_instance);
-void fcn_ACinput_drv(struct_ControllerInputs *ptr_instance);
+void fcn_initACinput_drv(void);
+void fcn_ACinput_drv(void);
+
+uint8_t fcn_StatusChange_Brew(void);
+uint8_t fcn_StatusChange_Steam(void);
+void fcn_StatusReset_Brew(void);
+void fcn_StatusReset_Steam(void);
+
+bool fcn_GetInputStatus_Brew(void);
+bool fcn_GetInputStatus_Steam(void);
+
 extern void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 extern void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
-
 
 #ifdef __cplusplus
 }

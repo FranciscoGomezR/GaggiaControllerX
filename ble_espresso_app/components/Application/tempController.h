@@ -1,29 +1,4 @@
 /************************************************************************************
-*	Copyright  			"Your Name / Company"										*
-*   All Rights Reserved																*
-*   The Copyright symbol does not also indicate public availability or publication.	*
-* 																					*
-* 							"YOUR NAME / COMPANY"									*
-* 																					*
-* - Driver:   			"Name of file".												*
-* 																					*
-* - Compiler:           Code Composer Studio (Licensed)								*
-* - Version:			6.1.0.xxxxx													*
-* - Supported devices:  "Microcontroller used" 										*
-* 																					*
-* - AppNote:			"Name of file that help to comprehend the code"				*
-*																					*
-* 	Created by: 		"Your Name"													*
-*   Date Created: 		"date of creation"											*
-*   Contact:			"Email"														*
-* 																					*
-* 	Description: 		"description".												*
-*   Device supported 																*
-*   and tested: 		- MSP430F5529 - 											*
-*   					-  	- 														*
-* 																				2012*
-*************************************************************************************
-
 *************************************************************************************
 * 	Revision History:
 *
@@ -35,17 +10,8 @@
 *************************************************************************************
 *
 * File/
-
 *  "More detail description of the code"
 *
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-*  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-*  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-*  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*  DEALINGS IN THE SOFTWARE.
 *
 */
 
@@ -75,39 +41,32 @@
     #define TEMP_CTRL_GAIN_D        0.0f
     #define TEMP_CTRL_MAX           900.0f
 
-    #define TEMP_CTRL_GAIN_WINDUP   .005f
+    #define TEMP_CTRL_GAIN_WINDUP   0.005f
 
-    //t=~333.3ms -> 0.341130f
-    #define TEMP_CTRL_ITERATION_T   0.3333f     //Iteration Time in Seconds
+   
+    #define TEMP_CTRL_SAMPLING_T    0.01f     //Sampling Time in seconds
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-typedef struct
-{
-    nrf_drv_timer_t             hwTmr;              ///HW-Timer that will control Relay trigger
-    nrfx_timer_event_handler_t  hwTmr_isr_handler;
-    uint32_t                    tmrPeriod_us;
-    uint32_t                    tmrPeriod_ticks;
-    bool                        status;
-} struct_PIDtimer;
+
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern volatile PID_Block_fStruct sBoilerTempCtrl;
-extern volatile struct_PIDtimer sPIDtimer;
+//extern volatile PID_Block_fStruct sBoilerTempCtrl;
+//extern volatile struct_PIDtimer sPIDtimer;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initTemperatureController(PID_Block_fStruct *ptr_pidTempCtrl);
+void fcn_initTemperatureController(void);
 void fcn_startTemperatureController(void);
 void fcn_stopTemperatureController(void);
 
-void isr_TempController_EventHandler(nrf_timer_event_t event_type, void* p_context);
+void isr_SamplingTime_EventHandler(nrf_timer_event_t event_type, void* p_context);

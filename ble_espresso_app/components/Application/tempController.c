@@ -11,32 +11,55 @@
 //			PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
 //
 //*****************************************************************************
-
+#define CTRL_SAMPLING_T_US   (TEMP_CTRL_SAMPLING_T * 1000.0f * 1000.0f)
 //*****************************************************************************
 //
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+typedef struct
+{
+    nrf_drv_timer_t             hwTmr;              ///HW-Timer that will control Relay trigger
+    nrfx_timer_event_handler_t  hwTmr_isr_handler;
+    uint32_t                    tmrPeriod_us;
+    uint32_t                    tmrPeriod_ticks;
+    bool                        status;
+} struct_PIDsamplingTimer;
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-volatile PID_Block_fStruct sBoilerTempCtrl;
-volatile struct_PIDtimer sPIDtimer;
+//volatile PID_Block_fStruct sBoilerTempCtrl;
+//volatile struct_PIDsamplingTimer sPIDsamplingTmr;
 
 //*****************************************************************************
 //
 //			PRIVATE VARIABLES
 //
 //*****************************************************************************
+static PID_Block_fStruct sBoilerTempCtrl;
+static struct_PIDsamplingTimer sPIDsamplingTmr;
 
 //*****************************************************************************
 //
-//			PRIVATE FUNCTIONS PROTOYPES
+//			ISR HANDLERS FUNCTIONS
 //
 //*****************************************************************************
+/*****************************************************************************
+ * Function: 	isr_SamplingTime_EventHandler
+ * Description: 
+ * Parameters:	
+ * Return:
+ *****************************************************************************/
+void isr_SamplingTime_EventHandler(nrf_timer_event_t event_type, void* p_context)
+{
+    nrf_drv_gpiote_out_toggle(29);
+    //sBoilerTempCtrl.Input = f_getBoilerTemperature();
+    //sBoilerTempCtrl.SetPoint = 45.0f;
+   // fcn_PID_Block_Iteration((PID_Block_fStruct *)&sBoilerTempCtrl);
+}
 
 //*****************************************************************************
 //
@@ -44,71 +67,61 @@ volatile struct_PIDtimer sPIDtimer;
 //
 //*****************************************************************************
 /*****************************************************************************
- * Function: 	InitClocks
- * Description: 
- * Caveats:
- * Parameters:	
- * Return:
+ * Function: 	fcn_initTemperatureController
+ * Description: This function init the HW-timer no.3
+ * Return:      N/A
  *****************************************************************************/
-void fcn_initTemperatureController(PID_Block_fStruct *ptr_pidTempCtrl)
+void fcn_initTemperatureController(void)
 {
-    sPIDtimer.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(3);
-    sPIDtimer.hwTmr_isr_handler   = isr_TempController_EventHandler;
-    sPIDtimer.status              = false;
+    sPIDsamplingTmr.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(3);
+    sPIDsamplingTmr.hwTmr_isr_handler   = isr_SamplingTime_EventHandler;
+    sPIDsamplingTmr.status              = false;
 
-    //TIMER SECTION
+    //TIMER SECTION TO SETUP SAMPLING TIME FOR PID CONTROLLER
     //------------------------------------------------------------------------------
     uint32_t err_code = NRF_SUCCESS;
     //Configure TIMER_HW intance
     nrf_drv_timer_config_t pid_timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
     pid_timer_cfg.bit_width = NRF_TIMER_BIT_WIDTH_32;
     pid_timer_cfg.frequency = NRF_TIMER_FREQ_1MHz;
-    sPIDtimer.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f) ; //time per second
+    //sPIDsamplingTmr.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f) ; //time per second
+    sPIDsamplingTmr.tmrPeriod_us = (uint32_t)(CTRL_SAMPLING_T_US) ; 
 
-    err_code = nrf_drv_timer_init((nrfx_timer_t const * const)&sPIDtimer.hwTmr, &pid_timer_cfg, sPIDtimer.hwTmr_isr_handler);
+    err_code = nrf_drv_timer_init((nrfx_timer_t const * const)&sPIDsamplingTmr.hwTmr, &pid_timer_cfg, sPIDsamplingTmr.hwTmr_isr_handler);
     APP_ERROR_CHECK(err_code);
 
-    sPIDtimer.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&sPIDtimer.hwTmr, sPIDtimer.tmrPeriod_us );
+    sPIDsamplingTmr.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&sPIDsamplingTmr.hwTmr, sPIDsamplingTmr.tmrPeriod_us );
 
-   nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&sPIDtimer.hwTmr, 
+    nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&sPIDsamplingTmr.hwTmr, 
                                    NRF_TIMER_CC_CHANNEL0,
-                                   sPIDtimer.tmrPeriod_ticks, 
+                                   sPIDsamplingTmr.tmrPeriod_ticks, 
                                    NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK,
                                    true);
-    //nrf_drv_timer_enable(&sPIDtimer.hwTmr);
-    //nrf_drv_timer_enable(&TIMER_HW2);     //Timer initialize but not enable
+    /* Timer will be enabled via this function: fcn_startTemperatureController  */
+    //nrf_drv_timer_enable(&sPIDsamplingTmr.hwTmr);
+    //nrf_drv_timer_enable(&TIMER_HW2);     
     
-    //PID SECTION
+    //PID PARAMETERS VALUE SETUP
     //------------------------------------------------------------------------------
-    ptr_pidTempCtrl->dt                     = TEMP_CTRL_ITERATION_T;
+    sBoilerTempCtrl.dt                     = TEMP_CTRL_SAMPLING_T;
 
-    ptr_pidTempCtrl->P_TERM_CTRL            = ACTIVE;
-    ptr_pidTempCtrl->Kp                     = TEMP_CTRL_GAIN_P;
-    ptr_pidTempCtrl->I_TERM_CTRL            = ACTIVE;
-    ptr_pidTempCtrl->Ki                     = TEMP_CTRL_GAIN_I;
-    ptr_pidTempCtrl->HistoryErrorLimit      = TEMP_CTRL_HIST_LIMIT;
-    ptr_pidTempCtrl->I_ANTIWINDUP_CTRL      = ACTIVE;
-    ptr_pidTempCtrl->Kwindup                = TEMP_CTRL_GAIN_WINDUP;
+    sBoilerTempCtrl.P_TERM_CTRL            = ACTIVE;
+    sBoilerTempCtrl.Kp                     = TEMP_CTRL_GAIN_P;
+    sBoilerTempCtrl.I_TERM_CTRL            = ACTIVE;
+    sBoilerTempCtrl.Ki                     = TEMP_CTRL_GAIN_I;
+    sBoilerTempCtrl.HistoryErrorLimit      = TEMP_CTRL_HIST_LIMIT;
+    sBoilerTempCtrl.I_ANTIWINDUP_CTRL      = ACTIVE;
+    sBoilerTempCtrl.Kwindup                = TEMP_CTRL_GAIN_WINDUP;
 
-    ptr_pidTempCtrl->D_TERM_CTRL            = NOT_ACTIVE;
-    ptr_pidTempCtrl->Kd                     = TEMP_CTRL_GAIN_D;
-    ptr_pidTempCtrl->D_TERM_LP_FILTER_CTRL  = NOT_ACTIVE;
+    sBoilerTempCtrl.D_TERM_CTRL            = NOT_ACTIVE;
+    sBoilerTempCtrl.Kd                     = TEMP_CTRL_GAIN_D;
+    sBoilerTempCtrl.D_TERM_LP_FILTER_CTRL  = NOT_ACTIVE;
    
-    ptr_pidTempCtrl->PID_OUTPUT_GAIN_CTRL   = NOT_ACTIVE;
-    ptr_pidTempCtrl->OutputLimit            = TEMP_CTRL_MAX;
+    sBoilerTempCtrl.PID_OUTPUT_GAIN_CTRL   = NOT_ACTIVE;
+    sBoilerTempCtrl.OutputLimit            = TEMP_CTRL_MAX;
 
-    ptr_pidTempCtrl->SetPoint = 45.0f;
+    sBoilerTempCtrl.SetPoint = 45.0f;
     
-    /*GPIOS SECTION - > FOR DEBUG PORPUSES
-    ret_code_t err_code_gpio;
-    //nrf_drv_gpiote_init -> Already init. in ac_inputs_drv
-    //err_code_gpio = nrf_drv_gpiote_init();
-    //APP_ERROR_CHECK(err_code_gpio);
-    //Output pin to control SSR
-    //------------------------------------------------------------------------
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code_gpio = nrf_drv_gpiote_out_init(20, &out_config);
-    APP_ERROR_CHECK(err_code_gpio);*/
 }
 
 /*****************************************************************************
@@ -117,8 +130,8 @@ void fcn_initTemperatureController(PID_Block_fStruct *ptr_pidTempCtrl)
  *****************************************************************************/
 void fcn_startTemperatureController(void)
 {
-  nrf_drv_timer_enable((nrfx_timer_t const *)&sPIDtimer.hwTmr);
-  sPIDtimer.status = ACTIVE;
+  nrf_drv_timer_enable((nrfx_timer_t const *)&sPIDsamplingTmr.hwTmr);
+  sPIDsamplingTmr.status = ACTIVE;
 }
 
 /*****************************************************************************
@@ -127,8 +140,8 @@ void fcn_startTemperatureController(void)
  *****************************************************************************/
 void fcn_stopTemperatureController(void)
 {
-  nrf_drv_timer_disable((nrfx_timer_t const *)&sPIDtimer.hwTmr);
-  sPIDtimer.status = NOT_ACTIVE;
+  nrf_drv_timer_disable((nrfx_timer_t const *)&sPIDsamplingTmr.hwTmr);
+  sPIDsamplingTmr.status = NOT_ACTIVE;
 }
 
 

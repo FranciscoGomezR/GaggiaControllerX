@@ -26,16 +26,10 @@
 
 //*****************************************************************************
 //
-//			PUBLIC VARIABLES
-//
-//****************************************************************************
-volatile float rtdTemperature;
-
-//*****************************************************************************
-//
 //			PRIVATE VARIABLES
 //
 //*****************************************************************************
+static float rtdTemperature; 
 
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
 static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instance completed the transfer. */
@@ -156,6 +150,16 @@ void spim_init (void)
  bool spim_operation_done(void)
  {
     return spi_xfer_done;
+ }
+
+ /*****************************************************************************
+ * Function: 	f_getBoilerTemperature
+ * Description: Encapsulates public variable into "spi_sensors.c" module
+ * Return:      temperature in float format
+ *****************************************************************************/
+ float f_getBoilerTemperature(void)
+ {
+    return rtdTemperature;
  }
 
 //***********************************************************************************************

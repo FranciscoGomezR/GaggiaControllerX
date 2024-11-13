@@ -197,7 +197,8 @@ Struct_PumpTiming sPumpTiming;
               volatile int16_t PumpPwr = (int16_t)smPumpCtrl.PumpPower;
               PumpPwr += (int16_t)sPumpTiming.Slope;
               smPumpCtrl.PumpPower = PumpPwr;
-              fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, smPumpCtrl.PumpPower);
+              //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, smPumpCtrl.PumpPower);
+              fcn_pumpSSR_pwrUpdate(smPumpCtrl.PumpPower);
             }else{}
             
           }else{

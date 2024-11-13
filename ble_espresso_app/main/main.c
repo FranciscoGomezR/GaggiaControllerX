@@ -77,7 +77,7 @@
   static void OneACcycle_swTmrHandler(void * p_context)
   {
       //bsp_board_led_invert(0);bsp_board_led_invert(1);
-      fcn_ACinput_drv(&sControllerInputs);
+      fcn_ACinput_drv();
   }
 
   static void OneSecond_swTmrHandler(void * p_context)
@@ -95,119 +95,46 @@
       PumpCtrl_flag = true;
   }
 
-  void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-  {
-      sControllerInputs.Steam.Counter++;
-  }
-  void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-  {
-      sControllerInputs.Brew.Counter++;
-  }
+/*****************************************************************************
+* Function: 	acinSteam_eventHandler
+* Description: Count number of AC cycle when swicth is active 
+* Definition: ac_inputs_drv.h
+*****************************************************************************/
+
 
 /*****************************************************************************
- * Function: 	isr_ZeroCross_EventHandler
- * Description: 
- * Parameters:	
- * Return:
- *****************************************************************************/
-void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-{
-    if( sBoilderSSRdrv.smTrigStatus == smS_Release )
-    {
-      //nrf_drv_gpiote_out_set(31);
-      fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
-      //nrf_drv_timer_enable((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
-      sBoilderSSRdrv.smTrigStatus = smS_Engage;
-      //nrf_drv_gpiote_out_clear(31);
-      nrf_drv_gpiote_out_clear(sBoilderSSRdrv.out_SSRelay);
-    }else{
-      sBoilderSSRdrv.smTrigStatus = smS_Release;
-    }
+* Function: 	acinBrew_eventHandler
+* Description: Count number of AC cycle when swicth is active  
+* Definition: ac_inputs_drv.h
+*****************************************************************************/
 
-    if( sPumpSSRdrv.smTrigStatus == smS_Release)
-    {
-        if(sPumpSSRdrv.ssrPWRstatus == MIDPWR)
-        {
-            fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
-            sPumpSSRdrv.smTrigStatus = smS_Engage;
-            nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-        }else{
-          if(sPumpSSRdrv.ssrPWRstatus == FULLPWR)
-          {
-              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-          }else{
-              nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-          }
-        }
-    }else{
-      sPumpSSRdrv.smTrigStatus = smS_Release;
-    }
-    /*
-if(sPumpSSRdrv.status == ssrMIDPWR)
-      {
-        fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
-        sPumpSSRdrv.smTrigStatus = smS_Engage;
-        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-      }else{
-        if(sPumpSSRdrv.status == ssrFULLPWR)
-        {
-          nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-        }else{
-          nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-        }
-      }
-      */
-}
 
 /*****************************************************************************
  * Function: 	isr_BoilderSSR_EventHandler
  * Description: Controls the SSR timing to trigger SSR 
+ * Definition: solidStateRelay_Controller.h
  *****************************************************************************/
-void isr_BoilderSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
-{
-    //nrf_drv_timer_pause((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
-    //nrf_drv_timer_clear((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
-      switch (event_type)
-      {
-          case NRF_TIMER_EVENT_COMPARE0:
-              nrf_drv_gpiote_out_set(sBoilderSSRdrv.out_SSRelay);
-              break;
-          default:
-              //Do nothing.
-              break;
-      }
-}
+
 
 /*****************************************************************************
  * Function: 	isr_PumpSSR_EventHandler
- * Description: Controls the SSR timing to trigger SSR 
+ * Description: Controls the SSR timing to trigger SSR
+ * Definition: solidStateRelay_Controller.h 
  *****************************************************************************/
-void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
-{
-      switch (event_type)
-      {
-          case NRF_TIMER_EVENT_COMPARE0:
-              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-              break;
-          default:
-              //Do nothing.
-              break;
-      }
-}
 
 /*****************************************************************************
- * Function: 	isr_SSRcontroller_EventHandler
+ * Function: 	isr_ZeroCross_EventHandler
+ * Description: 
+ * Definition: solidStateRelay_Controller.h 
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Function: 	isr_SamplingTime_EventHandler
  * Description: 
  * Parameters:	
  * Return:
  *****************************************************************************/
-void isr_TempController_EventHandler(nrf_timer_event_t event_type, void* p_context)
-{
-    //nrf_drv_gpiote_out_toggle(20);
-    sBoilerTempCtrl.Input = rtdTemperature;
-    //sBoilerTempCtrl.SetPoint = 45.0f;
-    fcn_PID_Block_Iteration((PID_Block_fStruct *)&sBoilerTempCtrl);
-}
+
 
 /**@brief Function for the Timer initialization.
  *
@@ -272,6 +199,7 @@ int main(void)
     log_init();
     ReadSensors_flag=false;
     PrintTask_flag=false;
+
     timers_init();
     spim_init();
     spim_initRTDconverter();
@@ -283,41 +211,14 @@ int main(void)
     NRF_LOG_DEBUG("DRV INIT: 12VDC output");
     NRF_LOG_FLUSH();
 
-    sControllerInputs.Brew.pinID      = inBREW_PIN;
-    sControllerInputs.Brew.Status     = false;
-    sControllerInputs.Brew.smEvent    = smS_NoChange;
-    sControllerInputs.Brew.nCycles    = 8;
-    sControllerInputs.Brew.ext_isr_handler = acinBrew_eventHandler;
-    sControllerInputs.Steam.pinID     = inSTEAM_PIN;
-    sControllerInputs.Steam.Status    = false;
-    sControllerInputs.Steam.smEvent   = smS_NoChange;
-    sControllerInputs.Steam.nCycles    = 8;
-    sControllerInputs.Steam.ext_isr_handler = acinSteam_eventHandler;
-    fcn_initACinput_drv(&sControllerInputs);
+    
+    fcn_initACinput_drv();
     NRF_LOG_DEBUG("DRV INIT: AC Inputs");
     NRF_LOG_FLUSH();
     
-    sBoilderSSRdrv.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(1);
-    sBoilderSSRdrv.hwTmr_isr_handler   = isr_BoilderSSR_EventHandler;
-    sBoilderSSRdrv.out_SSRelay         = outSSRboiler_PIN;
-    fcn_createSSRinstance((struct_SSRinstance *)&sBoilderSSRdrv);
-    NRF_LOG_DEBUG("DRV INIT: SSR for Boiler");
-    NRF_LOG_FLUSH();
+    fcn_initSSRController_BLEspresso();
 
-    sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
-    sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
-    sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
-    fcn_createSSRinstance((struct_SSRinstance *)&sPumpSSRdrv);
-    NRF_LOG_DEBUG("DRV INIT: SSR for Pump");
-    NRF_LOG_FLUSH();
-  
-    sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
-    sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
-    fcn_initSSRController((struct_SSRcontroller *)&sSSRcontroller);
-    NRF_LOG_DEBUG("DRV INIT: AC Zero-cross.");
-    NRF_LOG_FLUSH();
-
-    fcn_initTemperatureController((PID_Block_fStruct *)&sBoilerTempCtrl);
+    fcn_initTemperatureController();
    // fcn_startTemperatureController();
     NRF_LOG_DEBUG("DRV INIT: PID Boiler Controller");
     NRF_LOG_FLUSH();
@@ -326,6 +227,13 @@ int main(void)
     NRF_LOG_DEBUG("DRV INIT: Pump Controller");
     NRF_LOG_FLUSH();
 
+    /* swection of code to control LED on the board*/
+    /***********************************************/
+    ret_code_t err_code_gpio;
+    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+    err_code_gpio = nrf_drv_gpiote_out_init(29, &out_config);
+    APP_ERROR_CHECK(err_code_gpio);
+
     BLEspressoVar.TargetBoilerTemp = 20.00f;
     BLEspressoVar.BrewPreInfussionPwr = 55.55f;
     BLEspressoVar.Pid_Gain_term = 1.111f;
@@ -333,8 +241,8 @@ int main(void)
 //FLASH storage example
 //////////////////////////////////////////////////////////////////////////////////////////////
     fstorage_Init();
-  
 //////////////////////////////////////////////////////////////////////////////////////////////
+
     // Start execution.
     BLE_bluetooth_init();
     application_timers_start();
@@ -350,48 +258,53 @@ int main(void)
         if(PrintTask_flag == true)
         {
           PrintTask_flag=false;
-          ble_update_boilerWaterTemp(rtdTemperature);
-          BLEspressoVar.ActualBoilerTemp=(float)rtdTemperature;
-          NRF_LOG_INFO("\033[0;36m Temp: " NRF_LOG_FLOAT_MARKER "\r\n \033[0;40m", NRF_LOG_FLOAT(rtdTemperature));
+          ble_update_boilerWaterTemp(f_getBoilerTemperature());
+          BLEspressoVar.ActualBoilerTemp=(float)f_getBoilerTemperature();
+          NRF_LOG_INFO("\033[0;36m Temp: " NRF_LOG_FLOAT_MARKER "\r\n \033[0;40m", NRF_LOG_FLOAT(f_getBoilerTemperature()));
         }else{}
         
         if(OneSecond_flag == true)
         {
           OneSecond_flag = false;
-          //ssrPower = ssrPower +50;
+          ssrPower = ssrPower +50;
           if(ssrPower>1009)
           {ssrPower=0;}
-          fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
+          //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
+          fcn_boilerSSR_pwrUpdate(ssrPower);
           NRF_LOG_INFO("\033[0;33m Heat Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPower/10.0f));
           NRF_LOG_INFO("\033[0;33m Pump Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPump/10.0f));
+          /* this section is to run trials on the PID loop
           if(sPIDtimer.status == NOT_ACTIVE)
           {
-              if(rtdTemperature>0.0f)
+              if(f_getBoilerTemperature()>0.0f)
               {
                   fcn_startTemperatureController();
               }else{}
           }else{}
+          */
+          fcn_startTemperatureController();
         }else{}
 
-        if(sControllerInputs.Brew.smEvent == smS_Change)
+        if(fcn_StatusChange_Brew() == smS_Change)
         {
-            if(sControllerInputs.Brew.Status == true )
+            if(fcn_GetInputStatus_Brew() == true )
             {
               NRF_LOG_INFO("BREW-> \033[0;42m ON \033[0;40m \r\n ");
             }else{
               NRF_LOG_INFO("BREW-> \033[0;43m OFF \033[0;40m \r\n ");
             }
-            sControllerInputs.Brew.smEvent = smS_NoChange; 
+            fcn_StatusReset_Brew();
         }else{}
-        if(sControllerInputs.Steam.smEvent == smS_Change)
+
+        if(fcn_StatusChange_Steam() == smS_Change)
         {
-            if(sControllerInputs.Steam.Status == true )
+            if(fcn_GetInputStatus_Steam() == true )
             {
               NRF_LOG_INFO("STEAM-> \033[0;42m ON \033[0;40m \r\n");
             }else{
               NRF_LOG_INFO("STEAM-> \033[0;43m OFF \033[0;40m \r\n");
             }
-            sControllerInputs.Steam.smEvent = smS_NoChange; 
+            fcn_StatusReset_Steam();
         }else{}
         //idle_state_handle();
         
