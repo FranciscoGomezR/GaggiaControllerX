@@ -73,27 +73,14 @@ extern  "C" {
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-typedef struct
-{
-  uint8_t     pinID;
-  uint16_t    Counter;
-  bool        Status;
-  bool        prevStatus;
-  uint8_t     smEvent;
-  uint16_t    nCycles;
-  nrfx_gpiote_evt_handler_t ext_isr_handler;
-}struct_AcInputPin;
-
-typedef struct
-{
-  struct_AcInputPin  Brew;
-  struct_AcInputPin  Steam;
-}struct_ControllerInputs;
-
-enum{
-  smS_NoChange=0,
-  smS_Change
-};
+typedef enum {
+  DRV_AC_INPUT_INIT_OK = 0,
+  DRV_AC_INPUT_INIT_ERROR,
+  AC_INPUT_NO_CHANGE,
+  AC_INPUT_CHANGE,
+  AC_INPUT_ASSERTED,
+  AC_INPUT_DEASSERTED
+} acInput_status_t;
 
 //*****************************************************************************
 //
@@ -107,17 +94,17 @@ enum{
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initACinput_drv(void);
+acInput_status_t fcn_initACinput_drv(void);
 void fcn_ACinput_drv(void);
 
-uint8_t fcn_StatusChange_Brew(void);
-uint8_t fcn_StatusChange_Steam(void);
+acInput_status_t fcn_StatusChange_Brew(void);
+acInput_status_t fcn_StatusChange_Steam(void);
+acInput_status_t fcn_GetInputStatus_Brew(void);
+acInput_status_t fcn_GetInputStatus_Steam(void);
 void fcn_StatusReset_Brew(void);
 void fcn_StatusReset_Steam(void);
 
-bool fcn_GetInputStatus_Brew(void);
-bool fcn_GetInputStatus_Steam(void);
-
+//GPIO' ISRs are created in this module and used inside of it.
 extern void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 extern void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 

@@ -54,10 +54,10 @@ extern  "C" {
 #include "nrf_gpio.h"
 #include "nrf_drv_timer.h"
 #include "app_error.h"
+
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
-
 
 //*****************************************************************************
 //
@@ -72,68 +72,26 @@ extern  "C" {
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-/**
- * @brief Timer driver instance data structure.
- */
-typedef struct
-{
-    uint16_t    tStep;
-    uint16_t    tPeriod;
-    uint16_t    tTrigger;
-    uint16_t    tZCdelay;
-    uint32_t    cPeriod;
-    uint32_t    cTrigger;
-    uint32_t    cZCdelay;
-}struct_ssrTiming;
-
-typedef struct
-{
-    nrf_drv_timer_t             hwTmr;              ///HW-Timer that will control Relay trigger
-    nrfx_timer_event_handler_t  hwTmr_isr_handler;
-    uint8_t                     in_zCross;    ///AC Zero-cross input pin
-    uint8_t                     out_SSRelay;     ///controller output pin
-    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
-    struct_ssrTiming            sSRR_timing_us;
-    uint8_t                     smTrigStatus;
-    uint16_t                    srrPower;
-    uint8_t                     ssrPWRstatus;
-} struct_SSRinstance;
-
-typedef struct
-{
-    uint8_t                     in_zCross;    ///AC Zero-cross input pin
-    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
-    bool                        status;
-} struct_SSRcontroller;
-
-enum{
-  smS_Release=0,
-  smS_Engage
-};
-
-enum{
-  OFF=0,
-  MIDPWR,
-  FULLPWR
-};
+typedef enum {
+    SSR_DRV_INIT_OK = 0,
+    SSR_DRV_INIT_ERROR,
+} ssr_status_t;
 
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initSSRController_BLEspresso(void);
+ssr_status_t fcn_initSSRController_BLEspresso(void);
 void fcn_boilerSSR_pwrUpdate( uint16_t outputPower);
 void fcn_pumpSSR_pwrUpdate( uint16_t outputPower);
-
 
 
 //External interrupt ISR has to be created in the main thread 
 
 extern void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
-//Timers' ISRs are created in the main thread 
-
+//Timers' ISRs are created in this module and used inside of it.
 extern void isr_BoilderSSR_EventHandler(nrf_timer_event_t event_type, void* p_context);
 extern void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context);
 

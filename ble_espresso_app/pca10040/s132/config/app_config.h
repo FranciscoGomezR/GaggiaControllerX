@@ -42,6 +42,11 @@
 
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
+
+#define NRF_LOG     0
+#define ELEC_UI     1
+#define PRODUCTION  2
+#define UART_MODE   NRF_LOG
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
 #define inBREW_PIN          27
@@ -49,7 +54,7 @@
 #define inZEROCROSS_PIN     26
 #define outSSRboiler_PIN    19
 #define outSSRpump_PIN      20
-#define enSelenoidRelay_PIN 25
+#define enSolenoidRelay_PIN 25
 #define enDC12Voutput_PIN   3
 
 #define outSTATE__ON        1
@@ -89,8 +94,25 @@
 #define NRFX_SPIM1_ENABLED 1
 #define NRFX_SPI_ENABLED 1
 
-#define BLE_NUS_ENABLED 1
+#define BLE_NUS_ENABLED 0
 #define NRF_SDH_BLE_VS_UUID_COUNT 2  
+
+#define UART_LEGACY_SUPPORT 0
+#define UART0_CONFIG_USE_EASY_DMA 0
+//#define NRFX_PRS_ENABLED 0
+#define NRFX_PRS_BOX_2_ENABLED 0
+
+#define UART_ENABLED 1
+#define UART_DEFAULT_CONFIG_BAUDRATE 30801920
+#define UART0_ENABLED 1
+#define NRFX_UART_ENABLED 1
+#define NRFX_UART_DEFAULT_CONFIG_BAUDRATE 30924800
+#define NRFX_UART0_ENABLED 0
+
+#define NRF_LOG_ENABLED 1
+#define NRF_LOG_BACKEND_UART_ENABLED 1
+#define NRF_LOG_BACKEND_UART_TX_PIN 6
+#define NRF_LOG_BACKEND_UART_BAUDRATE 30801920
 
 
 // <<< end of configuration section >>>

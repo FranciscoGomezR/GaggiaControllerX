@@ -3,29 +3,7 @@
  *
  *  Created on: 14/03/2012
  *      Author: uidw3542
-*************************************************************************************
-* 	Revision History:
-*
-*   Date          CP#           Author
-*   MM-DD-YY      XXXXX:1       Initials   Description of change
-*   -----------   -----------   --------   ------------------------------------
-*    03-14-12      	1.0             JFGR	Initial version.
-*    03-09-17		2.0				JFGR	Second version.
-*
-*************************************************************************************
-*  File/
-*
-*
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-*  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-*  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-*  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*  DEALINGS IN THE SOFTWARE.
-*
-*/
+ */
 //*****************************************************************************
 //
 //			INCLUDE FILE SECTION FOR THIS MODULE

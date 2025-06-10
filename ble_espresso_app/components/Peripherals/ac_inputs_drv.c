@@ -17,6 +17,22 @@
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+typedef struct
+{
+  uint8_t     pinID;
+  uint16_t    Counter;
+  uint8_t     Status;
+  uint8_t     prevStatus;
+  uint8_t     smEvent;
+  uint16_t    nCycles;
+  nrfx_gpiote_evt_handler_t ext_isr_handler;
+}struct_AcInputPin;
+
+typedef struct
+{
+  struct_AcInputPin  Brew;
+  struct_AcInputPin  Steam;
+}struct_ControllerInputs;
 
 //*****************************************************************************
 //
@@ -69,32 +85,21 @@ void fcn_inputLogic(struct_AcInputPin *ptr_instance);
                 and configure two GPIO as inputs (toggle) &  external interrupts
  * Caveats:     THIS FCN INIT THE GPIO DRIVER
  *****************************************************************************/
-void fcn_initACinput_drv(void)
+acInput_status_t fcn_initACinput_drv(void)
 {
   sIO_ACinput.Brew.pinID          = BREW_CFG_PIN_ID;
   sIO_ACinput.Brew.Status         = BREW_CFG_STATUS;
-  sIO_ACinput.Brew.smEvent        = smS_NoChange;
+  sIO_ACinput.Brew.smEvent        = AC_INPUT_NO_CHANGE;
   sIO_ACinput.Brew.nCycles        = BREW_CFG_THRESHOLD_N;
   sIO_ACinput.Brew.ext_isr_handler = BREW_CFG_EVT_HANDLER;
   sIO_ACinput.Steam.pinID         = inSTEAM_PIN;
   sIO_ACinput.Steam.Status        = STEAM_CFG_STATUS;
-  sIO_ACinput.Steam.smEvent       = smS_NoChange;
+  sIO_ACinput.Steam.smEvent       = AC_INPUT_NO_CHANGE;
   sIO_ACinput.Steam.nCycles       = STEAM_CFG_THRESHOLD_N;
   sIO_ACinput.Steam.ext_isr_handler = STEAM_CFG_EVT_HANDLER;
 
   ret_code_t err_code;
-  //  GPIO DRIVER init
-  //---------------------------------------------------------------------------
-  if (!nrf_drv_gpiote_is_init())
-    {
-        err_code = nrf_drv_gpiote_init();
-        if (err_code != NRF_SUCCESS)
-        {
-            return NRF_ERROR_INTERNAL;
-        }
-    }
-  APP_ERROR_CHECK(err_code);
-
+ 
   //inSwitchBrew
   //------------------------------------------------------------------------
   nrf_drv_gpiote_in_config_t in_configBrew = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
@@ -116,6 +121,8 @@ void fcn_initACinput_drv(void)
                                      sIO_ACinput.Steam.ext_isr_handler);
   APP_ERROR_CHECK(err_code);
   nrf_drv_gpiote_in_event_enable(sIO_ACinput.Steam.pinID, true);
+
+  return DRV_AC_INPUT_INIT_OK;
 }
 
 /*****************************************************************************
@@ -135,7 +142,7 @@ void fcn_ACinput_drv(void)
  * Return:      TRUE if drv detecte a higher no. of cycle than the threshold lvl
                 FALSE if there is no cycle detected or no. is below threshold
  *****************************************************************************/
-bool fcn_GetInputStatus_Brew(void)
+acInput_status_t fcn_GetInputStatus_Brew(void)
 {
   return sIO_ACinput.Brew.Status;
 }
@@ -146,7 +153,7 @@ bool fcn_GetInputStatus_Brew(void)
  * Return:      TRUE if drv detecte a higher no. of cycle than the threshold lvl
                 FALSE if there is no cycle detected or no. is below threshold
  *****************************************************************************/
-bool fcn_GetInputStatus_Steam(void)
+acInput_status_t fcn_GetInputStatus_Steam(void)
 {
   return sIO_ACinput.Steam.Status;
 }
@@ -157,7 +164,7 @@ bool fcn_GetInputStatus_Steam(void)
  * Return:      0 -> No change in the status of the pin
                 1 -> status of the pin changed 
  *****************************************************************************/
-uint8_t fcn_StatusChange_Brew(void)
+acInput_status_t fcn_StatusChange_Brew(void)
 {
   return sIO_ACinput.Brew.smEvent;
 }
@@ -168,27 +175,27 @@ uint8_t fcn_StatusChange_Brew(void)
  * Return:      0 -> No change in the status of the pin
                 1 -> status of the pin changed 
  *****************************************************************************/
-uint8_t fcn_StatusChange_Steam(void)
+acInput_status_t fcn_StatusChange_Steam(void)
 {
   return sIO_ACinput.Steam.smEvent;
 }
 
 /*****************************************************************************
  * Function: 	fcn_StatusReset_Brew
- * Description: Reset the following field: smEvent to: smS_NoChange
+ * Description: Reset the following field: smEvent to: AC_INPUT_NO_CHANGE
  *****************************************************************************/
 void fcn_StatusReset_Brew(void)
 {
-  sIO_ACinput.Brew.smEvent = smS_NoChange;
+  sIO_ACinput.Brew.smEvent = AC_INPUT_NO_CHANGE;
 }
 
 /*****************************************************************************
  * Function: 	fcn_StatusReset_Steam
- * Description: Reset the following field: smEvent to: smS_NoChange
+ * Description: Reset the following field: smEvent to: AC_INPUT_NO_CHANGE
  *****************************************************************************/
 void fcn_StatusReset_Steam(void)
 {
-  sIO_ACinput.Steam.smEvent = smS_NoChange;
+  sIO_ACinput.Steam.smEvent = AC_INPUT_NO_CHANGE;
 }
 
 //*****************************************************************************
@@ -205,16 +212,24 @@ void fcn_inputLogic(struct_AcInputPin *ptr_instance)
 {
     if(ptr_instance->Counter > ptr_instance->nCycles)
     {
-        ptr_instance->Status = true;
+        //number of AC zero-crossing events are more than nCyles, 
+        //it means the switch is close
+        ptr_instance->Status = (uint8_t)AC_INPUT_ASSERTED;
     }else{
-        ptr_instance->Status = false;
+        //number of AC zero-crossing events are less than nCyles or even 0 cyles,
+        //it means the switch is OPEN
+        ptr_instance->Status = (uint8_t)AC_INPUT_DEASSERTED;
     }
+    //IF STATEMENT to detect changes events, from Close-To-Open or from Open-To-Close
     if( ptr_instance->Status != ptr_instance->prevStatus)
     {
-        ptr_instance->smEvent = smS_Change;
+        //Event change detected, update
+        ptr_instance->smEvent = AC_INPUT_CHANGE;
     }else{
-        ptr_instance->smEvent = smS_NoChange;
+        //Event change not detected
+        ptr_instance->smEvent = AC_INPUT_NO_CHANGE;
     }
+    //Cycle counter reset and saved current status to be evaluted in the next iteration
     ptr_instance->Counter = 0;
     ptr_instance->prevStatus = ptr_instance->Status;
 }

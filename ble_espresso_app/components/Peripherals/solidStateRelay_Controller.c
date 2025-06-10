@@ -17,20 +17,73 @@
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+/**
+ * @brief Timer driver instance data structure.
+ */
+typedef struct
+{
+    uint16_t    tStep;
+    uint16_t    tPeriod;
+    uint16_t    tTrigger;
+    uint16_t    tZCdelay;
+    uint32_t    cPeriod;
+    uint32_t    cTrigger;
+    uint32_t    cZCdelay;
+}struct_ssrTiming;
 
+typedef struct
+{
+    nrf_drv_timer_t             hwTmr;                //HW-Timer that will control Relay trigger
+    nrfx_timer_event_handler_t  hwTmr_isr_handler;
+    uint8_t                     in_zCross;            //AC Zero-cross input pin
+    uint8_t                     out_SSRelay;          //controller output pin
+    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
+    struct_ssrTiming            sSRR_timing_us;
+    uint8_t                     smTrigStatus;
+    uint16_t                    srrPower;
+    uint8_t                     ssrPWRstatus;
+} struct_SSRinstance;
+
+typedef struct
+{
+    uint8_t                     in_zCross;            //AC Zero-cross input pin
+    nrfx_gpiote_evt_handler_t   zcross_isr_handler;
+    bool                        status;
+} struct_SSRcontroller;
+
+enum{
+  smS_Release=0,
+  smS_Engage
+};
+
+enum{
+  SSR_NOPWR=0,
+  SSR_MIDPWR,
+  SSR_FULLPWR
+};
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-  volatile struct_SSRcontroller sSSRcontroller;
-  struct_SSRinstance sBoilderSSRdrv;
-  struct_SSRinstance sPumpSSRdrv;
+volatile struct_SSRcontroller sSSRcontroller;
+struct_SSRinstance sBoilderSSRdrv;
+struct_SSRinstance sPumpSSRdrv;
 
+ //*****************************************************************************
+//
+//			PRIVATE FUNCTIONS PROTOYPES
+//
+//*****************************************************************************
+void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
+void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
 
-  void fcn_boilerSSR_ctrlUpdate(void);
-  void fcn_pumpSSR_ctrlUpdate(void);
+void fcn_boilerSSR_ctrlUpdate(void);
+void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
+
+void fcn_pumpSSR_ctrlUpdate(void);
+void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
 
 //*****************************************************************************
 //
@@ -75,71 +128,75 @@ void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
 
 /*****************************************************************************
  * Function: 	isr_ZeroCross_EventHandler
- * Description: 
+ * Description: This event is asserted when AC is close/is at to 0V
  * Parameters:	
  * Return:
  *****************************************************************************/
 void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
+  /* LOGIC BLOCK FOR BOILER SSR */
+  if(sBoilderSSRdrv.ssrPWRstatus == SSR_MIDPWR)
+  {
     if( sBoilderSSRdrv.smTrigStatus == smS_Release )
     {
-      //nrf_drv_gpiote_out_set(31);
-      //fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
-      fcn_boilerSSR_ctrlUpdate();
-      //nrf_drv_timer_enable((nrfx_timer_t const *)&sBoilderSSRdrv.hwTmr);
-      sBoilderSSRdrv.smTrigStatus = smS_Engage;
-      //nrf_drv_gpiote_out_clear(31);
+      /* Disengage TRIAC/SSR  */
       nrf_drv_gpiote_out_clear(sBoilderSSRdrv.out_SSRelay);
+      /* Update timers with new count/power percentage  */
+      /* This function re-enables the timer if we enter from a 0% or 100% state */
+      fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
+      /* Reset State machine for this new cycle  */
+      sBoilderSSRdrv.smTrigStatus = smS_Engage;
     }else{
+      /* A semi-cycle or 180deg phase as passed; driver continues engaging the SSR  */
+      /* but prepare the state machine to update in the next semi-cyle  */
       sBoilderSSRdrv.smTrigStatus = smS_Release;
     }
+  }else if(sBoilderSSRdrv.ssrPWRstatus == SSR_FULLPWR)
+  {
+    /* When SSR has to deliver 100% of power:  */ 
+    /* driver will disable the timer and set 1 the output */
+    nrf_drv_gpiote_out_set(sBoilderSSRdrv.out_SSRelay);
+    nrf_drv_timer_disable(&sBoilderSSRdrv.hwTmr );  
+  }else if(sBoilderSSRdrv.ssrPWRstatus == SSR_NOPWR)
+  {
+    /* When SSR has to deliver 0% of power:  */ 
+    /* driver will disable the timer and set 0 the output */
+    nrf_drv_gpiote_out_clear(sBoilderSSRdrv.out_SSRelay);
+    nrf_drv_timer_disable(&sBoilderSSRdrv.hwTmr );  
+  }
 
-    if( sPumpSSRdrv.smTrigStatus == smS_Release)
+  /* LOGIC BLOCK FOR PUMP SSR */
+  if(sPumpSSRdrv.ssrPWRstatus == SSR_MIDPWR)
+  {
+    if( sPumpSSRdrv.smTrigStatus == smS_Release )
     {
-        if(sPumpSSRdrv.ssrPWRstatus == MIDPWR)
-        {
-            fcn_pumpSSR_ctrlUpdate();
-            //fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
-            sPumpSSRdrv.smTrigStatus = smS_Engage;
-            nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-        }else{
-          if(sPumpSSRdrv.ssrPWRstatus == FULLPWR)
-          {
-              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-          }else{
-              nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-          }
-        }
+      /* Disengage TRIAC/SSR  */
+      nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+      /* Update timers with new count/power percentage  */
+      /* This function re-enables the timer if we enter from a 0% or 100% state */
+      fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+      /* Reset State machine for this new cycle  */
+      sPumpSSRdrv.smTrigStatus = smS_Engage;
     }else{
+      /* A semi-cycle or 180deg phase as passed; driver continues engaging the SSR  */
+      /* but prepare the state machine to update in the next semi-cyle  */
       sPumpSSRdrv.smTrigStatus = smS_Release;
     }
-    /*
-if(sPumpSSRdrv.status == ssrMIDPWR)
-      {
-        fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
-        sPumpSSRdrv.smTrigStatus = smS_Engage;
-        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-      }else{
-        if(sPumpSSRdrv.status == ssrFULLPWR)
-        {
-          nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-        }else{
-          nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-        }
-      }
-      */
+  }else if(sPumpSSRdrv.ssrPWRstatus == SSR_FULLPWR)
+  {
+    /* When SSR has to deliver 100% of power:  */ 
+    /* driver will disable the timer and set 1 the output */
+    nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr );  
+  }else if(sPumpSSRdrv.ssrPWRstatus == SSR_NOPWR)
+  {
+    /* When SSR has to deliver 0% of power:  */ 
+    /* driver will disable the timer and set 0 the output */
+    nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr );  
+  }
 }
 
-//*****************************************************************************
-//
-//			PRIVATE FUNCTIONS PROTOYPES
-//
-//*****************************************************************************
-void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
-void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
-
-void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
-void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
 
 //*****************************************************************************
 //
@@ -155,28 +212,23 @@ void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
  *              will make easy debugging
  *
  *****************************************************************************/
-void fcn_initSSRController_BLEspresso(void)
+ssr_status_t fcn_initSSRController_BLEspresso(void)
 {
-    sBoilderSSRdrv.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(1);
-    sBoilderSSRdrv.hwTmr_isr_handler   = isr_BoilderSSR_EventHandler;
-    sBoilderSSRdrv.out_SSRelay         = outSSRboiler_PIN;
-    fcn_createSSRinstance((struct_SSRinstance *)&sBoilderSSRdrv);
-    NRF_LOG_DEBUG("DRV INIT: SSR for Boiler");
-    NRF_LOG_FLUSH();
+  sBoilderSSRdrv.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(1);
+  sBoilderSSRdrv.hwTmr_isr_handler   = isr_BoilderSSR_EventHandler;
+  sBoilderSSRdrv.out_SSRelay         = outSSRboiler_PIN;
+  fcn_createSSRinstance((struct_SSRinstance *)&sBoilderSSRdrv);
 
-    sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
-    sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
-    sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
-    fcn_createSSRinstance((struct_SSRinstance *)&sPumpSSRdrv);
-    NRF_LOG_DEBUG("DRV INIT: SSR for Pump");
-    NRF_LOG_FLUSH();
- 
-    sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
-    sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
-    fcn_initSSRController((struct_SSRcontroller *)&sSSRcontroller);
-    NRF_LOG_DEBUG("DRV INIT: AC Zero-cross.");
-    NRF_LOG_FLUSH();
+  sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
+  sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
+  sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
+  fcn_createSSRinstance((struct_SSRinstance *)&sPumpSSRdrv);
 
+  sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
+  sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
+  fcn_initSSRController((struct_SSRcontroller *)&sSSRcontroller);
+
+  return SSR_DRV_INIT_OK;
 }
 
 /*****************************************************************************
@@ -200,6 +252,12 @@ void fcn_pumpSSR_pwrUpdate( uint16_t outputPower)
 {
     fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, outputPower);
 }
+
+//*****************************************************************************
+//
+//			PRIVATE FUNCTIONS SECTION
+//
+//*****************************************************************************
 
 /*****************************************************************************
  * Function: 	fcn_boilerSSR_ctrlUpdate
@@ -263,7 +321,7 @@ void fcn_createSSRinstance(struct_SSRinstance * ptr_instance)
     ptr_instance->sSRR_timing_us.tZCdelay = 200;
     ptr_instance->sSRR_timing_us.tTrigger = 0;  //50% of power
     ptr_instance->sSRR_timing_us.tPeriod  = AC_CYCLE_PERIOD;
-    ptr_instance->ssrPWRstatus            = OFF; 
+    ptr_instance->ssrPWRstatus            = SSR_NOPWR; 
     //TIMER SECTION
     //------------------------------------------------------------------------------
     uint32_t err_code = NRF_SUCCESS;
@@ -317,7 +375,7 @@ void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
     if(outputPower > 0 && outputPower <1000)
     {
       ptr_instance->srrPower = outputPower;
-      ptr_instance->ssrPWRstatus = MIDPWR;
+      ptr_instance->ssrPWRstatus = SSR_MIDPWR;
       ptr_instance->sSRR_timing_us.tTrigger = ptr_instance->sSRR_timing_us.tPeriod - 
                                               ( ptr_instance->sSRR_timing_us.tStep * outputPower);
 
@@ -332,13 +390,13 @@ void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
         if(outputPower >= 1000)
         {
             ptr_instance->srrPower = 1000;
-            ptr_instance->ssrPWRstatus = FULLPWR;
+            ptr_instance->ssrPWRstatus = SSR_FULLPWR;
             //nrf_drv_gpiote_out_clear(ptr_instance->out_SSRelay); 
         }else{
           if(outputPower == 0)
           {
             ptr_instance->srrPower = 0;
-            ptr_instance->ssrPWRstatus = OFF;
+            ptr_instance->ssrPWRstatus = SSR_NOPWR;
             //nrf_drv_gpiote_out_set(ptr_instance->out_SSRelay); 
           }else{}
         }
@@ -349,7 +407,7 @@ void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
 
 /*****************************************************************************
  * Function: 	fcn_SSR_ctrlUpdate
- * Description: Stops the timer
+ * Description: Stops the timer, updates new top count in the timer, finally re-enables it.
  * Caveats:
  * Parameters:	
  * Return:
@@ -365,20 +423,6 @@ void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance)
                                     true);
     nrf_drv_timer_enable(&ptr_instance->hwTmr);
 }
-
-//*****************************************************************************
-//
-//			PRIVATE FUNCTIONS SECTION
-//
-//*****************************************************************************
-
-/*****************************************************************************
- * Function: 	InitClocks
- * Description: 
- * Caveats:
- * Parameters:	
- * Return:
- *****************************************************************************/
 
 
 /*

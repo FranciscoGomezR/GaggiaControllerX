@@ -8,20 +8,6 @@
 *  	XX-XX-XXXX		X.X			ABCD		"CHANGE"	
 *
 *************************************************************************************
-*
-* File/
-
-*  "More detail description of the code"
-*
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-*  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-*  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-*  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*  DEALINGS IN THE SOFTWARE.
-*
 */
 #ifndef STORAGECONTROLLER_H__
 #define STORAGECONTROLLER_H__
@@ -40,6 +26,7 @@
 #include "nrf_fstorage.h"
 #include "nrf_fstorage_sd.h"
 #include "BLEspressoServices.h"
+#include "spi_Devices.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -50,17 +37,21 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-  #define PARAM_NVM_START_ADDR    0x3e000
-  #define PARAM_NVM_END_ADDR      0x3ffff
 
-  //#define PARAM_NVM_START_ADDR    0x7e000
-  //#define PARAM_NVM_END_ADDR      0x80000
 
-  #define PARAM_NVM_MEM_KEY       0x00aa00aa
+//https://devzone.nordicsemi.com/f/nordic-q-a/31017/fstorage-vs-softdevice-activity-application-halts-when-writing-to-flash-if-waiting-to-write-or-data-not-correctly-written-if-not-waiting
 
-  //https://devzone.nordicsemi.com/f/nordic-q-a/31017/fstorage-vs-softdevice-activity-application-halts-when-writing-to-flash-if-waiting-to-write-or-data-not-correctly-written-if-not-waiting
-  //https://devzone.nordicsemi.com/f/nordic-q-a/22325/flash-data-storage-place-in-memory
-  //https://docs.nordicsemi.com/bundle/sdk_nrf5_v16.0.0/page/lib_bootloader.html#lib_bootloader_memory
+typedef enum {
+  STORAGE_INIT_OK = 0,
+  STORAGE_INIT_ERROR,
+  STORAGE_USERDATA_EMPTY,
+  STORAGE_USERDATA_FIRSTW,
+  STORAGE_USERDATA_LOADED,
+  STORAGE_USERDATA_STORED,
+  STORAGE_PROFILEDATA_STORED,
+  STORAGE_CONTROLLERDATA_STORED,
+  STORAGE_USERDATA_ERROR
+} storageCtrl_status_t;
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
@@ -73,14 +64,15 @@
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-  void fstorage_evt_handler(nrf_fstorage_evt_t * p_evt);
 
+uint32_t stgCtrl_Init(void);
 
-  void fstorage_Init(void);
-  void wait_for_flash_ready(nrf_fstorage_t const * p_fstorage);
-  void wait_for_flash_ready_noSoftDevice(nrf_fstorage_t const * p_fstorage);
+uint32_t stgCtrl_ChkForUserData(void);
 
-  void fcn_WriteParameterNVM(BLEspressoVariable_struct * ptr_writeParam);
-  void fcn_Read_ParameterNVM(BLEspressoVariable_struct * ptr_ReadParam);
+uint32_t stgCtrl_ReadUserData(bleSpressoUserdata_struct* ptr_rxData);
+
+uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData);
+uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData);
 
 #endif // BLESPRESSOSERVICES_H__
+

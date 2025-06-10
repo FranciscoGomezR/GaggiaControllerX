@@ -11,28 +11,51 @@
 //			PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
 //
 //*****************************************************************************
-
+static nrf_drv_pwm_t m_pwm0 = NRF_DRV_PWM_INSTANCE(0);
 //*****************************************************************************
 //
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+typedef struct
+  {
+      StateMachineCtrl_Struct sDrv;
+      uint8_t outState;
+  }StateMachine12Vout_Struct;
 
+enum{
+  st_Idle = 0,
+  st_LoadDimOn,
+  st_turningON,
+  st_LoadDimOff,
+  st_turningOFF,
+  st_LoadDimDown,
+  st_DimDown,
+  st_LoadDimUp,
+  st_DimUp
+};
+
+enum{
+  outst_ON = 0,
+  outst_OFF,
+  outst_2_3
+};
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-StateMachine12Vout_Struct s12Vout;
-volatile uint32_t seqCounter;
-volatile uint32_t startFlag;
 
 //*****************************************************************************
 //
 //			PRIVATE VARIABLES
 //
 //*****************************************************************************
+StateMachine12Vout_Struct s12Vout;
+volatile uint32_t seqCounter;
+volatile uint32_t startFlag;
+
 static uint16_t /*const*/ seq_ONvalues[] =
     {
         0,
@@ -166,7 +189,7 @@ static uint16_t /*const*/ seq_ONvalues[] =
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_initDC12Voutput_drv(void)
+dc12vout_status_t fcn_initDC12Voutput_drv(void)
 {
     s12Vout.sDrv.sRunning = st_Idle;
     s12Vout.outState = outst_OFF;
@@ -194,6 +217,8 @@ void fcn_initDC12Voutput_drv(void)
     nrf_drv_pwm_simple_playback(&m_pwm0, &seqOn, 1, NRFX_PWM_FLAG_LOOP);
     startFlag = 0;
     seqCounter = 0;
+
+    return DRV_12VO_INIT_AS_LAMP;
 }
 
 /*****************************************************************************

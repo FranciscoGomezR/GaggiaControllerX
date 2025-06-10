@@ -7,7 +7,7 @@
 #include "BLEspresso.h"
 #include "app_timer.h"
 #include "i2c_sensors.h"
-#include "spi_sensors.h"
+#include "spi_Devices.h"
 
 #include "tempController.h"
 #include "solidStateRelay_Controller.h"

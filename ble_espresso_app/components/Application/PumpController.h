@@ -1,29 +1,4 @@
 
-/*************************************************************************************
-* 	Revision History:
-*
-*   Date          	CP#           Author
-*   DD-MM-YYYY      XXXXX:1		Initials	Description of change
-*   -----------   ------------  ---------   ------------------------------------
-*  	XX-XX-XXXX		X.X			ABCD		"CHANGE"	
-*
-*************************************************************************************
-*
-* File/
-
-*  "More detail description of the code"
-*
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-*  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-*  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-*  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*  DEALINGS IN THE SOFTWARE.
-*
-*/
-
 //*****************************************************************************
 //
 //			INCLUDE FILE SECTION FOR THIS MODULE
@@ -40,22 +15,31 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-  #define PUMP_BREWPWR_DEFAULT              1000
-  #define PUMP_PREINFUSSIONPWR_DEFAULT      300
-  #define PUMP_PREINFUSSION_T_MS_DEFAULT    5000
-  #define PUMP_PEAKPRESSURE_T_MS_DEFAULT    500
-  #define PUMP_RAMPUP_T_MS_DEFAULT          3000
-  #define PUMP_RAMPDOWN_T_MS_DEFAULT        1500
+#define PUMP_RAMPUP_T_MS_DEFAULT          3000
+#define PUMP_RAMPDOWN_T_MS_DEFAULT        1500
 
-  #define PUMP_DECLINING_PWR_DEFAULT        750
-  #define PUMP_DECLINING_T_MS_DEFAULT       5000
-  #define PUMP_BASETIME_T_MS                250
+#define PUMP_PREINFUSSIONPWR_DEFAULT      300
+#define PUMP_PREINFUSSION_T_MS_DEFAULT    5000
+
+#define PUMP_BREWPWR_DEFAULT              1000
+#define PUMP_PEAKPRESSURE_T_MS_DEFAULT    500
+
+
+#define PUMP_DECLINING_PWR_DEFAULT        750
+#define PUMP_DECLINING_T_MS_DEFAULT       5000
+
+#define PUMP_BASETIME_T_MS                250
 
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
+ typedef enum {
+  PUMPCTRL_INIT_OK = 0,
+  PUMPCTRL_INIT_ERROR,
+} pumpCtrl_status_t;
+
   typedef struct
   {
       StateMachineCtrl_Struct smPump;
@@ -81,7 +65,7 @@ extern StateMachinePump_Struct smPumpCtrl;
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initPumpController(void);
+pumpCtrl_status_t fcn_initPumpController(void);
 void fcn_PumpStateDriver(void);
 void fcn_StartBrew(void);
 void fcn_CancelBrew(void);

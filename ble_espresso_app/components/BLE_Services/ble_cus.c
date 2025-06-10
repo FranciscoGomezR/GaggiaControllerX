@@ -255,7 +255,7 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 *               @param[in]   p_cus_init   Information needed to initialize the service.
 * Return:       NRF_SUCCESS on success, otherwise an error code.
 *****************************************************************************/
-static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, BLEspressoVariable_struct * ptr_initVal)
+static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, bleSpressoUserdata_struct * ptr_initVal)
 {
     uint32_t              err_code;
     ble_add_char_params_t add_char_param;
@@ -465,7 +465,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 *               @param[in]   p_cus_init   Information needed to initialize the service.
 * Return:       NRF_SUCCESS on success, otherwise an error code.
 *****************************************************************************/
-static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, BLEspressoVariable_struct *ptr_initVal)
+static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, bleSpressoUserdata_struct *ptr_initVal)
 {
     uint32_t              err_code;
     ble_add_char_params_t add_char_param;
@@ -652,7 +652,7 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     if (err_code != NRF_SUCCESS)
     {return err_code;}
     // Add Custom Value characteristic
-    custom_value_char_add(p_cus, p_cus_init,(BLEspressoVariable_struct *)&int_NvmData);
+    custom_value_char_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&int_NvmData);
 
     // CREATE NEW SERVICE FOR PID ///////////////////////////////////////////////////
     ble_uuid.type = p_cus->uuid_type;
@@ -663,7 +663,7 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     {return err_code;}
 
     // Add Custom Value characteristic
-    return custom_value_PIDchar_add(p_cus, p_cus_init,(BLEspressoVariable_struct *)&int_NvmData);
+    return custom_value_PIDchar_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&int_NvmData);
 
 }
 

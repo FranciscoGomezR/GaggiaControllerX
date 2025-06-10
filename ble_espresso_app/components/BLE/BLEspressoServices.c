@@ -24,8 +24,8 @@
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-  volatile BLEspressoVariable_struct BLEspressoVar;
-  volatile BLEspressoVariable_struct int_NvmData;
+  volatile bleSpressoUserdata_struct BLEspressoVar;
+  volatile bleSpressoUserdata_struct int_NvmData;
 
 //*****************************************************************************
 //

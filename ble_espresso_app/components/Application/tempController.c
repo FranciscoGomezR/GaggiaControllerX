@@ -5,7 +5,7 @@
 //
 //*****************************************************************************
 #include "tempController.h"
-#include "spi_sensors.h"
+#include "spi_Devices.h"
 #include "solidStateRelay_Controller.h"
 
 //*****************************************************************************

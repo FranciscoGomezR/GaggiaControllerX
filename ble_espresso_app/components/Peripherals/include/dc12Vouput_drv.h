@@ -47,51 +47,25 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-static nrf_drv_pwm_t m_pwm0 = NRF_DRV_PWM_INSTANCE(0);
 
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-typedef struct
-  {
-      StateMachineCtrl_Struct sDrv;
-      uint8_t outState;
-  }StateMachine12Vout_Struct;
-
-enum{
-  st_Idle = 0,
-  st_LoadDimOn,
-  st_turningON,
-  st_LoadDimOff,
-  st_turningOFF,
-  st_LoadDimDown,
-  st_DimDown,
-  st_LoadDimUp,
-  st_DimUp
-};
-
-enum{
-  outst_ON = 0,
-  outst_OFF,
-  outst_2_3
-};
-
-extern volatile uint32_t flag;
-extern StateMachine12Vout_Struct s12Vout;
-
+typedef enum {
+  DRV_12VO_INIT_AS_LAMP = 0,
+  DRV_12VO_INIT_AS_OUT,
+} dc12vout_status_t;
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
 
-
 //*****************************************************************************
 //
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initDC12Voutput_drv(void);
-void sm_DC12Voutput_drv(StateMachine12Vout_Struct *ptr_drvState);
+dc12vout_status_t fcn_initDC12Voutput_drv(void);

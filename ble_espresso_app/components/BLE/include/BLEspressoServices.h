@@ -68,8 +68,8 @@
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-  typedef struct BLEspressoVariable_struct{
-    uint32_t nvmBuffer;
+  typedef struct bleSpressoUserdata_struct{
+    uint32_t nvmWcycles;
     uint32_t nvmKey;
     float TargetBoilerTemp;
     float ActualBoilerTemp;
@@ -87,16 +87,19 @@
     float Pid_D_term;
     float Pid_Dlpf_term;
     float Pid_Gain_term;
-   }BLEspressoVariable_struct;
+   }bleSpressoUserdata_struct;
 
-   //17 floats
+   //14 floats
+   //2 uint32_t
+   //1  byte
+   //Equal to 65 bytes
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
- extern volatile BLEspressoVariable_struct BLEspressoVar;
- extern volatile BLEspressoVariable_struct int_NvmData;
+ extern volatile bleSpressoUserdata_struct BLEspressoVar;
+ extern volatile bleSpressoUserdata_struct int_NvmData;
   
 
 //*****************************************************************************

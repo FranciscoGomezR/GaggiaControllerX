@@ -83,43 +83,45 @@ Struct_PumpTiming sPumpTiming;
  * Parameters:	
  * Return:
  *****************************************************************************/
-  void fcn_initPumpController(void)
-  {
-    smPumpCtrl.PumpPower          = 0;
-    smPumpCtrl.smPump.sRunning    = st_Idle;
-    smPumpCtrl.PumpBrePwr         = PUMP_BREWPWR_DEFAULT;
-    smPumpCtrl.preInfussionPwr    = PUMP_PREINFUSSIONPWR_DEFAULT;
-    smPumpCtrl.decliningPressurePwr = PUMP_DECLINING_PWR_DEFAULT;
+pumpCtrl_status_t fcn_initPumpController(void)
+{
+  smPumpCtrl.PumpPower          = 0;
+  smPumpCtrl.smPump.sRunning    = st_Idle;
+  smPumpCtrl.PumpBrePwr         = PUMP_BREWPWR_DEFAULT;
+  smPumpCtrl.preInfussionPwr    = PUMP_PREINFUSSIONPWR_DEFAULT;
+  smPumpCtrl.decliningPressurePwr = PUMP_DECLINING_PWR_DEFAULT;
 
-    smPumpCtrl.preInfussionT_ms   = PUMP_PREINFUSSION_T_MS_DEFAULT;
-    smPumpCtrl.peakPressureT_ms   = PUMP_PEAKPRESSURE_T_MS_DEFAULT;
-    smPumpCtrl.decliningPressureT_ms = PUMP_DECLINING_T_MS_DEFAULT;
-    smPumpCtrl.PumpRampUpT_ms     = PUMP_RAMPUP_T_MS_DEFAULT;
-    smPumpCtrl.PumpRampDownT_ms   = PUMP_RAMPDOWN_T_MS_DEFAULT;
-    
-    sPumpTiming.RampUpCounts      = (uint16_t)(PUMP_RAMPUP_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
-    sPumpTiming.RampDownCounts    = (uint16_t)(PUMP_RAMPDOWN_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
-    sPumpTiming.PreInfussionCounts= (uint16_t)(PUMP_PREINFUSSION_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
-    sPumpTiming.PeakTimeCounts    = (uint16_t)(PUMP_PEAKPRESSURE_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
-    sPumpTiming.DecliningTimeCounts = (uint16_t)(PUMP_DECLINING_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
-    sPumpTiming.SlopeToPreInfussion  = PUMP_PREINFUSSIONPWR_DEFAULT / sPumpTiming.RampUpCounts;
-    sPumpTiming.SlopeToBrew       = ((PUMP_BREWPWR_DEFAULT - PUMP_PREINFUSSIONPWR_DEFAULT) / sPumpTiming.RampUpCounts)+1; 
-    sPumpTiming.SlopeToLowPressure= -((( PUMP_BREWPWR_DEFAULT - PUMP_DECLINING_PWR_DEFAULT) / sPumpTiming.DecliningTimeCounts)+1);
-    sPumpTiming.SlopeToStop       = -((PUMP_DECLINING_PWR_DEFAULT / sPumpTiming.RampDownCounts)+2); 
+  smPumpCtrl.preInfussionT_ms   = PUMP_PREINFUSSION_T_MS_DEFAULT;
+  smPumpCtrl.peakPressureT_ms   = PUMP_PEAKPRESSURE_T_MS_DEFAULT;
+  smPumpCtrl.decliningPressureT_ms = PUMP_DECLINING_T_MS_DEFAULT;
+  smPumpCtrl.PumpRampUpT_ms     = PUMP_RAMPUP_T_MS_DEFAULT;
+  smPumpCtrl.PumpRampDownT_ms   = PUMP_RAMPDOWN_T_MS_DEFAULT;
+  
+  sPumpTiming.RampUpCounts      = (uint16_t)(PUMP_RAMPUP_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
+  sPumpTiming.RampDownCounts    = (uint16_t)(PUMP_RAMPDOWN_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
+  sPumpTiming.PreInfussionCounts= (uint16_t)(PUMP_PREINFUSSION_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
+  sPumpTiming.PeakTimeCounts    = (uint16_t)(PUMP_PEAKPRESSURE_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
+  sPumpTiming.DecliningTimeCounts = (uint16_t)(PUMP_DECLINING_T_MS_DEFAULT / PUMP_BASETIME_T_MS);
+  sPumpTiming.SlopeToPreInfussion  = PUMP_PREINFUSSIONPWR_DEFAULT / sPumpTiming.RampUpCounts;
+  sPumpTiming.SlopeToBrew       = ((PUMP_BREWPWR_DEFAULT - PUMP_PREINFUSSIONPWR_DEFAULT) / sPumpTiming.RampUpCounts)+1; 
+  sPumpTiming.SlopeToLowPressure= -((( PUMP_BREWPWR_DEFAULT - PUMP_DECLINING_PWR_DEFAULT) / sPumpTiming.DecliningTimeCounts)+1);
+  sPumpTiming.SlopeToStop       = -((PUMP_DECLINING_PWR_DEFAULT / sPumpTiming.RampDownCounts)+2); 
 
 
-    //GPIOS SECTION
-    //------------------------------------------------------------------------------
-    ret_code_t err_code_gpio;
-    //nrf_drv_gpiote_init -> Already init. in ac_inputs_drv
-    //err_code_gpio = nrf_drv_gpiote_init();
-    //APP_ERROR_CHECK(err_code_gpio);
-    //Output pin to control SSR
-    //------------------------------------------------------------------------
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code_gpio = nrf_drv_gpiote_out_init(enSelenoidRelay_PIN, &out_config);
-    APP_ERROR_CHECK(err_code_gpio);
-  }
+  //GPIOS SECTION
+  //------------------------------------------------------------------------------
+  ret_code_t err_code_gpio;
+  //nrf_drv_gpiote_init -> Already init. in ac_inputs_drv
+  //err_code_gpio = nrf_drv_gpiote_init();
+  //APP_ERROR_CHECK(err_code_gpio);
+  //Output pin to control SSR
+  //------------------------------------------------------------------------
+  nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+  err_code_gpio = nrf_drv_gpiote_out_init(enSolenoidRelay_PIN, &out_config);
+  APP_ERROR_CHECK(err_code_gpio);
+
+  return  PUMPCTRL_INIT_OK;
+}
 
  /*****************************************************************************
  * Function: 	fcn_PumpStateDriver
@@ -137,8 +139,8 @@ Struct_PumpTiming sPumpTiming;
         break;
 
         case st_RampupToPreInf:
-          //Close Pump's valve by activating selenoid
-          nrf_drv_gpiote_out_set(enSelenoidRelay_PIN);
+          //Close Pump's valve by activating solenoid
+          nrf_drv_gpiote_out_set(enSolenoidRelay_PIN);
           //Ramp-up pressure to pre-infussion power level
           smPumpCtrl.smPump.sRunning  = st_Timer;
           smPumpCtrl.smPump.sNext = st_PreInfussion;
@@ -178,7 +180,10 @@ Struct_PumpTiming sPumpTiming;
         break;
 
         case st_LowPressureBrew:
-          
+          smPumpCtrl.smPump.sRunning  = st_Timer;
+          smPumpCtrl.smPump.sNext = st_RampdownToStop;
+          sPumpTiming.Counter = sPumpTiming.DecliningTimeCounts+1;
+          sPumpTiming.Slope   = sPumpTiming.SlopeToLowPressure;
         break;
 
         case st_RampdownToStop:
@@ -208,8 +213,10 @@ Struct_PumpTiming sPumpTiming;
 
         case st_Stop:
           //Open Pump's valve by deactivating selenoid
-          nrf_drv_gpiote_out_clear(enSelenoidRelay_PIN);
-
+          //nrf_drv_gpiote_out_clear(enSolenoidRelay_PIN);
+          smPumpCtrl.PumpPower = 0;
+          fcn_pumpSSR_pwrUpdate(smPumpCtrl.PumpPower);
+          smPumpCtrl.smPump.sRunning  = st_Idle;
           //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, 0);
           //Open valve
         break;

@@ -20,7 +20,7 @@
 
 #include "app_timer.h"
 #include "i2c_sensors.h"
-#include "spi_sensors.h"
+#include "spi_Devices.h"
 
 #include "tempController.h"
 #include "PumpController.h"
@@ -31,33 +31,34 @@
 #include "app_error.h"
 
 
-volatile bool PrintTask_flag;
-volatile bool ReadSensors_flag;
-volatile bool OneSecond_flag;
-volatile bool LightSeq_flag;
-volatile bool PumpCtrl_flag;
-volatile uint16_t ssrPower=0;
-volatile uint16_t ssrPump=0;
+  volatile bool PrintTask_flag;
+  volatile bool ReadSensors_flag;
+  volatile bool OneSecond_flag;
+  volatile bool LightSeq_flag;
+  volatile bool PumpCtrl_flag;
+  volatile uint16_t ssrPower=0;
+  volatile uint16_t ssrPump=0;
 
-//  Create a timer identifier and statically allocate memory for the timer
-APP_TIMER_DEF(READTEMPSENSORS_TMR_ID);
-APP_TIMER_DEF(PRINTTEMPVALUES_TMR_ID);
-APP_TIMER_DEF(ONE_AC_CYCLE____TMR_ID);
-APP_TIMER_DEF(ONE_SECOND______TMR_ID);
-APP_TIMER_DEF(PUMP_CONTROLLER_TMR_ID);
-APP_TIMER_DEF(LIGHT_SEQ_______TMR_ID);
+  //  Create a timer identifier and statically allocate memory for the timer
+  APP_TIMER_DEF(READTEMPSENSORS_TMR_ID);
+  APP_TIMER_DEF(PRINTTEMPVALUES_TMR_ID);
+  APP_TIMER_DEF(ONE_AC_CYCLE____TMR_ID);
+  APP_TIMER_DEF(ONE_SECOND______TMR_ID);
+  APP_TIMER_DEF(PUMP_CONTROLLER_TMR_ID);
+  APP_TIMER_DEF(LIGHT_SEQ_______TMR_ID);
 
-//  Convert milliseconds to timer ticks.
-#define READTEMPSENSORS_TICKS   APP_TIMER_TICKS(200)
-#define PRINTTEMPVALUES_TICKS   APP_TIMER_TICKS(1000)
-#define ONE_AC_CYCLE____TICKS   APP_TIMER_TICKS(100)
-#define ONE_SECOND______TICKS   APP_TIMER_TICKS(1003)
-#define PUMP_CONTROLER__TICKS   APP_TIMER_TICKS(250)
-#define LIGHT_SEQ_______TICKS   APP_TIMER_TICKS(63)
+  //  Convert milliseconds to timer ticks.
+  #define READTEMPSENSORS_TICKS   APP_TIMER_TICKS(200)
+  #define PRINTTEMPVALUES_TICKS   APP_TIMER_TICKS(1000)
+  #define ONE_AC_CYCLE____TICKS   APP_TIMER_TICKS(100)
+  #define ONE_SECOND______TICKS   APP_TIMER_TICKS(1003)
+  #define PUMP_CONTROLER__TICKS   APP_TIMER_TICKS(250)
+  #define LIGHT_SEQ_______TICKS   APP_TIMER_TICKS(63)
 
-void fcn_initBLEspressoHwInterface_drv(void);
-void fcn_enSelenoidHwInterface_drv(uint32_t state);
-void fcn_en12VDCoutHwInterface_drv(uint32_t state);
+  void fcn_initBLEspressoHwInterface_drv(void);
+  void fcn_enSelenoidHwInterface_drv(uint32_t state);
+  void fcn_en12VDCoutHwInterface_drv(uint32_t state);
+
 
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
@@ -100,20 +101,17 @@ void fcn_en12VDCoutHwInterface_drv(uint32_t state);
 * Definition: ac_inputs_drv.h
 *****************************************************************************/
 
-
 /*****************************************************************************
 * Function: 	acinBrew_eventHandler
 * Description: Count number of AC cycle when swicth is active  
 * Definition: ac_inputs_drv.h
 *****************************************************************************/
 
-
 /*****************************************************************************
  * Function: 	isr_BoilderSSR_EventHandler
  * Description: Controls the SSR timing to trigger SSR 
  * Definition: solidStateRelay_Controller.h
  *****************************************************************************/
-
 
 /*****************************************************************************
  * Function: 	isr_PumpSSR_EventHandler
@@ -191,169 +189,275 @@ static void application_timers_start(void)
 /******************************************************************************************************************************/
 int main(void)
 {
-    bool erase_bonds;
-    // Initialize.
+  bool erase_bonds;
+  ret_code_t err_code;
+  volatile uint32_t initResultFlag=0;
+
+  #if NRF_LOG_ENABLED == 1
     log_init();
-    ReadSensors_flag=false;
-    PrintTask_flag=false;
+  #endif
 
-    timers_init();
-    spim_init();
-    spim_initRTDconverter();
-    NRF_LOG_DEBUG("DRV INIT: Temp. Sensor");
+  ReadSensors_flag=false;
+  PrintTask_flag=false;
+  
+
+  //  GPIO DRIVER init
+  //---------------------------------------------------------------------------
+  if (!nrf_drv_gpiote_is_init())
+  {
+      err_code = nrf_drv_gpiote_init();
+      if (err_code != NRF_SUCCESS)
+      {
+          return NRF_ERROR_INTERNAL;
+      }
+  }
+  APP_ERROR_CHECK(err_code);
+
+  timers_init();
+  spim_init();
+
+  //initResultFlag = spim_initNVmemory();
+  initResultFlag = stgCtrl_Init();
+  #if NRF_LOG_ENABLED == 1
+    if( initResultFlag == NVM_INIT_OK)
+    { 
+      NRF_LOG_DEBUG("NVM INIT SPI-NV memory ::SUCCESFUL::");
+    }else{
+      NRF_LOG_DEBUG("NVM INIT SPI-NV memory ::FAILED::");
+    }
     NRF_LOG_FLUSH();
+  #endif
 
-    fcn_initBLEspressoHwInterface_drv();
-    fcn_initDC12Voutput_drv();
-    NRF_LOG_DEBUG("DRV INIT: 12VDC output");
+  initResultFlag = stgCtrl_ChkForUserData();
+  #if NRF_LOG_ENABLED == 1
+    if( initResultFlag == STORAGE_USERDATA_LOADED)
+    { 
+      NRF_LOG_DEBUG("NVM INIT ::HAS DATA::");
+    }else{
+      NRF_LOG_DEBUG("NVM INIT ::IS EMPTY::");
+    }
     NRF_LOG_FLUSH();
-
-    
-    fcn_initACinput_drv();
-    NRF_LOG_DEBUG("DRV INIT: AC Inputs");
+  #endif
+  initResultFlag = stgCtrl_ReadUserData((bleSpressoUserdata_struct*)&BLEspressoVar);
+  #if NRF_LOG_ENABLED == 1
+    if( initResultFlag == STORAGE_USERDATA_LOADED)
+    { 
+      NRF_LOG_DEBUG("NVM INIT ::Data Loaded::");
+    }else{
+      NRF_LOG_DEBUG("NVM INIT ::No     Data::");
+    }
     NRF_LOG_FLUSH();
-    
-    fcn_initSSRController_BLEspresso();
+  #endif
 
-    fcn_initTemperatureController();
-   // fcn_startTemperatureController();
+  initResultFlag = spim_initRTDconverter();
+  #if NRF_LOG_ENABLED == 1
+  if( initResultFlag == TMP_INIT_OK)
+  { 
+    NRF_LOG_DEBUG("NVM INIT SPI-Temperature Sensor ::SUCCESFUL::");
+  }else{
+    NRF_LOG_DEBUG("NVM INIT SPI-Temperature Sensor ::FAILED::");
+  }
+  NRF_LOG_FLUSH();
+  #endif
+
+  initResultFlag = fcn_initDC12Voutput_drv();
+  #if NRF_LOG_ENABLED == 1
+  if( initResultFlag == DRV_12VO_INIT_AS_LAMP)
+  { 
+    NRF_LOG_DEBUG("DRV INIT 12VDC output ::SUCCESFUL::");
+  }else{
+    NRF_LOG_DEBUG("NVM INIT 12VDC output ::FAILED::");
+  }
+  NRF_LOG_FLUSH();
+  #endif
+
+  initResultFlag = fcn_initACinput_drv();
+  #if NRF_LOG_ENABLED == 1
+  if( initResultFlag == DRV_AC_INPUT_INIT_OK)
+  { 
+    NRF_LOG_DEBUG("DRV INIT AC Inputs ::READY::");
+  }else{
+    NRF_LOG_DEBUG("DRV INIT AC Inputs ::FAILED::");
+  }
+  NRF_LOG_FLUSH();
+  #endif
+  
+  initResultFlag = fcn_initSSRController_BLEspresso();
+  #if NRF_LOG_ENABLED == 1
+    if( initResultFlag == SSR_DRV_INIT_OK)
+    { 
+      NRF_LOG_DEBUG("DRV INIT Solid State Relays ::READY::");
+    }else{
+      NRF_LOG_DEBUG("DRV INIT Solid State Relays ::FAILED::");
+    }
+    NRF_LOG_FLUSH();
+  #endif
+
+  fcn_initTemperatureController();
+ // fcn_startTemperatureController();
+  #if NRF_LOG_ENABLED == 1
     NRF_LOG_DEBUG("DRV INIT: PID Boiler Controller");
     NRF_LOG_FLUSH();
+  #endif
 
-    fcn_initPumpController();
+  fcn_initPumpController();
+  #if NRF_LOG_ENABLED == 1
     NRF_LOG_DEBUG("DRV INIT: Pump Controller");
     NRF_LOG_FLUSH();
+  #endif
 
-    /* swection of code to control LED on the board*/
-    /***********************************************/
-    ret_code_t err_code_gpio;
-    nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code_gpio = nrf_drv_gpiote_out_init(29, &out_config);
-    APP_ERROR_CHECK(err_code_gpio);
+  /* I don't know what this fcn is for  */
+  fcn_initBLEspressoHwInterface_drv();
 
-    BLEspressoVar.TargetBoilerTemp = 20.00f;
-    BLEspressoVar.BrewPreInfussionPwr = 55.55f;
-    BLEspressoVar.Pid_Gain_term = 1.111f;
-    
-//FLASH storage example
-//////////////////////////////////////////////////////////////////////////////////////////////
-    //fstorage_Init();
-//////////////////////////////////////////////////////////////////////////////////////////////
+  /* swection of code to control LED on the board*/
+  /***********************************************/
+  ret_code_t err_code_gpio;
+  nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+  err_code_gpio = nrf_drv_gpiote_out_init(29, &out_config);
+  APP_ERROR_CHECK(err_code_gpio);
 
-    // Start execution.
-    BLE_bluetooth_init();
-    application_timers_start();
-    advertising_start(erase_bonds);
-
-    fcn_startTempCtrlSamplingTmr();
-    // Enter main loop.
-    for (;;)
-    {
-        if(ReadSensors_flag == true)
+  BLEspressoVar.TargetBoilerTemp = 20.00f;
+  BLEspressoVar.BrewPreInfussionPwr = 55.55f;
+  BLEspressoVar.Pid_Gain_term = 1.111f;
+  
+  // Start Bluetooth execution.
+  BLE_bluetooth_init();
+  application_timers_start();
+  advertising_start(erase_bonds);
+  // Enter main loop.
+  for (;;)
+  {
+      if(ReadSensors_flag == true)
+      {
+        ReadSensors_flag=false;
+        spim_ReadRTDconverter();
+      }else{}
+      if(PrintTask_flag == true)
+      {
+        PrintTask_flag=false;
+        ble_update_boilerWaterTemp(f_getBoilerTemperature());
+        BLEspressoVar.ActualBoilerTemp=(float)f_getBoilerTemperature();
+        #if NRF_LOG_ENABLED == 1
+          NRF_LOG_INFO("\033[0;36m Temp: 10," NRF_LOG_FLOAT_MARKER "\r\n \033[0;40m", NRF_LOG_FLOAT(f_getBoilerTemperature()));
+        #endif
+      }else{}
+      
+      if(OneSecond_flag == true)
+      {
+        OneSecond_flag = false;
+        ssrPower = ssrPower +50;
+        if(ssrPower>1009)
+        {ssrPower=0;}
+        //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
+        fcn_boilerSSR_pwrUpdate(ssrPower);
+        //fcn_pumpSSR_pwrUpdate(ssrPower+50);
+        NRF_LOG_INFO("\033[0;33m Heat Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPower/10.0f));
+        //NRF_LOG_INFO("\033[0;33m Pump Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPump/10.0f));
+        /* this section is to run trials on the PID loop
+        if(sPIDtimer.status == NOT_ACTIVE)
         {
-          ReadSensors_flag=false;
-          spim_ReadRTDconverter();
-        }else{}
-        if(PrintTask_flag == true)
-        {
-          PrintTask_flag=false;
-          ble_update_boilerWaterTemp(f_getBoilerTemperature());
-          BLEspressoVar.ActualBoilerTemp=(float)f_getBoilerTemperature();
-          NRF_LOG_INFO("\033[0;36m Temp: " NRF_LOG_FLOAT_MARKER "\r\n \033[0;40m", NRF_LOG_FLOAT(f_getBoilerTemperature()));
-        }else{}
-        
-        if(OneSecond_flag == true)
-        {
-          OneSecond_flag = false;
-          //led_state ^= 1;
-          /*
-          ssrPower = ssrPower +50;
-          if(ssrPower>1009)
-          {ssrPower=0;}
-          */
-          //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
-          //fcn_boilerSSR_pwrUpdate(ssrPower);
-          //NRF_LOG_INFO("\033[0;33m Heat Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPower/10.0f));
-          //NRF_LOG_INFO("\033[0;33m Pump Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPump/10.0f));
-          /* this section is to run trials on the PID loop*/
-          fcn_updateTemperatureController();
-          /*  */
-          
-        }else{}
-
-        if(fcn_StatusChange_Brew() == smS_Change)
-        {
-            if(fcn_GetInputStatus_Brew() == true )
+            if(f_getBoilerTemperature()>0.0f)
             {
+                fcn_startTemperatureController();
+            }else{}
+        }else{}
+        */
+        //fcn_updateTemperatureController();
+      }else{}
+
+      if(fcn_StatusChange_Brew() == AC_INPUT_CHANGE)
+      {
+          if(fcn_GetInputStatus_Brew() == AC_INPUT_ASSERTED )
+          {
+            #if NRF_LOG_ENABLED == 1
               NRF_LOG_INFO("BREW-> \033[0;42m ON \033[0;40m \r\n ");
-            }else{
+            #endif
+          }else{
+            #if NRF_LOG_ENABLED == 1
               NRF_LOG_INFO("BREW-> \033[0;43m OFF \033[0;40m \r\n ");
-            }
-            fcn_StatusReset_Brew();
-        }else{}
+            #endif
+          }
+          fcn_StatusReset_Brew();
+      }else{}
 
-        if(fcn_StatusChange_Steam() == smS_Change)
-        {
-            if(fcn_GetInputStatus_Steam() == true )
-            {
+      if(fcn_StatusChange_Steam() == AC_INPUT_CHANGE)
+      {
+          if(fcn_GetInputStatus_Steam() == AC_INPUT_ASSERTED )
+          {
+            #if NRF_LOG_ENABLED == 1
               NRF_LOG_INFO("STEAM-> \033[0;42m ON \033[0;40m \r\n");
-            }else{
+            #endif
+          }else{
+            #if NRF_LOG_ENABLED == 1
               NRF_LOG_INFO("STEAM-> \033[0;43m OFF \033[0;40m \r\n");
-            }
-            fcn_StatusReset_Steam();
-        }else{}
-        //idle_state_handle();
-        
+            #endif
+          }
+          fcn_StatusReset_Steam();
+      }else{}
+      //idle_state_handle();
+      
 
-        if(PumpCtrl_flag == true)
-        {
-            PumpCtrl_flag = false;
-            
-            switch(smPumpCtrl.smPump.sRunning)
-            {
-              case 1:  //st_RampupToPreInf
-                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mStarting Pre-Infussion\033[0;40m \r\n");
-              break;
-              case 2: //st_PreInfussion
-                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mPre-Infussion\033[0;40m \r\n");
-              break;
-              case 3: //st_RampupToBrew
-                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mStarting Brew\033[0;40m \r\n");
-              break;
-              case 4: //st_BrewPressure
-                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mBrewing\033[0;40m \r\n");
-              break;
-              default:
-              break;
-            }
-            fcn_PumpStateDriver();
-        }else{}
-        
-        if(LightSeq_flag == true)
-        {
-            LightSeq_flag = false;
-            sm_DC12Voutput_drv(&s12Vout);
-        }else{}
-
-        if(flg_BrewCfg == 1 || flg_PidCfg == 1)
-        {
-          flg_BrewCfg = 0;
-          flg_PidCfg = 0;
-          fcn_WriteParameterNVM((BLEspressoVariable_struct *)&BLEspressoVar);
-          NRF_LOG_INFO("\033[0;44m <FDS> \033[0;40m" "\033[0;34m Write new data into FLASH block \033[0;40m \r\n");
+      if(PumpCtrl_flag == true)
+      {
+          PumpCtrl_flag = false;
           
-        }else{}
+          switch(smPumpCtrl.smPump.sRunning)
+          {
+            case 1:  //st_RampupToPreInf
+              #if NRF_LOG_ENABLED == 1
+                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mStarting Pre-Infussion\033[0;40m \r\n");
+              #endif
+            break;
+            case 2: //st_PreInfussion
+              #if NRF_LOG_ENABLED == 1
+                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mPre-Infussion\033[0;40m \r\n");
+              #endif
+            break;
+            case 3: //st_RampupToBrew
+              #if NRF_LOG_ENABLED == 1
+                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mStarting Brew\033[0;40m \r\n");
+              #endif
+            break;
+            case 4: //st_BrewPressure
+              #if NRF_LOG_ENABLED == 1
+                NRF_LOG_INFO("\033[0;32m Pump: \033[0;40m\033[0;42mBrewing\033[0;40m \r\n");
+              #endif
+            break;
+            default:
+            break;
+          }
+          fcn_PumpStateDriver();
+      }else{}
+      
+      if(LightSeq_flag == true)
+      {
+          LightSeq_flag = false;
+          //sm_DC12Voutput_drv(&s12Vout);
+      }else{}
 
-        if(flg_ReadCfg == 1 )
-        {
-          flg_ReadCfg = 0;
-          fcn_Read_ParameterNVM((BLEspressoVariable_struct *)&int_NvmData);
+      if(flg_BrewCfg == 1 || flg_PidCfg == 1)
+      {
+        flg_BrewCfg = 0;
+        flg_PidCfg = 0;
+        //fcn_WriteParameterNVM((bleSpressoUserdata_struct *)&BLEspressoVar);
+        #if NRF_LOG_ENABLED == 1
+          NRF_LOG_INFO("\033[0;44m <FDS> \033[0;40m" "\033[0;34m Write new data into FLASH block \033[0;40m \r\n");
+        #endif
+      }else{}
+
+      if(flg_ReadCfg == 1 )
+      {
+        flg_ReadCfg = 0;
+        //fcn_Read_ParameterNVM((bleSpressoUserdata_struct *)&int_NvmData);
+        #if NRF_LOG_ENABLED == 1
           NRF_LOG_INFO("\033[0;44m <FDS> \033[0;40m" "\033[0;34m Read data from FLASH block data \033[0;40m \r\n");
-        }else{}
+        #endif
+      }else{}
 
-        NRF_LOG_FLUSH();
-       
-    }
+      #if NRF_LOG_ENABLED == 1
+      NRF_LOG_FLUSH();
+      #endif
+  }
 }
 
 
@@ -368,7 +472,7 @@ void fcn_initBLEspressoHwInterface_drv(void)
 {
   //Init output for SELENOID VALVE
   //------------------------------------------------------------------------
-  nrf_gpio_cfg_output(enSelenoidRelay_PIN);
+  nrf_gpio_cfg_output(enSolenoidRelay_PIN);
   //Init ouput for 12VDC output
   //------------------------------------------------------------------------
   //nrf_gpio_cfg_output(enDC12Voutput_PIN);
@@ -384,7 +488,7 @@ void fcn_initBLEspressoHwInterface_drv(void)
  *****************************************************************************/
 inline void fcn_enSelenoidHwInterface_drv(uint32_t state)
 {
-  nrf_gpio_pin_write(enSelenoidRelay_PIN, state);
+  nrf_gpio_pin_write(enSolenoidRelay_PIN, state);
 }
 
 /*****************************************************************************
@@ -427,3 +531,7 @@ static void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
+
+    
+
+    
