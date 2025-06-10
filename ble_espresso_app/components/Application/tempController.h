@@ -44,7 +44,6 @@
     #define TEMP_CTRL_GAIN_WINDUP   0.005f
 
    
-    #define TEMP_CTRL_SAMPLING_T    0.01f     //Sampling Time in seconds
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
@@ -66,7 +65,9 @@
 //
 //*****************************************************************************
 void fcn_initTemperatureController(void);
-void fcn_startTemperatureController(void);
-void fcn_stopTemperatureController(void);
+void fcn_startTempCtrlSamplingTmr(void);
+void fcn_stopTempCtrlSamplingTmr(void);
 
-void isr_SamplingTime_EventHandler(nrf_timer_event_t event_type, void* p_context);
+void fcn_updateTemperatureController(void);
+
+void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_context);

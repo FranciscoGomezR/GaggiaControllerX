@@ -2,7 +2,7 @@
  * x205_PID_Block.h
  *
  *  Created on: Nov 7, 2017
- *      Author: Juan Fco. Gómez
+ *      Author: Juan Fco. Gï¿½mez
  */
 
 #ifndef X205_PID_BLOCK_H_
@@ -47,13 +47,6 @@
 * 	Outputs:
 * 	None.
 * 	**********************************************************************
-*
-* 	IQ Range:
-* 	---------------------------------------------------------
-* 	Data Type	Min			Max					Resolution
-* 	---------------------------------------------------------
-* 	_iq23		  -256	  255.999 999 981		0.000 000 119
-* 	_iq15		-65536	65535.999 969 482		0.000 000 119
 * 	---------------------------------------------------------
 */
 //*****************************************************************************
@@ -77,34 +70,42 @@
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-  typedef struct
-  {
-      float Input;
-      float SetPoint;
-      float Output;
-      float dt;
-      bool PID_OUTPUT_GAIN_CTRL;
-      float Kpid;
-      float OutputLimit;
+typedef struct
+{
+    float ProcessVariable;
+    float SetPoint;
+    uint32_t TimeMilis;
+}input_PID_Block_fStruct;
+
+ 
+typedef struct
+{
+    input_PID_Block_fStruct feedPIDblock;
+    float PrevError;
+    float prevT_Milis;
     
-      float PreviousError;
-      bool P_TERM_CTRL;
-      float Kp;
-      bool I_TERM_CTRL;
-      float Ki;
-      float HistoryError;
-      float HistoryErrorLimit;
-      bool I_ANTIWINDUP_CTRL;
-      bool WindupStatus;
-      float Kwindup;
-      float WindupError;
-      bool D_TERM_CTRL;
-      float Kd;
-      bool D_TERM_LP_FILTER_CTRL;
-      struct_DigitalRCFilterParam sLPF_Param;
-      const float LPF_FCUTOFF_HZ;
-      const float LPF_SAMPLING_S;	
-  }PID_Block_fStruct;
+    float OutputLimit;
+    int8_t OutputSaturationOut;
+    float Output;
+
+    bool P_TERM_CTRL;
+    float Kp;
+
+    bool I_TERM_CTRL;
+    float Ki;
+    float HistoryError;
+    float IntegralLimit;
+    bool I_ANTIWINDUP_CTRL;
+    bool WindupClampStatus;
+
+
+    bool D_TERM_CTRL;
+    float Kd;
+    bool D_TERM_LP_FILTER_CTRL;
+    lpf_rc_param_t sLPF_Param;
+    float LPF_FCUTOFF_HZ;
+    
+}PID_Block_fStruct;
 
 
 //*****************************************************************************
@@ -118,13 +119,18 @@
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-	extern void fcn_PID_Block_Iteration( PID_Block_fStruct * ptr_sPIDparam);
+extern float fcn_update_PID_Block( float fInput, 
+                                  float fSetpoint, 
+                                  uint32_t timeMilis,  
+                                  PID_Block_fStruct * ptr_sPIDparam );
 
-	extern void fcn_PID_Block_ResetI( PID_Block_fStruct * ptr_sPIDparam, float Attenuator);
 
-	extern void fcn_PID_Block_Dterm_LPF_Init( PID_Block_fStruct* ptr_sPIDparam);
-	extern void fcn_PID_Block_Init_Dterm_LPfilter( PID_Block_fStruct* ptr_sPIDparam,
-	                                                      float* ptr_FilterCoeffAddress,
-	                                                      uint8_t NoTaps, uint8_t NoChannels);
+
+extern void fcn_PID_Block_ResetI( PID_Block_fStruct * ptr_sPIDparam, float Attenuator);
+
+extern void fcn_PID_Block_Dterm_LPF_Init( PID_Block_fStruct* ptr_sPIDparam);
+extern void fcn_PID_Block_Init_Dterm_LPfilter( PID_Block_fStruct* ptr_sPIDparam,
+                                                      float* ptr_FilterCoeffAddress,
+                                                      uint8_t NoTaps, uint8_t NoChannels);
 
 #endif /* 02_MAL_ECU_DRIVERS_X205_PID_BLOCK_H_ */

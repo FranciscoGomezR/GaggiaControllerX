@@ -137,6 +137,7 @@
   {
     ret_code_t rc;
     /* Let's erease  flash. */
+    //uint32_t flashEndAddr = fs_flash_page_end_addr();
     rc = nrf_fstorage_erase(&fstorage, PARAM_NVM_START_ADDR, 1,NULL);
     APP_ERROR_CHECK(rc);
     wait_for_flash_ready(&fstorage);

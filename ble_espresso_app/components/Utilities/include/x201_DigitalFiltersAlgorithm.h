@@ -80,7 +80,8 @@ typedef struct{
     float DataOut_n;
     float DataOut_n_1;
     float FilterRCCoefficients[2];
-}struct_DigitalRCFilterParam;
+    float rc_constant;
+}lpf_rc_param_t;
 
 //*****************************************************************************
 //
@@ -93,7 +94,13 @@ typedef struct{
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-extern void pfcn_InitRCFilterAlgorithm(struct_DigitalRCFilterParam* FilterParam, float Filt_FcutoffHz, float Filt_SamplingTimeS );
-extern void pfcn_RCFilterAlgorithm(struct_DigitalRCFilterParam* FilterParam, float DataIn );
+
+// Low-pass filter for fixed sampling time
+extern void pfcn_InitRCFilterAlgorithm(lpf_rc_param_t* FilterParam, float Filt_FcutoffHz, float Filt_SamplingTimeS );
+extern void pfcn_RCFilterAlgorithm(lpf_rc_param_t* FilterParam, float DataIn );
+
+// Low-pass filter for non-fixed sampling time
+extern void lpf_rc_calculate_const(lpf_rc_param_t* filterParam, float feq_cutoff_hz );
+extern float lpf_rc_update(lpf_rc_param_t* filterParam, float data_In, float t_seconds );
 
 #endif /* 02_MAL_ECU_DRIVERS_X201_DIGITALFILTERSALGORITHM_H_ */

@@ -52,10 +52,15 @@
 //*****************************************************************************
   #define PARAM_NVM_START_ADDR    0x3e000
   #define PARAM_NVM_END_ADDR      0x3ffff
+
+  //#define PARAM_NVM_START_ADDR    0x7e000
+  //#define PARAM_NVM_END_ADDR      0x80000
+
   #define PARAM_NVM_MEM_KEY       0x00aa00aa
 
   //https://devzone.nordicsemi.com/f/nordic-q-a/31017/fstorage-vs-softdevice-activity-application-halts-when-writing-to-flash-if-waiting-to-write-or-data-not-correctly-written-if-not-waiting
-
+  //https://devzone.nordicsemi.com/f/nordic-q-a/22325/flash-data-storage-place-in-memory
+  //https://docs.nordicsemi.com/bundle/sdk_nrf5_v16.0.0/page/lib_bootloader.html#lib_bootloader_memory
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION

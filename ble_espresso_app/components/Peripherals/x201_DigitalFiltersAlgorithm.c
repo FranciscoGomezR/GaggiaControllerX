@@ -94,10 +94,13 @@
 //			PUBLIC FUNCTIONS SECTION
 //
 //*****************************************************************************
+
 void pfcn_InitRCFilterAlgorithm(struct_DigitalRCFilterParam* FilterParam, float Filt_FcutoffHz, float Filt_SamplingTimeS )
 {
+	// Reference Link: https://www.youtube.com/watch?v=MrbffdimDts&t=767s&ab_channel=Phil%E2%80%99sLab
+	/* compute equivalent 'RC' constant from cut-off freq */
     float RC_constant = 1.0f / (6.28318530718f * Filt_FcutoffHz);
-
+	/* Precompute filter coefficient from first-order Low-pass filter */
     FilterParam->FilterRCCoefficients[0] =  Filt_SamplingTimeS / (Filt_SamplingTimeS + RC_constant);
     FilterParam->FilterRCCoefficients[1] =  RC_constant / (RC_constant + Filt_SamplingTimeS);
 

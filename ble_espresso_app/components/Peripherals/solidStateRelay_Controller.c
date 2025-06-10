@@ -24,9 +24,13 @@
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-volatile struct_SSRcontroller sSSRcontroller;
- struct_SSRinstance sBoilderSSRdrv;
- struct_SSRinstance sPumpSSRdrv;
+  volatile struct_SSRcontroller sSSRcontroller;
+  struct_SSRinstance sBoilderSSRdrv;
+  struct_SSRinstance sPumpSSRdrv;
+
+
+  void fcn_boilerSSR_ctrlUpdate(void);
+  void fcn_pumpSSR_ctrlUpdate(void);
 
 //*****************************************************************************
 //
@@ -133,6 +137,7 @@ if(sPumpSSRdrv.status == ssrMIDPWR)
 //*****************************************************************************
 void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
 void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
+
 void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
 void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
 

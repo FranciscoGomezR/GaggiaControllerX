@@ -54,10 +54,10 @@ extern  "C" {
 #include "nrf_gpio.h"
 #include "nrf_drv_timer.h"
 #include "app_error.h"
-
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+
 
 //*****************************************************************************
 //
@@ -125,8 +125,8 @@ enum{
 void fcn_initSSRController_BLEspresso(void);
 void fcn_boilerSSR_pwrUpdate( uint16_t outputPower);
 void fcn_pumpSSR_pwrUpdate( uint16_t outputPower);
-void fcn_boilerSSR_ctrlUpdate(void);
-void fcn_pumpSSR_ctrlUpdate(void);
+
+
 
 //External interrupt ISR has to be created in the main thread 
 

@@ -31,34 +31,33 @@
 #include "app_error.h"
 
 
-  volatile bool PrintTask_flag;
-  volatile bool ReadSensors_flag;
-  volatile bool OneSecond_flag;
-  volatile bool LightSeq_flag;
-  volatile bool PumpCtrl_flag;
-  volatile uint16_t ssrPower=0;
-  volatile uint16_t ssrPump=0;
+volatile bool PrintTask_flag;
+volatile bool ReadSensors_flag;
+volatile bool OneSecond_flag;
+volatile bool LightSeq_flag;
+volatile bool PumpCtrl_flag;
+volatile uint16_t ssrPower=0;
+volatile uint16_t ssrPump=0;
 
-  //  Create a timer identifier and statically allocate memory for the timer
-  APP_TIMER_DEF(READTEMPSENSORS_TMR_ID);
-  APP_TIMER_DEF(PRINTTEMPVALUES_TMR_ID);
-  APP_TIMER_DEF(ONE_AC_CYCLE____TMR_ID);
-  APP_TIMER_DEF(ONE_SECOND______TMR_ID);
-  APP_TIMER_DEF(PUMP_CONTROLLER_TMR_ID);
-  APP_TIMER_DEF(LIGHT_SEQ_______TMR_ID);
+//  Create a timer identifier and statically allocate memory for the timer
+APP_TIMER_DEF(READTEMPSENSORS_TMR_ID);
+APP_TIMER_DEF(PRINTTEMPVALUES_TMR_ID);
+APP_TIMER_DEF(ONE_AC_CYCLE____TMR_ID);
+APP_TIMER_DEF(ONE_SECOND______TMR_ID);
+APP_TIMER_DEF(PUMP_CONTROLLER_TMR_ID);
+APP_TIMER_DEF(LIGHT_SEQ_______TMR_ID);
 
-  //  Convert milliseconds to timer ticks.
-  #define READTEMPSENSORS_TICKS   APP_TIMER_TICKS(200)
-  #define PRINTTEMPVALUES_TICKS   APP_TIMER_TICKS(1000)
-  #define ONE_AC_CYCLE____TICKS   APP_TIMER_TICKS(100)
-  #define ONE_SECOND______TICKS   APP_TIMER_TICKS(1003)
-  #define PUMP_CONTROLER__TICKS   APP_TIMER_TICKS(250)
-  #define LIGHT_SEQ_______TICKS   APP_TIMER_TICKS(63)
+//  Convert milliseconds to timer ticks.
+#define READTEMPSENSORS_TICKS   APP_TIMER_TICKS(200)
+#define PRINTTEMPVALUES_TICKS   APP_TIMER_TICKS(1000)
+#define ONE_AC_CYCLE____TICKS   APP_TIMER_TICKS(100)
+#define ONE_SECOND______TICKS   APP_TIMER_TICKS(1003)
+#define PUMP_CONTROLER__TICKS   APP_TIMER_TICKS(250)
+#define LIGHT_SEQ_______TICKS   APP_TIMER_TICKS(63)
 
-  void fcn_initBLEspressoHwInterface_drv(void);
-  void fcn_enSelenoidHwInterface_drv(uint32_t state);
-  void fcn_en12VDCoutHwInterface_drv(uint32_t state);
-
+void fcn_initBLEspressoHwInterface_drv(void);
+void fcn_enSelenoidHwInterface_drv(uint32_t state);
+void fcn_en12VDCoutHwInterface_drv(uint32_t state);
 
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
@@ -129,12 +128,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * Function: 	isr_SamplingTime_EventHandler
+ * Function: 	isr_HwTmr3_Period_EventHandler
  * Description: 
- * Parameters:	
- * Return:
+ * Definition: TempController.h 
  *****************************************************************************/
-
 
 /**@brief Function for the Timer initialization.
  *
@@ -240,13 +237,15 @@ int main(void)
     
 //FLASH storage example
 //////////////////////////////////////////////////////////////////////////////////////////////
-    fstorage_Init();
+    //fstorage_Init();
 //////////////////////////////////////////////////////////////////////////////////////////////
 
     // Start execution.
     BLE_bluetooth_init();
     application_timers_start();
     advertising_start(erase_bonds);
+
+    fcn_startTempCtrlSamplingTmr();
     // Enter main loop.
     for (;;)
     {
@@ -266,23 +265,20 @@ int main(void)
         if(OneSecond_flag == true)
         {
           OneSecond_flag = false;
+          //led_state ^= 1;
+          /*
           ssrPower = ssrPower +50;
           if(ssrPower>1009)
           {ssrPower=0;}
-          //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
-          fcn_boilerSSR_pwrUpdate(ssrPower);
-          NRF_LOG_INFO("\033[0;33m Heat Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPower/10.0f));
-          NRF_LOG_INFO("\033[0;33m Pump Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPump/10.0f));
-          /* this section is to run trials on the PID loop
-          if(sPIDtimer.status == NOT_ACTIVE)
-          {
-              if(f_getBoilerTemperature()>0.0f)
-              {
-                  fcn_startTemperatureController();
-              }else{}
-          }else{}
           */
-          fcn_startTemperatureController();
+          //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, ssrPower);
+          //fcn_boilerSSR_pwrUpdate(ssrPower);
+          //NRF_LOG_INFO("\033[0;33m Heat Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPower/10.0f));
+          //NRF_LOG_INFO("\033[0;33m Pump Power: \033[0;40m \033[0;43m" NRF_LOG_FLOAT_MARKER "\033[0;40m \r\n", NRF_LOG_FLOAT((float)ssrPump/10.0f));
+          /* this section is to run trials on the PID loop*/
+          fcn_updateTemperatureController();
+          /*  */
+          
         }else{}
 
         if(fcn_StatusChange_Brew() == smS_Change)
@@ -431,7 +427,3 @@ static void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
-
-    
-
-    
