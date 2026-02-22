@@ -38,8 +38,6 @@
  *
  */
 
-
-
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
 
@@ -47,6 +45,7 @@
 #define ELEC_UI     1
 #define PRODUCTION  2
 #define UART_MODE   NRF_LOG
+
 // <<< Use Configuration Wizard in Context Menu >>>\n
 
 #define inBREW_PIN          27
@@ -57,10 +56,7 @@
 #define enSolenoidRelay_PIN 25
 #define enDC12Voutput_PIN   3
 
-#define outSTATE__ON        1
-#define outSTATE_OFF        0
-
-
+// <<< Use Configuration Wizard in Context Menu >>>\n
 #define TWI_ENABLED 1
 // <o> TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
  

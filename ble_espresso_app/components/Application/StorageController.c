@@ -42,14 +42,14 @@
   -----------------------------------------
   0x00 - 0x03   uint32_t nvmWcycles -> (littleEndia)16bit MSB allocated for ShotProfile - 16b LSB allocated for Controller profile
   0x04 - 0x07   uint32_t nvmKey
-  0x08 - 0x0B   float TargetBoilerTemp
+  0x08 - 0x0B   float temp_Target
   0x0C - 0x0F   float RSVD
-  0x10 - 0x13   float BrewPreInfussionPwr
+  0x10 - 0x13   float prof_preInfusePwr
   0x14 - 0x17   float BrewPreInfussionTmr
-  0x18 - 0x1B   float BrewInfussionPwr
-  0x1C - 0x1F   float BrewInfussionTmr
-  0x20 - 0x23   float BrewDecliningPwr
-  0x24 - 0x27   float BrewDecliningTmr
+  0x18 - 0x1B   float prof_InfusePwr
+  0x1C - 0x1F   float prof_InfuseTmr
+  0x20 - 0x23   float Prof_DeclinePwr
+  0x24 - 0x27   float Prof_DeclineTmr
   0x28 - 0x2B   float Pid_P_term
   0x2C - 0x2F   float Pid_I_term
   0x30 - 0x33   float Pid_Imax_term
@@ -135,7 +135,7 @@ uint32_t stgCtrl_ChkForUserData(void)
   
   //Clear rxUserData buffer
   memset(rxKeyData, 0x00, PARAM_NVM_KEYSECTION_SIZE);
-  //Let's read BLEspressoVar (65bytes) from the NVM
+  //Let's read blEspressoProfile (65bytes) from the NVM
   spi_NVMemoryRead(PARAM_NVM_PAGE_ADD, 
                   PARAM_NVM_KEYSECTION_ADD, 
                   PARAM_NVM_KEYSECTION_SIZE, 
@@ -187,25 +187,25 @@ uint32_t stgCtrl_ReadUserData(bleSpressoUserdata_struct* ptr_rxData)
     ptr_rxData->nvmWcycles = nvm_wCycle;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_TARGETBOILER_TMP],(float*)&tempfvar);
-    ptr_rxData->TargetBoilerTemp = tempfvar;
+    ptr_rxData->temp_Target = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWPREINFUSSION_PWR],(float*)&tempfvar);
-    ptr_rxData->BrewPreInfussionPwr = tempfvar;
+    ptr_rxData->prof_preInfusePwr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWPREINFUSSION_TMR],(float*)&tempfvar);
-    ptr_rxData->BrewPreInfussionTmr = tempfvar;
+    ptr_rxData->prof_preInfuseTmr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWINFUSSION_PWR],(float*)&tempfvar);
-    ptr_rxData->BrewInfussionPwr = tempfvar;
+    ptr_rxData->prof_InfusePwr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWINFUSSION_TMR],(float*)&tempfvar);
-    ptr_rxData->BrewInfussionTmr = tempfvar;
+    ptr_rxData->prof_InfuseTmr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWDECLINING_PWR],(float*)&tempfvar);
-    ptr_rxData->BrewDecliningPwr = tempfvar;
+    ptr_rxData->Prof_DeclinePwr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_BREWDECLINING_TMR],(float*)&tempfvar);
-    ptr_rxData->BrewDecliningTmr = tempfvar;
+    ptr_rxData->Prof_DeclineTmr = tempfvar;
 
     parsingBytesToFloat((uint8_t *)&rxUserData[BE_USERDATA_PID_PTERM],(float*)&tempfvar);
     ptr_rxData->Pid_P_term = tempfvar;
@@ -298,22 +298,23 @@ uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData)
             &rxUserData[PARAM_NVM_CONTROLLER_ADD],
             PARAM_NVM_CONTROLLER_SIZE);
     //converting and pasting the new shot profule into TX string
-    encodeFloatToBytes(ptr_sxData->TargetBoilerTemp,    (uint8_t *)&txUserData[BE_USERDATA_TARGETBOILER_TMP]);
+    encodeFloatToBytes(ptr_sxData->temp_Target,    (uint8_t *)&txUserData[BE_USERDATA_TARGETBOILER_TMP]);
     txUserData[BE_USERDATA_RSVD+0] = 0x00; 
     txUserData[BE_USERDATA_RSVD+1] = 0x00; 
     txUserData[BE_USERDATA_RSVD+2] = 0x00; 
     txUserData[BE_USERDATA_RSVD+3] = 0x00; 
-    encodeFloatToBytes((float)ptr_sxData->BrewPreInfussionPwr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_PWR]);
-    encodeFloatToBytes((float)ptr_sxData->BrewPreInfussionTmr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_TMR]);
-    encodeFloatToBytes((float)ptr_sxData->BrewInfussionPwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_PWR]);
-    encodeFloatToBytes((float)ptr_sxData->BrewInfussionTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_TMR]);
-    encodeFloatToBytes((float)ptr_sxData->BrewDecliningPwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_PWR]);
-    encodeFloatToBytes((float)ptr_sxData->BrewDecliningTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_TMR]);
+    encodeFloatToBytes((float)ptr_sxData->prof_preInfusePwr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_PWR]);
+    encodeFloatToBytes((float)ptr_sxData->prof_preInfuseTmr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_TMR]);
+    encodeFloatToBytes((float)ptr_sxData->prof_InfusePwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_PWR]);
+    encodeFloatToBytes((float)ptr_sxData->prof_InfuseTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_TMR]);
+    encodeFloatToBytes((float)ptr_sxData->Prof_DeclinePwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_PWR]);
+    encodeFloatToBytes((float)ptr_sxData->Prof_DeclineTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_TMR]);
     //Write entire user data block into nvm
     spi_NVMemoryWritePage(PARAM_NVM_PAGE_ADD, 
                           PARAM_NVM_PAGE_OFFSET, 
                           PARAM_NVM_USERDATA_SIZE, 
                           &txUserData[PARAM_NVM_USERDATA_ADD]);
+    dataStatus=STORAGE_PROFILEDATA_STORED;
   }
   return dataStatus;
 }
@@ -395,9 +396,84 @@ uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData)
                           PARAM_NVM_PAGE_OFFSET, 
                           PARAM_NVM_USERDATA_SIZE, 
                           &txUserData[PARAM_NVM_USERDATA_ADD]);
+    dataStatus=STORAGE_CONTROLLERDATA_STORED;
   }
   return dataStatus;
 
+}
+
+/*****************************************************************************
+* Function: 	stgCtrl_PrintUserData
+* Description:  Print into UART the data contain is *ptr_rxData Pointer
+* Return:       STORAGE_USERDATA_PRINTED
+*****************************************************************************/
+uint32_t stgCtrl_PrintUserData(bleSpressoUserdata_struct* ptr_rxData)
+{
+  uint16_t wCycleShotprofile;
+  uint16_t wCycleCtrlProfile;
+
+  wCycleShotprofile = (uint16_t)((ptr_rxData->nvmWcycles)>>16);
+  wCycleCtrlProfile = (uint16_t)((ptr_rxData->nvmWcycles) & 0x00FF);
+
+  //Print: uint32_t nvmWcycles;
+  NRF_LOG_DEBUG("NVM Profile- # of Write cycles:  %d\r\n", 
+                (wCycleShotprofile));
+  NRF_LOG_DEBUG("NVM CTRL-    # of Write cycles:  %d\r\n", 
+                (wCycleCtrlProfile));
+  //Print: uint32_t nvmKey;
+
+  
+  //Print: float temp_Target;
+  NRF_LOG_DEBUG("Boiler-      Target Temp:        " NRF_LOG_FLOAT_MARKER "  C\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->temp_Target));
+  //Print: float temp_Boiler;
+  NRF_LOG_DEBUG("Boiler-      Temp:               " NRF_LOG_FLOAT_MARKER "  C\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->temp_Boiler));
+  //Print: float prof_preInfusePwr;
+  NRF_LOG_DEBUG("Profile-     PreInfuse Power:    " NRF_LOG_FLOAT_MARKER "  %%\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->prof_preInfusePwr));
+  //Print: float prof_preInfuseTmr;
+  NRF_LOG_DEBUG("Profile-     PreInfuse Timer:    " NRF_LOG_FLOAT_MARKER "  s\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->prof_preInfuseTmr));
+  //Print: float prof_InfusePwr;
+  NRF_LOG_DEBUG("Profile-     Infuse Power:       " NRF_LOG_FLOAT_MARKER "  %%\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->prof_InfusePwr));
+  //Print: float prof_InfuseTmr;
+  NRF_LOG_DEBUG("Profile-     Infuse Timer:       " NRF_LOG_FLOAT_MARKER "  s\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->prof_InfuseTmr));
+  //Print: float Prof_DeclinePwr;
+  NRF_LOG_DEBUG("Profile-     Declining Power:    " NRF_LOG_FLOAT_MARKER "  %\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Prof_DeclinePwr));
+  //Print: float Prof_DeclineTmr;
+  NRF_LOG_DEBUG("Profile-     Declining Timer:    " NRF_LOG_FLOAT_MARKER "  s\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Prof_DeclineTmr));
+
+  //Print: float Pid_P_term;
+  NRF_LOG_DEBUG("Controller-  Proportial Gain:    " NRF_LOG_FLOAT_MARKER "\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Pid_P_term));
+  //Print: float Pid_I_term;
+  NRF_LOG_DEBUG("Controller-  Integral Gain:      " NRF_LOG_FLOAT_MARKER "\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Pid_I_term));
+  //Print: float Pid_Imax_term;
+  NRF_LOG_DEBUG("Controller-  Max Integral Value: " NRF_LOG_FLOAT_MARKER "\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Pid_Imax_term));
+  //Print: bool  Pid_Iwindup_term;
+  if(ptr_rxData->Pid_Iwindup_term)
+  {
+    NRF_LOG_DEBUG("Controller-  Integral Windup:    ENABLE\r\n");
+  }else{
+    NRF_LOG_DEBUG("Controller-  Integral Windup:    DISABLE\r\n");
+  }
+  //Print: float Pid_D_term;
+  NRF_LOG_DEBUG("Controller-  Derivative Gain:    " NRF_LOG_FLOAT_MARKER "\r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Pid_D_term));
+  //Print: float Pid_Dlpf_term;
+  NRF_LOG_DEBUG("Controller-  Derivate Filter:    " NRF_LOG_FLOAT_MARKER " Hz \r\n", 
+                NRF_LOG_FLOAT(ptr_rxData->Pid_Dlpf_term));
+  //Print: float Pid_Gain_term;
+  NRF_LOG_DEBUG("Controller-  PID Gain:           NOT USED!");
+                
+  return STORAGE_USERDATA_PRINTED;
 }
 
  

@@ -5,6 +5,7 @@
 //
 //*****************************************************************************
 #include "ac_inputs_drv.h"
+#include "x01_StateMachineControls.h"
 
 //*****************************************************************************
 //
@@ -19,12 +20,11 @@
 //*****************************************************************************
 typedef struct
 {
-  uint8_t     pinID;
-  uint16_t    Counter;
-  uint8_t     Status;
-  uint8_t     prevStatus;
-  uint8_t     smEvent;
-  uint16_t    nCycles;
+  uint8_t           pinID;
+  volatile uint32_t isr_Counter;
+  volatile bool     logicEvaluation;
+  uint32_t          counterTop;
+  uint8_t           Status;
   nrfx_gpiote_evt_handler_t ext_isr_handler;
 }struct_AcInputPin;
 
@@ -33,6 +33,11 @@ typedef struct
   struct_AcInputPin  Brew;
   struct_AcInputPin  Steam;
 }struct_ControllerInputs;
+
+enum {
+  oddOStick = 0,
+  evenOStick
+};
 
 //*****************************************************************************
 //
@@ -46,33 +51,34 @@ static struct_ControllerInputs sIO_ACinput;
 //			ISR HANDLERS FUCNTIONS
 //
 //*****************************************************************************
-  /*****************************************************************************
-  * Function: 	acinSteam_eventHandler
-  * Description: Count number of AC cycle when swicth is active 
-  * Definition: ac_inputs_drv.h
-  *****************************************************************************/
-  void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-  {
-      sIO_ACinput.Steam.Counter++;
-  }
+/*****************************************************************************
+* Function: 	acinSteam_eventHandler
+* Description: Count number of AC cycle when swicth is active 
+* Definition: ac_inputs_drv.h
+*****************************************************************************/
+void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    sIO_ACinput.Steam.isr_Counter++;
+    sIO_ACinput.Steam.logicEvaluation = true;
+}
 
-  /*****************************************************************************
-  * Function: 	acinBrew_eventHandler
-  * Description: Count number of AC cycle when swicth is active  
-  * Definition: ac_inputs_drv.h
-  *****************************************************************************/
-  void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-  {
-      sIO_ACinput.Brew.Counter++;
-  }
+/*****************************************************************************
+* Function: 	acinBrew_eventHandler
+* Description: Count number of AC cycle when swicth is active  
+* Definition: ac_inputs_drv.h
+*****************************************************************************/
+void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    sIO_ACinput.Brew.isr_Counter++;
+    sIO_ACinput.Brew.logicEvaluation = true;
+}
 
 //*****************************************************************************
 //
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_inputLogic(struct_AcInputPin *ptr_instance);
-
+static void fcn_acInputLogic(struct_AcInputPin* ptr_input);
 
 //*****************************************************************************
 //
@@ -87,24 +93,29 @@ void fcn_inputLogic(struct_AcInputPin *ptr_instance);
  *****************************************************************************/
 acInput_status_t fcn_initACinput_drv(void)
 {
+  //inSwitchBrew
   sIO_ACinput.Brew.pinID          = BREW_CFG_PIN_ID;
   sIO_ACinput.Brew.Status         = BREW_CFG_STATUS;
-  sIO_ACinput.Brew.smEvent        = AC_INPUT_NO_CHANGE;
-  sIO_ACinput.Brew.nCycles        = BREW_CFG_THRESHOLD_N;
   sIO_ACinput.Brew.ext_isr_handler = BREW_CFG_EVT_HANDLER;
+  sIO_ACinput.Brew.logicEvaluation = false;
+  //inSwitchSteam 
   sIO_ACinput.Steam.pinID         = inSTEAM_PIN;
   sIO_ACinput.Steam.Status        = STEAM_CFG_STATUS;
-  sIO_ACinput.Steam.smEvent       = AC_INPUT_NO_CHANGE;
-  sIO_ACinput.Steam.nCycles       = STEAM_CFG_THRESHOLD_N;
   sIO_ACinput.Steam.ext_isr_handler = STEAM_CFG_EVT_HANDLER;
+  sIO_ACinput.Steam.logicEvaluation = false;
 
   ret_code_t err_code;
- 
   //inSwitchBrew
   //------------------------------------------------------------------------
   nrf_drv_gpiote_in_config_t in_configBrew = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  in_configBrew.pull = NRF_GPIO_PIN_NOPULL;
-  in_configBrew.sense = GPIOTE_CONFIG_POLARITY_Toggle;
+  /*#define NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(hi_accu) \
+  {                                                   \
+    .sense = NRF_GPIOTE_POLARITY_TOGGLE,            \
+    .pull = NRF_GPIO_PIN_NOPULL,                    \
+    .is_watcher = false,                            \
+    .hi_accuracy = hi_accu,                         \
+    .skip_gpio_setup = false,                       \
+  }*/
   err_code = nrf_drv_gpiote_in_init(sIO_ACinput.Brew.pinID,
                                      &in_configBrew, 
                                      sIO_ACinput.Brew.ext_isr_handler);
@@ -114,8 +125,6 @@ acInput_status_t fcn_initACinput_drv(void)
   //inSwitchSteam 
   //------------------------------------------------------------------------
   nrf_drv_gpiote_in_config_t in_configSteam = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  in_configSteam.pull = NRF_GPIO_PIN_NOPULL;
-  in_configSteam.sense = GPIOTE_CONFIG_POLARITY_Toggle;
   err_code = nrf_drv_gpiote_in_init(sIO_ACinput.Steam.pinID,
                                      &in_configSteam, 
                                      sIO_ACinput.Steam.ext_isr_handler);
@@ -126,14 +135,14 @@ acInput_status_t fcn_initACinput_drv(void)
 }
 
 /*****************************************************************************
- * Function: 	fcn_ACinput_drv
- * Description: Drivers the logic behind the detection of both switch activation
-                by detecting no. of cycle above the threshold no.
+ * Function: 	fcn_SenseACinputs_Sixty_ms
+ * Description: Drivers the logic behind the detection of both AC inputs.
+ *              It shall be called every 60ms to detect proper status change.
  *****************************************************************************/
-void fcn_ACinput_drv(void)
+void fcn_SenseACinputs_Sixty_ms(void)
 {
-    fcn_inputLogic(&sIO_ACinput.Brew);
-    fcn_inputLogic(&sIO_ACinput.Steam);
+  fcn_acInputLogic(&sIO_ACinput.Brew);
+  fcn_acInputLogic(&sIO_ACinput.Steam);
 }
 
 /*****************************************************************************
@@ -144,6 +153,10 @@ void fcn_ACinput_drv(void)
  *****************************************************************************/
 acInput_status_t fcn_GetInputStatus_Brew(void)
 {
+  if(sIO_ACinput.Brew.logicEvaluation == true)
+  {
+    fcn_acInputLogic(&sIO_ACinput.Brew);
+  }else{}
   return sIO_ACinput.Brew.Status;
 }
 
@@ -155,47 +168,11 @@ acInput_status_t fcn_GetInputStatus_Brew(void)
  *****************************************************************************/
 acInput_status_t fcn_GetInputStatus_Steam(void)
 {
+  if(sIO_ACinput.Steam.logicEvaluation == true)
+  {
+    fcn_acInputLogic(&sIO_ACinput.Steam);
+  }else{}
   return sIO_ACinput.Steam.Status;
-}
-
-/*****************************************************************************
- * Function: 	fcn_StatusChange_Brew
- * Description: this fcn asks the drv if an event (Off->on or Off->on) was detected
- * Return:      0 -> No change in the status of the pin
-                1 -> status of the pin changed 
- *****************************************************************************/
-acInput_status_t fcn_StatusChange_Brew(void)
-{
-  return sIO_ACinput.Brew.smEvent;
-}
-
-/*****************************************************************************
- * Function: 	fcn_StatusChange_Steam
- * Description: this fcn asks the drv if an event (Off->on or Off->on) was detected
- * Return:      0 -> No change in the status of the pin
-                1 -> status of the pin changed 
- *****************************************************************************/
-acInput_status_t fcn_StatusChange_Steam(void)
-{
-  return sIO_ACinput.Steam.smEvent;
-}
-
-/*****************************************************************************
- * Function: 	fcn_StatusReset_Brew
- * Description: Reset the following field: smEvent to: AC_INPUT_NO_CHANGE
- *****************************************************************************/
-void fcn_StatusReset_Brew(void)
-{
-  sIO_ACinput.Brew.smEvent = AC_INPUT_NO_CHANGE;
-}
-
-/*****************************************************************************
- * Function: 	fcn_StatusReset_Steam
- * Description: Reset the following field: smEvent to: AC_INPUT_NO_CHANGE
- *****************************************************************************/
-void fcn_StatusReset_Steam(void)
-{
-  sIO_ACinput.Steam.smEvent = AC_INPUT_NO_CHANGE;
 }
 
 //*****************************************************************************
@@ -203,33 +180,20 @@ void fcn_StatusReset_Steam(void)
 //			PRIVATE FUNCTIONS SECTION
 //
 //*****************************************************************************
-
-/*****************************************************************************
- * Function: 	fcn_inputLogic
- * Description: 
- *****************************************************************************/
-void fcn_inputLogic(struct_AcInputPin *ptr_instance)
+static void fcn_acInputLogic(struct_AcInputPin* ptr_input)
 {
-    if(ptr_instance->Counter > ptr_instance->nCycles)
-    {
-        //number of AC zero-crossing events are more than nCyles, 
-        //it means the switch is close
-        ptr_instance->Status = (uint8_t)AC_INPUT_ASSERTED;
-    }else{
-        //number of AC zero-crossing events are less than nCyles or even 0 cyles,
-        //it means the switch is OPEN
-        ptr_instance->Status = (uint8_t)AC_INPUT_DEASSERTED;
-    }
-    //IF STATEMENT to detect changes events, from Close-To-Open or from Open-To-Close
-    if( ptr_instance->Status != ptr_instance->prevStatus)
-    {
-        //Event change detected, update
-        ptr_instance->smEvent = AC_INPUT_CHANGE;
-    }else{
-        //Event change not detected
-        ptr_instance->smEvent = AC_INPUT_NO_CHANGE;
-    }
-    //Cycle counter reset and saved current status to be evaluted in the next iteration
-    ptr_instance->Counter = 0;
-    ptr_instance->prevStatus = ptr_instance->Status;
+  if(ptr_input->isr_Counter > ptr_input->counterTop)
+  {
+    //number of AC zero-crossing events are more than nCyles, 
+    //it means the AC-switch is close
+    ptr_input->Status = (uint8_t)AC_SWITCH_ASSERTED;
+  }else{
+    //number of AC zero-crossing events are less than nCyles or even 0 cyles,
+    //it means the AC-switch is OPEN
+    ptr_input->Status = (uint8_t)AC_SWITCH_DEASSERTED;
+  }
+  //Saved current values
+  ptr_input->counterTop = ptr_input->isr_Counter;
+  //Input counter has been evaluated
+  ptr_input->logicEvaluation=false;
 }

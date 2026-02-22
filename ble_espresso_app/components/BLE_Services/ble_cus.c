@@ -101,48 +101,48 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     // Writing to this Custom Value Characteristic: BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewPreInfussionPower_char_handles.value_handle)
     {
-        evt.param_command.sBrewPreInfussionPwr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewPreInfussionPwr.length    = p_evt_write->len;
+        evt.param_command.s_preInfusePwr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_preInfusePwr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewPreInfussiontime__char_handles.value_handle)
     {
-        evt.param_command.sBrewPreInfussionTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewPreInfussionTmr.length    = p_evt_write->len;
+        evt.param_command.s_preInfuseTmr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_preInfuseTmr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_INFUSION_POWER_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewInfussionPower_char_handles.value_handle)
     {
-        evt.param_command.sBrewInfussionPwr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewInfussionPwr.length    = p_evt_write->len;
+        evt.param_command.s_InfusePwr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_InfusePwr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_INFUSION_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_INFUSION_TIME__CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewInfussiontime__char_handles.value_handle)
     {
-        evt.param_command.sBrewInfussionTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewInfussionTmr.length    = p_evt_write->len;
+        evt.param_command.s_InfuseTmr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_InfuseTmr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_INFUSION_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewDecliningPower_char_handles.value_handle)
     {
-        evt.param_command.sBrewDecliningPwr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewDecliningPwr.length    = p_evt_write->len;
+        evt.param_command.s_DeclinePwr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_DeclinePwr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewDecliningtime__char_handles.value_handle)
     {
-        evt.param_command.sBrewDecliningTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.sBrewDecliningTmr.length    = p_evt_write->len;
+        evt.param_command.s_DeclineTmr.ptr_data  = p_evt_write->data;
+        evt.param_command.s_DeclineTmr.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
@@ -235,11 +235,11 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GATTS_EVT_WRITE:
             on_write(p_cus, p_ble_evt);
             break;
-/* Handling this event is not necessary
+/* Handling this event is not necessary*/
         case BLE_GATTS_EVT_EXCHANGE_MTU_REQUEST:
             NRF_LOG_INFO("EXCHANGE_MTU_REQUEST event received.\r\n");
             break;
-*/
+
         default:
             // No implementation needed.
             break;
@@ -310,7 +310,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
     // Add Boilder Target Temperature characteristic
     //TimeStamp: 51:45
     //uint8_t boilerTargetTemp[4] = {'0','9','8','5'};
-    fcn_FloatToChrArray(98.5f,(uint8_t*)&initValueChar[0],3,1);
+    fcn_FloatToChrArray(ptr_initVal->temp_Target,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BOILER_TARGET_TEMP_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -332,7 +332,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BREW_PRE_INFUSION_POWER characteristic
     //uint8_t brewPreInfusionPwr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->BrewPreInfussionPwr,(uint8_t*)&initValueChar[0],2,1);
+    fcn_FloatToChrArray(ptr_initVal->prof_preInfusePwr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -352,7 +352,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BREW_PRE_INFUSION_TIME characteristic
     //uint8_t brewPreInfusiontmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->BrewPreInfussionTmr,(uint8_t*)&initValueChar[0],2,1);
+    fcn_FloatToChrArray(ptr_initVal->prof_preInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -372,7 +372,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BREW_INFUSION_POWER characteristic
     //uint8_t brewInfusionPwr[4] = {'0','0','0', '0' };
-    fcn_FloatToChrArray(ptr_initVal->BrewInfussionPwr,(uint8_t*)&initValueChar[0],3,1);
+    fcn_FloatToChrArray(ptr_initVal->prof_InfusePwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -393,7 +393,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BREW_INFUSION_TIME characteristic
     //uint8_t brewInfusiontmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->BrewInfussionTmr,(uint8_t*)&initValueChar[0],2,1);
+    fcn_FloatToChrArray(ptr_initVal->prof_InfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -414,7 +414,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BLE_CHAR_BREW_DECLINING_PR_POWER characteristic
     //uint8_t brewDecliningPressurePwr[4] = {'0','0','0', '0' };
-    fcn_FloatToChrArray(ptr_initVal->BrewDecliningPwr,(uint8_t*)&initValueChar[0],3,1);
+    fcn_FloatToChrArray(ptr_initVal->Prof_DeclinePwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -435,7 +435,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     // Add BLE_CHAR_BREW_DECLINING_PR_TIME characteristic
     //uint8_t brewDecliningPressureTmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->BrewDecliningTmr,(uint8_t*)&initValueChar[0],2,1);
+    fcn_FloatToChrArray(ptr_initVal->Prof_DeclineTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -652,7 +652,7 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     if (err_code != NRF_SUCCESS)
     {return err_code;}
     // Add Custom Value characteristic
-    custom_value_char_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&int_NvmData);
+    custom_value_char_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&blEspressoProfile);
 
     // CREATE NEW SERVICE FOR PID ///////////////////////////////////////////////////
     ble_uuid.type = p_cus->uuid_type;
@@ -663,8 +663,7 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     {return err_code;}
 
     // Add Custom Value characteristic
-    return custom_value_PIDchar_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&int_NvmData);
-
+    return custom_value_PIDchar_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&blEspressoProfile);
 }
 
 /****************************************************************************

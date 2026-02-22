@@ -1,4 +1,3 @@
-
 //*****************************************************************************
 //
 //			INCLUDE FILE SECTION FOR THIS MODULE
@@ -15,7 +14,7 @@
 //*****************************************************************************
 //#define TEMP_CTRL_SAMPLING_T    0.01f                         //Sampling Time in seconds
 #define HWTMR_PERIOD_MS           1.0f                          //Period of the TMR is in miliseconds
-#define HWTMR_PERIOD_US           (HWTMR_PERIOD_MS * 1000.0f)
+#define HWTMR_PERIOD_US           (HWTMR_PERIOD_MS * 1009.0f)
 
 //*****************************************************************************
 //
@@ -36,15 +35,16 @@ typedef struct
 //			PUBLIC VARIABLES
 //
 //****************************************************************************
-//volatile PID_Block_fStruct sBoilerTempCtrl;
-//volatile struct_HWTimer sHwTmr_Miliseconds;
+
 
 //*****************************************************************************
 //
 //			PRIVATE VARIABLES
 //
 //*****************************************************************************
-static PID_Block_fStruct sBoilerTempCtrl;
+static PID_IMC_Block_fStruct sctrl_profile_main;
+static PID_IMC_Block_fStruct sctrl_profile_phi1;
+static PID_IMC_Block_fStruct sctrl_profile_phi2;
 static struct_HWTimer sHwTmr_Miliseconds;
 static volatile uint32_t milisTicks=0;
 
@@ -53,6 +53,8 @@ static volatile uint32_t milisTicks=0;
 //			PRIVATE FUNCTIONS
 //
 //*****************************************************************************
+tempCtrl_status_t fcn_loadI_ParamToCtrl_Temp(PID_IMC_Block_fStruct *ptrParam);
+
 void fcn_initMilisecondHWTimer(void);
 
 //*****************************************************************************
@@ -67,7 +69,7 @@ void fcn_initMilisecondHWTimer(void);
 void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_context)
 {
     //GPIO29 controls the LED_HeartBeat - for measurieng purposes.
-    nrf_drv_gpiote_out_toggle(29);
+    //nrf_drv_gpiote_out_toggle(29);
     milisTicks++;
 }
 
@@ -77,36 +79,143 @@ void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_contex
 //
 //*****************************************************************************
 /*****************************************************************************
- * Function: 	fcn_initTemperatureController
+ * Function: 	fcn_initCntrl_Temp
  * Description: 
  * Return:      N/A
  *****************************************************************************/
-void fcn_initTemperatureController(void)
+tempCtrl_status_t fcn_initCntrl_Temp(void)
 {
-    //PID PARAMETERS VALUE SETUP
-    //------------------------------------------------------------------------------
-    sBoilerTempCtrl.P_TERM_CTRL            = ACTIVE;
-    sBoilerTempCtrl.Kp                     = TEMP_CTRL_GAIN_P;
-    sBoilerTempCtrl.I_TERM_CTRL            = ACTIVE;
-    sBoilerTempCtrl.Ki                     = TEMP_CTRL_GAIN_I;
-    sBoilerTempCtrl.IntegralLimit           = TEMP_CTRL_HIST_LIMIT;
-    sBoilerTempCtrl.I_ANTIWINDUP_CTRL      = ACTIVE;
-    //sBoilerTempCtrl.Kwindup                = TEMP_CTRL_GAIN_WINDUP;
+  //PID PARAMETERS VALUE SETUP
+  //------------------------------------------------------------------------------
+  sctrl_profile_main.P_TERM_CTRL       = ACTIVE;
+  sctrl_profile_main.Kp                = TEMP_CTRL_KP;
+  sctrl_profile_main.I_TERM_CTRL       = ACTIVE;
+  sctrl_profile_main.Ki                = TEMP_CTRL_KI;
+  sctrl_profile_main.IntegralLimit     = TEMP_CTRL_HIST_LIMIT;
+  sctrl_profile_main.I_ANTIWINDUP_CTRL = ACTIVE;
 
-    sBoilerTempCtrl.D_TERM_CTRL            = NOT_ACTIVE;
-    sBoilerTempCtrl.Kd                     = TEMP_CTRL_GAIN_D;
-    sBoilerTempCtrl.D_TERM_LP_FILTER_CTRL  = NOT_ACTIVE;
-    sBoilerTempCtrl.LPF_FCUTOFF_HZ         = 30.0f;
-   
-    sBoilerTempCtrl.OutputLimit            = TEMP_CTRL_MAX;
+  sctrl_profile_main.D_TERM_CTRL       = ACTIVE;
+  sctrl_profile_main.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  sctrl_profile_main.Kd                = TEMP_CTRL_KD;
+ 
+  sctrl_profile_main.OutputLimit       = TEMP_CTRL_MAX;
 
-    sBoilerTempCtrl.feedPIDblock.SetPoint = 45.0f;
+  //PID PARAMETERS PHASE 1
+  //------------------------------------------------------------------------------
+  sctrl_profile_phi1.P_TERM_CTRL       = NOT_ACTIVE;
+  sctrl_profile_phi1.Kp                = 0.0f;
 
-    fcn_PID_Block_Dterm_LPF_Init( (PID_Block_fStruct *)&sBoilerTempCtrl );
-    
-    //TIMER SECTION TO TRACK TIME IN MILISECONDS
-    //------------------------------------------------------------------------------
-    fcn_initMilisecondHWTimer();
+  sctrl_profile_phi1.I_TERM_CTRL       = sctrl_profile_main.I_TERM_CTRL;
+  sctrl_profile_phi1.Ki                = sctrl_profile_main.Ki * 6.5f;
+  sctrl_profile_phi1.IntegralLimit     = sctrl_profile_main.IntegralLimit;
+
+  sctrl_profile_phi1.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
+  sctrl_profile_phi1.D_TERM_CTRL       = NOT_ACTIVE;
+  sctrl_profile_phi1.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  sctrl_profile_phi1.Kd                = 0.0f;
+  sctrl_profile_phi1.OutputLimit       = 0.0f;
+
+  //PID PARAMETERS PHASE 1
+  //------------------------------------------------------------------------------
+  sctrl_profile_phi2.P_TERM_CTRL       = NOT_ACTIVE;
+  sctrl_profile_phi2.Kp                = 0.0f;
+
+  sctrl_profile_phi2.I_TERM_CTRL       = sctrl_profile_main.I_TERM_CTRL;
+  sctrl_profile_phi2.Ki                = sctrl_profile_main.Ki * 2.0f;
+  sctrl_profile_phi2.IntegralLimit     = sctrl_profile_main.IntegralLimit;
+
+  sctrl_profile_phi2.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
+  sctrl_profile_phi2.D_TERM_CTRL       = NOT_ACTIVE;
+  sctrl_profile_phi2.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  sctrl_profile_phi2.Kd                = 0.0f;
+  sctrl_profile_phi2.OutputLimit       = 0.0f;
+
+
+  //TIMER SECTION TO TRACK TIME IN MILISECONDS
+  //------------------------------------------------------------------------------
+  fcn_initMilisecondHWTimer();
+  return TEMPCTRL_INIT_OK;
+}
+
+/*****************************************************************************
+ * Function: 	fcn_loadPID_ParamToCtrl_Temp
+ * Description: This function load/copy the value from blEspressoProfile (bleSpressoUserdata_struct)
+                into private PID boiler temp. controller variable: sctrl_profile_main
+ *****************************************************************************/
+tempCtrl_status_t fcn_loadPID_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData)
+{
+  //PID PARAMETERS VALUE COPY
+  //------------------------------------------------------------------------------
+  if( prt_profData->Pid_P_term == 0.0f )
+  {
+    sctrl_profile_main.P_TERM_CTRL            = NOT_ACTIVE;
+    sctrl_profile_main.Kp                     = 0.0f;
+  }else{
+    sctrl_profile_main.P_TERM_CTRL            = ACTIVE;
+    sctrl_profile_main.Kp                     = prt_profData->Pid_P_term;
+  }
+  if( prt_profData->Pid_I_term == 0.0f )
+  {
+    sctrl_profile_main.I_TERM_CTRL            = NOT_ACTIVE;
+    sctrl_profile_main.Ki                     = 0.0f;
+    sctrl_profile_main.IntegralLimit          = 0.0f;
+    sctrl_profile_main.I_ANTIWINDUP_CTRL      = NOT_ACTIVE;
+  }else{
+    sctrl_profile_main.I_TERM_CTRL            = ACTIVE;
+    sctrl_profile_main.Ki                     = prt_profData->Pid_I_term;
+    sctrl_profile_main.IntegralLimit          = prt_profData->Pid_Imax_term;
+    sctrl_profile_main.I_ANTIWINDUP_CTRL      = prt_profData->Pid_Iwindup_term;
+  }
+  if( prt_profData->Pid_D_term == 0.0f )
+  {
+    sctrl_profile_main.D_TERM_CTRL            = NOT_ACTIVE;
+    sctrl_profile_main.Kd                     = 0.0f;
+    sctrl_profile_main.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
+  }else{
+    sctrl_profile_main.D_TERM_CTRL            = ACTIVE;
+    sctrl_profile_main.Kd                     = prt_profData->Pid_D_term;
+    sctrl_profile_main.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
+  }
+  return TEMPCTRL_LOAD_OK;
+  /*This code line is not part of this function's scope
+  sctrl_profile_main.feedPIDblock.SetPoint = 45.0f;
+  */
+}
+
+/*****************************************************************************
+ * Function: 	fcn_loaddSetPoint_ParamToCtrl_Temp
+ * Description: Loads a new Setpoint determined by the second fcn paramater into the Temp Ctrl. 
+ *****************************************************************************/
+tempCtrl_LoadSP_t fcn_loaddSetPoint_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, tempCtrl_LoadSP_t Setpoint)
+{
+  if( Setpoint == SETPOINT_BREW)
+  {
+    prt_profData->temp_Target = prt_profData->sp_BrewTemp;
+  }else{}
+  if( Setpoint == SETPOINT_STEAM)
+  {
+    prt_profData->temp_Target = prt_profData->sp_StemTemp;
+  }else{} 
+  return TEMPCTRL_SP_LOAD_OK;
+}
+
+/*****************************************************************************
+ * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi1
+ * Description: Loads only the I gain into the mainCtrl during Phase-1 (Pump Active)
+ *****************************************************************************/
+tempCtrl_status_t fcn_loadIboost_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData)
+{
+  sctrl_profile_main.Ki = prt_profData->Pid_Iboost_term;
+  return TEMPCTRL_I_LOAD_OK;
+}
+/*****************************************************************************
+ * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi2
+ * Description: Loads only the I gain into the mainCtrl during Phase-2 (time after pump deactivation)
+ *****************************************************************************/
+tempCtrl_status_t fcn_multiplyI_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, float factor)
+{
+  sctrl_profile_main.Ki = (float)(prt_profData->Pid_I_term * factor);
+  return TEMPCTRL_I_LOAD_OK;
 }
 
 /*****************************************************************************
@@ -130,18 +239,17 @@ void fcn_stopTempCtrlSamplingTmr(void)
 }
 
 /*****************************************************************************
- * Function: 	fcn_startTemperatureController
+ * Function: 	fcn_updateTemperatureController
  * Description: 
  *****************************************************************************/
-void fcn_updateTemperatureController(void)
+float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData)
 {
-    volatile uint32_t pidOuput;
-    pidOuput = fcn_update_PID_Block(  f_getBoilerTemperature(),
-                                      33.0f,
-                                      milisTicks,
-                                      (PID_Block_fStruct *)&sBoilerTempCtrl);
-    /* TO DO - verify code up to this line of code  */
-    fcn_boilerSSR_pwrUpdate((uint16_t)pidOuput);
+  sctrl_profile_main.feedPIDblock.ProcessVariable  = (float)prt_profData->temp_Boiler;
+  sctrl_profile_main.feedPIDblock.SetPoint         = (float)prt_profData->temp_Target;
+  sctrl_profile_main.feedPIDblock.TimeMilis        = (uint32_t)milisTicks;
+  return (float)fcn_update_PIDimc_typeA((PID_IMC_Block_fStruct *)&sctrl_profile_main);
+
+  //fcn_boilerSSR_pwrUpdate((uint16_t)sctrl_profile_main.Output);
 }
 
 //*****************************************************************************

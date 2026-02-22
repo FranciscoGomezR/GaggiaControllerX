@@ -109,7 +109,6 @@
       <folder Name="components">
         <folder Name="BLE">
           <file file_name="../../../components/BLE/bluetooth_drv.c" />
-          <file file_name="../../../components/BLE/BLEspressoServices.c" />
         </folder>
         <folder Name="Log">
           <file file_name="../../../components/Log/log_drv.c" />
@@ -130,11 +129,11 @@
         </folder>
         <folder Name="Application">
           <file file_name="../../../components/Application/tempController.c" />
-          <file file_name="../../../components/Application/BLEspresso.c" />
           <file file_name="../../../components/Application/StorageController.c">
             <configuration Name="Release" build_exclude_from_build="No" />
           </file>
           <file file_name="../../../components/Application/PumpController.c" />
+          <file file_name="../../../components/Application/BLEspressoServices.c" />
         </folder>
         <folder Name="BLE_Services">
           <file file_name="../../../components/BLE_Services/ble_cus.c" />
@@ -194,7 +193,8 @@
     Name="Release"
     c_preprocessor_definitions="NDEBUG"
     gcc_optimization_level="Optimize For Size"
-    link_time_optimization="No" />
+    link_time_optimization="No"
+    linker_printf_fp_enabled="Float" />
   <configuration
     Name="Debug"
     c_preprocessor_definitions="DEBUG; DEBUG_NRF"

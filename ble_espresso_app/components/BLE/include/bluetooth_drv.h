@@ -144,7 +144,12 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
 extern volatile uint8_t DataReceived[];
 extern volatile uint32_t iTagertTemp;
 extern volatile uint8_t dataLen;
-extern volatile uint8_t flg_BrewCfg,flg_PidCfg,flg_ReadCfg;
+/* flg_BrewCfg & flg_PidCfg are set to:
+    flg_BrewCfg = 1 -> means there is new Brew Profiel data from the mobile phone
+    flg_PidCfg  = 1 -> means there is new PID profile data from the mobile phone
+ */
+extern volatile uint8_t flg_BrewCfg,flg_PidCfg;
+extern volatile uint8_t flg_ReadCfg;
 
 //*****************************************************************************
 //

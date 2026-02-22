@@ -94,18 +94,30 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt);
  *****************************************************************************/
 void BLE_bluetooth_init(void)
 {
-    power_management_init();
-    ble_stack_init();
-    gap_params_init();
-    gatt_init();
-    services_init();
-    advertising_init();
-    conn_params_init();
-    peer_manager_init();
-
-    flg_BrewCfg=0;
-    flg_PidCfg=0;
-    flg_ReadCfg=0;
+  power_management_init();
+  ble_stack_init();
+  gap_params_init();
+  gatt_init();
+  /* FCN: services_init create the Custom service for: BLE espresso app
+  by calling FCN: ble_cus_init(&m_cus, &cus_init); 
+  The services created are:
+  - SERVICE FOR BREW
+  - SERVICE FOR PID
+  Each service for each window in the phone app */
+  services_init();
+  advertising_init();
+  conn_params_init();
+  peer_manager_init();
+  /*  Reset flg_BrewCfg FLAG
+  Is the telltale thta indicates ble_cus drv has been received Brew and Boiler Temp. data 
+  and that has been stored in: blEspressoProfile  */
+  flg_BrewCfg=0;
+  /*  Reset flg_PidCfg FLAG
+  Is the telltale thta indicates ble_cus drv has been received PID parameter data 
+  and that has been stored in: blEspressoProfile  */
+  flg_PidCfg=0;
+  /* TODO identify possible usage of this FLAG  */
+  flg_ReadCfg=0;
 }
 
 
@@ -326,21 +338,27 @@ static void on_yys_evt(ble_yy_service_t     * p_yy_service,
  */
 static void services_init(void)
 {
-    ret_code_t         err_code;
-    nrf_ble_qwr_init_t qwr_init = {0};
+  ret_code_t         err_code;
+  nrf_ble_qwr_init_t qwr_init = {0};
 
-    // Initialize Queued Write Module.
-    qwr_init.error_handler = nrf_qwr_error_handler;
+  // Initialize Queued Write Module.
+  qwr_init.error_handler = nrf_qwr_error_handler;
+  err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
+  APP_ERROR_CHECK(err_code);
 
-    err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize CUS.
-    ble_cus_init_t    cus_init = {0};
-    cus_init.evt_handler  = cus_evt_handler;
-
-    err_code = ble_cus_init(&m_cus, &cus_init);
-    APP_ERROR_CHECK(err_code);
+  // Initialize CUS for BLE ESPRESSO APPLICATION
+  ble_cus_init_t    cus_init = {0};
+  /*
+  cus_evt_handler is the event handler that will identify which characteristic
+  of the service and write the received data to blEspressoProfile  from phone
+  */
+  cus_init.evt_handler  = cus_evt_handler;
+  /* FCN: ble_cus_init create two service for the app
+  - SERVICE FOR BREW
+  - SERVICE FOR PID
+  */
+  err_code = ble_cus_init(&m_cus, &cus_init);
+  APP_ERROR_CHECK(err_code);
 }
 
 
@@ -436,14 +454,14 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_DISCONNECTED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("Disconnected.");
             #endif
             // LED indication will be changed when advertising starts.
             break;
 
         case BLE_GAP_EVT_CONNECTED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("Connected.");
             #endif
             //err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
@@ -455,7 +473,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
         {
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("PHY update request.");
             #endif
             ble_gap_phys_t const phys =
@@ -469,7 +487,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GATTC_EVT_TIMEOUT:
             // Disconnect on GATT Client timeout event.
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("GATT Client Timeout.");
             #endif
             err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
@@ -479,7 +497,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GATTS_EVT_TIMEOUT:
             // Disconnect on GATT Server timeout event.
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("GATT Server Timeout.");
             #endif
             err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
@@ -559,7 +577,7 @@ static void peer_manager_init(void)
 static void delete_bonds(void)
 {
     ret_code_t err_code;
-    #if NRF_LOG_ENABLED == 1
+    #if(NRF_LOG_ENABLED == 1)
     NRF_LOG_INFO("Erase bonds!");
     #endif
     err_code = pm_peers_delete();
@@ -613,7 +631,7 @@ static void power_management_init(void)
 static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
 {
     ret_code_t  err_code;
-    #if NRF_LOG_ENABLED == 1
+    #if(NRF_LOG_ENABLED == 1)
     NRF_LOG_DEBUG("Event %d",p_evt->evt_type);
     #endif
     switch(p_evt->evt_type)
@@ -621,151 +639,152 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> New target temperature for the boiler
         case BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE:
             //Youtube-TimeStamp: 2:33:00
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> New target Temperature");
             #endif
-            BLEspressoVar.TargetBoilerTemp = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);              
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)BLEspressoVar.TargetBoilerTemp);
+            blEspressoProfile.temp_Target = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);              
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)blEspressoProfile.temp_Target);
             #endif
         break;
      //Event -> Enable notification to get water temperature
         case BLE_BOILER_TEMP_CHAR_NOTIFICATION_ENABLED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> Boiler Water Temp Notifications ENABLE");
             #endif
         break;
     //Event -> Disable notification to get water temperature
         case BLE_BOILER_TEMP_CHAR_NOTIFICATION_DISABLED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> Boiler Water Temp Notifications DISABLE");
             #endif
         break;
     //Event -> Enable notification to get machine status
         case BLESPRESSO_STATUS_CHAR_NOTIFICATION_ENABLED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> Blespresso Status Notifications ENABLE");
             #endif
         break;
     //Event -> Disbale notification to get machine status
         case BLESPRESSO_STATUS_CHAR_NOTIFICATION_DISABLED:
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> Blespresso Status Notifications DISABLE");
             #endif
         break;
     //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_POWER
         case BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT:
-            BLEspressoVar.BrewPreInfussionPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewPreInfussionPwr.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m PreInfusion POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewPreInfussionPwr);
+            blEspressoProfile.prof_preInfusePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_preInfusePwr.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m PreInfusion POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_preInfusePwr);
             #endif
         break;
     //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_TIME
         case BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT:
-            BLEspressoVar.BrewPreInfussionTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewPreInfussionTmr.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m PreInfusion TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewPreInfussionTmr);
+            blEspressoProfile.prof_preInfuseTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_preInfuseTmr.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m PreInfusion TIME: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_preInfuseTmr);
             #endif
         break;
     //Event -> Get new value from mobile for char:  BREW_INFUSION_POWER
         case BLE_BREW_INFUSION_POWER_CHAR_RX_EVT:   
-            BLEspressoVar.BrewInfussionPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewInfussionPwr.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m Infusion POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewInfussionPwr);
+            blEspressoProfile.prof_InfusePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_InfusePwr.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m Infusion POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_InfusePwr);
             #endif
         break;
      //Event -> Get new value from mobile for char:  BREW_INFUSION_TIME
         case BLE_BREW_INFUSION_TIME__CHAR_RX_EVT:
-            BLEspressoVar.BrewInfussionTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewInfussionTmr.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m Infusion TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewInfussionTmr);
+            blEspressoProfile.prof_InfuseTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_InfuseTmr.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m Infusion TIME: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_InfuseTmr);
             #endif
         break;
     //Event -> Get new value from mobile for char:  BREW_DECLINING_PR_POWER
         case BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT:
-            BLEspressoVar.BrewDecliningPwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewDecliningPwr.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m Declining Pressure POWER: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewDecliningPwr);
+            blEspressoProfile.Prof_DeclinePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_DeclinePwr.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m Declining Pressure POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.Prof_DeclinePwr);
             #endif
         break;
     //Event -> Get new value from mobile for char:  BREW_DECLINING_PR_TIME
         case BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT:
-            BLEspressoVar.BrewDecliningTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBrewDecliningTmr.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m Declining Pressure TIME: %d \r\n \033[0;40m", (int)BLEspressoVar.BrewDecliningTmr);
+            blEspressoProfile.Prof_DeclineTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_DeclineTmr.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m Declining Pressure TIME: %d \r\n \033[0;40m", (int)blEspressoProfile.Prof_DeclineTmr);
             #endif
+            /*  fcn has collected all parameter for the Brew controller And Boiler temperature */
             flg_BrewCfg =1;
         break;
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //Event -> Get new value from mobile for char:  PID_P_TERM
         case PID_P_TERM_CHAR_RX_EVT:
-            BLEspressoVar.Pid_P_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_P_term.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m P Term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_P_term);
+            blEspressoProfile.Pid_P_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_P_term.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m P Term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_P_term);
             #endif
         break;
     //Event -> Get new value from mobile for char:  PID_I_TERM
         case PID_I_TERM_CHAR_RX_EVT:
-            BLEspressoVar.Pid_I_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_I_term.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m I term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_I_term);
+            blEspressoProfile.Pid_I_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_I_term.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m I term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_I_term);
             #endif
         break;
     //Event -> Get new value from mobile for char:  PID_I_TERM
         case PID_I_TERM_INT_CHAR_RX_EVT:
-            BLEspressoVar.Pid_Imax_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Imax_term.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m Imax Term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Imax_term);
+            blEspressoProfile.Pid_Imax_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Imax_term.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m Imax Term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_Imax_term);
             #endif
         break;
      //Event -> Get new value from mobile for char:  PID_I_TERM_WINDUP
         case PID_I_TERM_WINDUP_CHAR_RX_EVT:
             if(iTagertTemp == 0)
             {
-              BLEspressoVar.Pid_Iwindup_term = false;
-              #if NRF_LOG_ENABLED == 1
+              blEspressoProfile.Pid_Iwindup_term = false;
+              #if(NRF_LOG_ENABLED == 1)
               NRF_LOG_INFO("\033[0;36m I windup Term: FALSE \r\n \033[0;40m");
               #endif
             }else if (iTagertTemp == 1)
             {
-              BLEspressoVar.Pid_Iwindup_term = true;
-              #if NRF_LOG_ENABLED == 1
+              blEspressoProfile.Pid_Iwindup_term = true;
+              #if(NRF_LOG_ENABLED == 1)
               NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
               #endif
             }else{
-              BLEspressoVar.Pid_Iwindup_term = true;
-              #if NRF_LOG_ENABLED == 1
+              blEspressoProfile.Pid_Iwindup_term = true;
+              #if(NRF_LOG_ENABLED == 1)
               NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
               #endif
             } 
-            
         break;
      //Event -> Get new value from mobile for char:  PID_D_TERM
         case PID_D_TERM_CHAR_RX_EVT:
-            BLEspressoVar.Pid_D_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_D_term.ptr_data,2,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m D term: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_D_term);
+            blEspressoProfile.Pid_D_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_D_term.ptr_data,2,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m D term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_D_term);
             #endif
         break;
      //Event -> Get new value from mobile for char:  PID_D_TERM_LPF
         case PID_D_TERM_LPF_CHAR_RX_EVT:
-            BLEspressoVar.Pid_Dlpf_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Dlpf_term.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m D Low-Pass Filter: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Dlpf_term);
+            blEspressoProfile.Pid_Dlpf_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Dlpf_term.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m D Low-Pass Filter: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_Dlpf_term);
             #endif
         break;
      //Event -> Get new value from mobile for char:  PID_GAIN
         case PID_GAIN___CHAR_RX_EVT:
-            BLEspressoVar.Pid_Gain_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Gain_term.ptr_data,3,1);
-            #if NRF_LOG_ENABLED == 1
-            NRF_LOG_INFO("\033[0;36m PID Gain: %d \r\n \033[0;40m", (int)BLEspressoVar.Pid_Gain_term);
+            blEspressoProfile.Pid_Gain_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Gain_term.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m PID Gain: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_Gain_term);
             #endif
+            /*  fcn has collected all parameter for the PID controller  */
             flg_PidCfg = 1;
         break;
 
         default:
             // No implementation needed.
-            #if NRF_LOG_ENABLED == 1
+            #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m ble_cuse_evt  un-recognize cus service \r\n \033[0;40m");
             #endif
             break;
@@ -775,7 +794,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
 
 /*****************************************************************************
 * Function: 	ble_update_boilerWaterTemp
-* Description:  Sen data: boilerWaterTemp to Mobile
+* Description:  Send data: boilerWaterTemp to Mobile
 * Caveats:      Youtube-TimeStamp: 2:10:00  - 2:26:00
 * Parameters:	
 * Return:       
@@ -814,7 +833,6 @@ void ble_update_boilerWaterTemp(float waterTemp)
           break;
       }
       err_code = ble_cus_BoilerWaterTemperature_update(&m_cus, sbleTemp, m_conn_handle);
-
 }
 
 
@@ -828,7 +846,7 @@ p_evt->param_command.sBoilerTempTarget.ptr_data++;
 iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48) * 10);
 p_evt->param_command.sBoilerTempTarget.ptr_data++;
 iTagertTemp += (uint32_t)((*p_evt->param_command.sBoilerTempTarget.ptr_data -48));
-BLEspressoVar.TargetBoilerTemp = (float) iTagertTemp/10.0f;
+blEspressoProfile.temp_Target = (float) iTagertTemp/10.0f;
 */
 
 

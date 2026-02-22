@@ -76,7 +76,6 @@ typedef struct
     float SetPoint;
     uint32_t TimeMilis;
 }input_PID_Block_fStruct;
-
  
 typedef struct
 {
@@ -107,6 +106,33 @@ typedef struct
     
 }PID_Block_fStruct;
 
+typedef struct
+{
+    input_PID_Block_fStruct feedPIDblock;
+    float   prevT_Milis;
+    float   errorK_1;
+    float   errorK_2;
+    
+    float   OutputLimit;
+    int8_t  OutputSaturationOut;
+    float   Output;
+
+    bool    P_TERM_CTRL;
+    float   Kp;
+
+    bool    I_TERM_CTRL;
+    bool    I_ANTIWINDUP_CTRL;
+    float   Ki;
+    float   HistoryError;
+    float   IntegralError;
+    float   IntegralLimit;
+    bool    WindupClampStatus;
+
+    bool    D_TERM_CTRL;
+    bool    D_TERM_FILTER_CTRL;
+    float   prevPV;
+    float   Kd;  
+}PID_IMC_Block_fStruct;
 
 //*****************************************************************************
 //
@@ -119,12 +145,13 @@ typedef struct
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-extern float fcn_update_PID_Block( float fInput, 
+extern float fcn_update_PID_Block(float fInput, 
                                   float fSetpoint, 
                                   uint32_t timeMilis,  
                                   PID_Block_fStruct * ptr_sPIDparam );
 
-
+extern float fcn_update_PIDimc_typeA(PID_IMC_Block_fStruct * ptr_sPIDparam );
+extern float fcn_update_PIDimc_typeB(PID_IMC_Block_fStruct * ptr_sPIDparam );
 
 extern void fcn_PID_Block_ResetI( PID_Block_fStruct * ptr_sPIDparam, float Attenuator);
 

@@ -48,6 +48,7 @@ typedef enum {
   STORAGE_USERDATA_FIRSTW,
   STORAGE_USERDATA_LOADED,
   STORAGE_USERDATA_STORED,
+  STORAGE_USERDATA_PRINTED,
   STORAGE_PROFILEDATA_STORED,
   STORAGE_CONTROLLERDATA_STORED,
   STORAGE_USERDATA_ERROR
@@ -64,15 +65,12 @@ typedef enum {
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-
 uint32_t stgCtrl_Init(void);
-
 uint32_t stgCtrl_ChkForUserData(void);
-
 uint32_t stgCtrl_ReadUserData(bleSpressoUserdata_struct* ptr_rxData);
-
 uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData);
 uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData);
+uint32_t stgCtrl_PrintUserData(bleSpressoUserdata_struct* ptr_rxData);
 
 #endif // BLESPRESSOSERVICES_H__
 

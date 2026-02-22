@@ -60,12 +60,10 @@ extern  "C" {
 //*****************************************************************************
 #define BREW_CFG_PIN_ID       inBREW_PIN
 #define BREW_CFG_STATUS       false
-#define BREW_CFG_THRESHOLD_N  8
 #define BREW_CFG_EVT_HANDLER  acinBrew_eventHandler
 
 #define STEAM_CFG_PIN_ID       inSTEAM_PIN
 #define STEAM_CFG_STATUS       false
-#define STEAM_CFG_THRESHOLD_N  8
 #define STEAM_CFG_EVT_HANDLER  acinSteam_eventHandler
 
 //*****************************************************************************
@@ -76,10 +74,8 @@ extern  "C" {
 typedef enum {
   DRV_AC_INPUT_INIT_OK = 0,
   DRV_AC_INPUT_INIT_ERROR,
-  AC_INPUT_NO_CHANGE,
-  AC_INPUT_CHANGE,
-  AC_INPUT_ASSERTED,
-  AC_INPUT_DEASSERTED
+  AC_SWITCH_ASSERTED,
+  AC_SWITCH_DEASSERTED
 } acInput_status_t;
 
 //*****************************************************************************
@@ -95,14 +91,10 @@ typedef enum {
 //
 //*****************************************************************************
 acInput_status_t fcn_initACinput_drv(void);
-void fcn_ACinput_drv(void);
-
-acInput_status_t fcn_StatusChange_Brew(void);
-acInput_status_t fcn_StatusChange_Steam(void);
 acInput_status_t fcn_GetInputStatus_Brew(void);
 acInput_status_t fcn_GetInputStatus_Steam(void);
-void fcn_StatusReset_Brew(void);
-void fcn_StatusReset_Steam(void);
+//This function shall be called every 60ms.
+void fcn_SenseACinputs_Sixty_ms(void);
 
 //GPIO' ISRs are created in this module and used inside of it.
 extern void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);

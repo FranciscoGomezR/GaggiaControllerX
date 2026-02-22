@@ -7,8 +7,31 @@
 #include "ble_srv_common.h"
 #include "BLEspressoServices.h"
 
+#define BLE_CUS_BLE_OBSERVER_PRIO               2
 
-#define BLE_CUS_BLE_OBSERVER_PRIO   2
+#define BLE_SERVICE_BLEESPRESSO_UUID            0x1400
+
+#define BLE_CHAR_BLESPRESSO_STATUS__UUID        0x1401
+#define BLE_CHAR_BOILER_WATER__TEMP_UUID        0x1402
+#define BLE_CHAR_BOILER_TARGET_TEMP_UUID        0x1403
+
+#define BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID   0x1404
+#define BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID   0x1405
+#define BLE_CHAR_BREW_INFUSION_POWER_UUID       0x1406
+#define BLE_CHAR_BREW_INFUSION_TIME__UUID       0x1407
+#define BLE_CHAR_BREW_DECLINING_PR_POWER_UUID   0x1408
+#define BLE_CHAR_BREW_DECLINING_PR_TIME__UUID   0x1409
+
+#define BLE_SERVICE_PIDESPRESSO_UUID            0x1500
+
+#define BLE_CHAR_PID_P_TERM_UUID                0x1501
+#define BLE_CHAR_PID_I_TERM_UUID                0x1502
+#define BLE_CHAR_PID_I_MAX_TERM_UUID            0x1503
+#define BLE_CHAR_PID_I_TERM_WINDUP_UUID         0x1504
+#define BLE_CHAR_PID_D_TERM_UUID                0x1505
+#define BLE_CHAR_PID_D_TERM_LPF_UUID            0x1506
+#define BLE_CHAR_PID_GAIN___UUID                0x1507
+
 
 /**@brief   Macro for defining a ble_hrs instance.
  *
@@ -73,12 +96,12 @@ typedef struct
     //add strucutre of data (string type)to be pass from mobile to BLe stack Youtube-TimeSTamp: 37:00
     union{
       struct_CharData sBoilerTempTarget;
-      struct_CharData sBrewPreInfussionPwr;
-      struct_CharData sBrewPreInfussionTmr;
-      struct_CharData sBrewInfussionPwr;
-      struct_CharData sBrewInfussionTmr;
-      struct_CharData sBrewDecliningPwr;
-      struct_CharData sBrewDecliningTmr;
+      struct_CharData s_preInfusePwr;
+      struct_CharData s_preInfuseTmr;
+      struct_CharData s_InfusePwr;
+      struct_CharData s_InfuseTmr;
+      struct_CharData s_DeclinePwr;
+      struct_CharData s_DeclineTmr;
 
       struct_CharData sPid_P_term;
       struct_CharData sPid_I_term;

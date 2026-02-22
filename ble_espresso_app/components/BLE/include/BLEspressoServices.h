@@ -39,29 +39,8 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-#define BLE_SERVICE_BLEESPRESSO_UUID            0x1400
-
-#define BLE_CHAR_BLESPRESSO_STATUS__UUID        0x1401
-
-#define BLE_CHAR_BOILER_WATER__TEMP_UUID        0x1402
-#define BLE_CHAR_BOILER_TARGET_TEMP_UUID        0x1403
-
-#define BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID   0x1404
-#define BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID   0x1405
-#define BLE_CHAR_BREW_INFUSION_POWER_UUID       0x1406
-#define BLE_CHAR_BREW_INFUSION_TIME__UUID       0x1407
-#define BLE_CHAR_BREW_DECLINING_PR_POWER_UUID   0x1408
-#define BLE_CHAR_BREW_DECLINING_PR_TIME__UUID   0x1409
-
-#define BLE_SERVICE_PIDESPRESSO_UUID            0x1500
-
-#define BLE_CHAR_PID_P_TERM_UUID                0x1501
-#define BLE_CHAR_PID_I_TERM_UUID                0x1502
-#define BLE_CHAR_PID_I_MAX_TERM_UUID            0x1503
-#define BLE_CHAR_PID_I_TERM_WINDUP_UUID         0x1504
-#define BLE_CHAR_PID_D_TERM_UUID                0x1505
-#define BLE_CHAR_PID_D_TERM_LPF_UUID            0x1506
-#define BLE_CHAR_PID_GAIN___UUID                0x1507
+#define LOAD_USERDATA_FROM_NVM_EN     1
+#define STORE_USERDATA_TO_NVM_EN      1
 
 //*****************************************************************************
 //
@@ -71,14 +50,15 @@
   typedef struct bleSpressoUserdata_struct{
     uint32_t nvmWcycles;
     uint32_t nvmKey;
-    float TargetBoilerTemp;
-    float ActualBoilerTemp;
-    float BrewPreInfussionPwr;
-    float BrewPreInfussionTmr;
-    float BrewInfussionPwr;
-    float BrewInfussionTmr;
-    float BrewDecliningPwr;
-    float BrewDecliningTmr;
+    float temp_Target;
+    float temp_Boiler;
+
+    float prof_preInfusePwr;
+    float prof_preInfuseTmr;
+    float prof_InfusePwr;
+    float prof_InfuseTmr;
+    float Prof_DeclinePwr;
+    float Prof_DeclineTmr;
 
     float Pid_P_term;
     float Pid_I_term;
@@ -98,9 +78,12 @@
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
- extern volatile bleSpressoUserdata_struct BLEspressoVar;
- extern volatile bleSpressoUserdata_struct int_NvmData;
-  
+extern volatile bleSpressoUserdata_struct blEspressoProfile;
+extern volatile bleSpressoUserdata_struct int_NvmData;
+ 
+#if STORE_USERDATA_TO_NVM_EN == 1
+  extern volatile bleSpressoUserdata_struct testProfileData;
+#endif
 
 //*****************************************************************************
 //
