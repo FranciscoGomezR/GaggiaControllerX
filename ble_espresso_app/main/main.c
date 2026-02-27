@@ -45,6 +45,8 @@ volatile uint16_t ssrPump=0;
 #define TICK_SVCS_ESPRESSO      (100 / SWTMR_TICK_MS)
 #define TICK_TASK_READBTN       (60 / SWTMR_TICK_MS)
 #define TICK_TASK_BOILERTEMP    (101 / SWTMR_TICK_MS)
+#define TICK_TASK_BLEUPDATE     (1000 / SWTMR_TICK_MS)
+
 /*  Code Section:
     Main & fastest Tick time in the system: ** 50 ms **
     Use to control rest of sync function
@@ -54,6 +56,7 @@ typedef struct
 {
   bool tf_ReadButton;
   bool tf_GetBoilerTemp;
+  bool tf_ble_update;
   bool tf_svc_StepFunction;
   bool tf_svc_EspressoApp;
 }struct_TaskFlg;
@@ -78,6 +81,11 @@ static void t_x0ms_swTmrHandler(void * p_context)
   if( !(swTmr_tick_x0ms % TICK_TASK_READBTN) )
   {
     sSchedulerFlags.tf_ReadButton = true;
+  }else{}
+
+  if( !(swTmr_tick_x0ms % TICK_TASK_BLEUPDATE) )
+  {
+    sSchedulerFlags.tf_ble_update = true;
   }else{}
 
   if( !(swTmr_tick_x0ms % TICK_SVCS_ESPRESSO))
@@ -181,6 +189,7 @@ int main(void)
   sSchedulerFlags.tf_ReadButton = false;
   sSchedulerFlags.tf_svc_StepFunction = false;
   sSchedulerFlags.tf_GetBoilerTemp = false;
+  sSchedulerFlags.tf_ble_update = false;
   sSchedulerFlags.tf_svc_EspressoApp = false;
 
   bool erase_bonds;
@@ -469,7 +478,13 @@ int main(void)
         fcn_service_StepFunction(fcn_GetInputStatus_Brew(),fcn_GetInputStatus_Steam());
         //nrf_drv_gpiote_out_toggle(29);
       }else{} 
-    }else{}   
+    }else{} 
+
+    if( sSchedulerFlags.tf_ble_update == true)
+    {
+      sSchedulerFlags.tf_ble_update = false;
+      ble_update_boilerWaterTemp(blEspressoProfile.temp_Boiler);
+    }else{}  
   }
 }
 
