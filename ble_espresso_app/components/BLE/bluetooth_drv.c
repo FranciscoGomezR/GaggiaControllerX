@@ -647,6 +647,16 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)blEspressoProfile.temp_Target);
             #endif
         break;
+    //Event -> new steam setpoint write
+        case BLE_BOILER_STEAM_TEMP_CHAR_RX_EVT:
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_DEBUG("BLE -> New steam target Temperature");
+            #endif
+            blEspressoProfile.sp_StemTemp = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerSteamTemp.ptr_data,3,1);
+            #if(NRF_LOG_ENABLED == 1)
+            NRF_LOG_INFO("\033[0;36m STEAM SETPOINT: %d . %d \r\n \033[0;40m", (int)blEspressoProfile.sp_StemTemp);
+            #endif
+        break;
      //Event -> Enable notification to get water temperature
         case BLE_BOILER_TEMP_CHAR_NOTIFICATION_ENABLED:
             #if(NRF_LOG_ENABLED == 1)

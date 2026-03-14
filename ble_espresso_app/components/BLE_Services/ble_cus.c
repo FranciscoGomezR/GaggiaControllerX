@@ -97,6 +97,14 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
         evt.evt_type = BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE;
         p_cus->evt_handler(p_cus, &evt);
     }
+  // Writing to this Custom Value Characteristic: boilerSteamTargetTemp
+    else if (p_evt_write->handle == p_cus->boilerSteamTargetTemp_char_handles.value_handle)
+    {
+        evt.param_command.sBoilerSteamTemp.ptr_data  = p_evt_write->data;
+        evt.param_command.sBoilerSteamTemp.length    = p_evt_write->len;
+        evt.evt_type = BLE_BOILER_STEAM_TEMP_CHAR_RX_EVT;
+        p_cus->evt_handler(p_cus, &evt);
+    }
 
     // Writing to this Custom Value Characteristic: BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->brewPreInfussionPower_char_handles.value_handle)
@@ -327,6 +335,27 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
                                   &p_cus->boilerTargetTemp_char_handles);
+    if (err_code != NRF_SUCCESS)
+    { return err_code;  }
+
+    // Add Boiler Steam Target Temperature characteristic
+    // This separate char allows the app to configure steam setpoint independently
+    fcn_FloatToChrArray(ptr_initVal->sp_StemTemp,(uint8_t*)&initValueChar[0],3,1);
+    memset(&add_char_param, 0, sizeof(add_char_param));
+    add_char_param.uuid             = BLE_CHAR_BOILER_STEAM_TARGET_TEMP_UUID;
+    add_char_param.uuid_type        = p_cus->uuid_type;
+    add_char_param.init_len         = 4;
+    add_char_param.max_len          = 4;
+    add_char_param.p_init_value     = (uint8_t*)initValueChar;
+    add_char_param.char_props.read  = 1;
+    add_char_param.char_props.write = 1;
+    add_char_param.char_props.notify= 0;
+    add_char_param.read_access      = SEC_OPEN;
+    add_char_param.write_access     = SEC_OPEN;
+
+    err_code = characteristic_add(p_cus->service_handle,
+                                  &add_char_param,
+                                  &p_cus->boilerSteamTargetTemp_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 

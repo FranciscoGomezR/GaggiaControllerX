@@ -14,6 +14,7 @@
 #define BLE_CHAR_BLESPRESSO_STATUS__UUID        0x1401
 #define BLE_CHAR_BOILER_WATER__TEMP_UUID        0x1402
 #define BLE_CHAR_BOILER_TARGET_TEMP_UUID        0x1403
+#define BLE_CHAR_BOILER_STEAM_TARGET_TEMP_UUID  0x140A
 
 #define BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID   0x1404
 #define BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID   0x1405
@@ -64,6 +65,8 @@ typedef enum
     BLE_BOILER_TEMP_CHAR_NOTIFICATION_DISABLED,                             /**< Custom value notification disabled event. */
     BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE,  //  CHAR_RX_EVT
     //Evetn type: CHAR_RX_EVT -> this event will occur when client write to this char
+    BLE_BOILER_STEAM_TEMP_CHAR_RX_EVT,       // write to steam target setpoint
+
     BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT,
     BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT,
     BLE_BREW_INFUSION_POWER_CHAR_RX_EVT,
@@ -96,6 +99,7 @@ typedef struct
     //add strucutre of data (string type)to be pass from mobile to BLe stack Youtube-TimeSTamp: 37:00
     union{
       struct_CharData sBoilerTempTarget;
+      struct_CharData sBoilerSteamTemp;  // data for steam target temp writes
       struct_CharData s_preInfusePwr;
       struct_CharData s_preInfuseTmr;
       struct_CharData s_InfusePwr;
@@ -156,6 +160,7 @@ struct ble_cus_s
     ble_gatts_char_handles_t      blespressoStatus_char_handles;
     ble_gatts_char_handles_t      boilerTemp_char_handles;           /**< Handles related to the Custom Value characteristic. */
     ble_gatts_char_handles_t      boilerTargetTemp_char_handles;
+    ble_gatts_char_handles_t      boilerSteamTargetTemp_char_handles;  /**< Handles for steam target characteristic */
 
     ble_gatts_char_handles_t      brewPreInfussionPower_char_handles;
     ble_gatts_char_handles_t      brewPreInfussiontime__char_handles;
