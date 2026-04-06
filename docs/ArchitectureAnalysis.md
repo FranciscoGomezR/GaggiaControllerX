@@ -38,10 +38,17 @@ Moreover, Map out the registers of external memory (W25Q64) along with a clear i
 
 13. Update this file's section: ## 4. Architecure; Describe the desing of this system on layers
     + **Output:** [## 4. Architecture](#4-architecure) below — layers description with data flow diagrams, BLE connection lifecycle, key design decisions, mains flow and timings.
-9. Generate in docs/architecture a file that describes the desing of this system using to different layout: Layer and other to your choose (tell me which one you decided to use)
+14. Generate in docs/architecture a file that describes the desing of this system using to different layout: Layer and other to your choose (tell me which one you decided to use)
     + **Output:** [`docs/architecture/system/system_design.md`](architecture/system/system_design.md)
     + **Layout 1 — Layer View:** Mermaid flowchart TB — horizontal layers from HW/SDK up to Scheduler
     + **Layout 2 — Component-Interaction View (Data-Centric):** Mermaid flowchart LR — shows blEspressoProfile as central data hub with producers/consumers
+
+15. Extract and generate the full GATT attribute table for this project
+    + Clearly identify for each characteristic: **Characteristic Declaration**, **Characteristic Value**, **Client Characteristic Configuration Descriptor (CCCD)**, and **Characteristic User Description Descriptor (CUDD)**
+    + Include: UUID (16-bit + full 128-bit base), Properties, Value length, Data format, corresponding `blEspressoProfile` field, and ATT handle offsets
+    + **Output:** [`docs/ble/gatt_table.md`](ble/gatt_table.md)
+    + **Diagram:** Create a GATT diagram in Mermaid `timeline` format, where each characteristic is a timeline step. Use information from `gatt_table.md` for each characteristic's UUID, properties, data length, format and `blEspressoProfile` field. Save as `gatt_table.mermaid` alongside `gatt_table.md`. **Does NOT follow § 3 diagram.mermaid Requirements** — uses `timeline` diagram type, no swimlane format.
+    + **Image:** Generate a `.svg` image from the Mermaid file. Save as `gatt_table.svg` in the same folder.
 
 The list of flows should live in ../flows/index.md and each individual flow should be defined in a separate folder.
 
@@ -195,4 +202,6 @@ At startup: if both Brew and Steam switches are held → **Tune mode** (step-fun
 | 2–8. Module maps | [`docs/architecture/modules/modules.md`](architecture/modules/modules.md) | Tables + Mermaid flowcharts |
 | 9. System design | [`docs/architecture/system/system_design.md`](architecture/system/system_design.md) | **Layout 1:** Layer View (Mermaid flowchart TB), **Layout 2:** Component-Interaction View (Mermaid flowchart LR, data-centric) |
 | 10–12. Data flows | [`docs/architecture/flows/index.md`](architecture/flows/index.md) | Mermaid flowchart LR per flow |
+| 15. GATT attribute table | [`docs/ble/gatt_table.md`](ble/gatt_table.md) | Full ATT table: Declaration + Value + CCCD + CUDD for all 17 characteristics across 2 services |
+| 15. GATT diagram | [`docs/ble/gatt_table.mermaid`](ble/gatt_table.mermaid) / [`gatt_table.svg`](ble/gatt_table.svg) | `timeline` diagram — each characteristic as a step, grouped by service, showing UUID, properties, length, format, blEspressoProfile field |
 

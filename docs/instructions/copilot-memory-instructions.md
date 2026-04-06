@@ -332,6 +332,8 @@ Six phases, sequential (each must pass before starting the next):
 | System Diagrams | `docs/architecture/system/system-ble-lifecycle_diagram.mermaid/.svg` | BLE connection state machine |
 | Flow Index | `docs/architecture/flows/index.md` | Index of 7 data flows |
 | Individual Flows | `docs/architecture/flows/[flow-name]/` | Each flow: `README.md` + `[flow-name]_diagram.mermaid` + `[flow-name]_diagram.svg` |
+| GATT Table | `docs/ble/gatt_table.md` | Full ATT attribute table: both services, all 17 characteristics — Declaration, Value, CCCD, CUDD |
+| GATT Diagram | `docs/ble/gatt_table.mermaid` / `gatt_table.svg` | 5-swimlane flowchart LR — ATT legend, Brew service, PID service, RX write path, TX notify path |
 
 ---
 
@@ -352,8 +354,9 @@ All diagrams follow the rules defined in `docs/ArchitectureAnalysis.md § 3`.
 | `docs/architecture/modules/` | `modules-[description]_diagram.mermaid` | `modules-pid-control_diagram.mermaid` |
 | `docs/architecture/system/` | `system-[description]_diagram.mermaid` | `system-layer-view_diagram.mermaid` |
 | `docs/mem/` | `[name].mermaid` | `external_mem.mermaid` |
+| `docs/ble/` | `[name].mermaid` | `gatt_table.mermaid` |
 
-### Current Diagram Inventory (14 files)
+### Current Diagram Inventory (15 files)
 
 **Flows** (`docs/architecture/flows/*/`):
 - `ble-temp-notification_diagram` — SPI RTD → blEspressoProfile → BLE notify
@@ -376,6 +379,9 @@ All diagrams follow the rules defined in `docs/ArchitectureAnalysis.md § 3`.
 
 **Memory** (`docs/mem/`):
 - `external_mem` — W25Q64 address regions and StorageController mapping
+
+**BLE** (`docs/ble/`):
+- `gatt_table` — full ATT attribute table: two services, all 17 characteristics, RX/TX data paths
 
 ### SVG Regeneration (Windows — run from workspace root)
 ```powershell
@@ -406,5 +412,6 @@ When working on this codebase:
 12. **Profile mode** exists but is commented out in `main.c` — Classic mode is active
 13. **Step function mode** = both switches held at power-on (diagnostic/PID tuning)
 14. **NVM key** `0x00AA00AA` at address 0x04 indicates valid stored data
-15. **Diagrams:** 14 `.mermaid` files, each with a matching `.svg` — see Section 15 for naming rules
+15. **Diagrams:** 15 `.mermaid` files (14 architecture + 1 BLE GATT), each with matching `.svg` — see Section 15 for naming rules
 16. **Do not edit `.svg` files directly** — regenerate from `.mermaid` source using `mmdc`
+17. **GATT table** — full ATT detail in `docs/ble/gatt_table.md`; diagram in `gatt_table.mermaid/.svg`

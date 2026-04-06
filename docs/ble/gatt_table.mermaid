@@ -1,0 +1,76 @@
+timeline
+    title BLEspresso GATT Attribute Map — Service 0x1400 (Brew) + Service 0x1500 (PID)
+
+    section Brew Service 0x1400  |  UUID base f364adc9-b000-xxxx-ba50-05ca45bf8abc
+        0x1401 Machine Status
+            : Decl  S1+1  Props=Read+Notify
+            : Value S1+2  10 B  ASCII string
+            : CCCD  S1+3  0x0001=Notify ON
+            : Field — (status string)
+        0x1402 Boiler Water Temp
+            : Decl  S1+4  Props=Read+Notify
+            : Value S1+5  4 B  XXXD format (tenths °C)
+            : CCCD  S1+6  0x0001=Notify 1s period
+            : Field temp_Boiler
+        0x1403 Boiler Target Temp
+            : Decl  S1+7  Props=Read+Write
+            : Value S1+8  4 B  XXXD format (tenths °C)
+            : Field temp_Target
+        0x140A Steam Target Temp
+            : Decl  S1+9  Props=Read+Write
+            : Value S1+10  4 B  XXXD format (tenths °C)
+            : Field sp_StemTemp
+        0x1404 Pre-Infusion Power
+            : Decl  S1+11  Props=Read+Write
+            : Value S1+12  3 B  XXD format (tenths %)
+            : Field prof_preInfusePwr
+        0x1405 Pre-Infusion Time
+            : Decl  S1+13  Props=Read+Write
+            : Value S1+14  3 B  XXD format (tenths s)
+            : Field prof_preInfuseTmr
+        0x1406 Infusion Power
+            : Decl  S1+15  Props=Read+Write
+            : Value S1+16  4 B  XXXD format (tenths %)
+            : Field prof_InfusePwr
+        0x1407 Infusion Time
+            : Decl  S1+17  Props=Read+Write
+            : Value S1+18  3 B  XXD format (tenths s)
+            : Field prof_InfuseTmr
+        0x1408 Declining Power
+            : Decl  S1+19  Props=Read+Write
+            : Value S1+20  4 B  XXXD format (tenths %)
+            : Field Prof_DeclinePwr
+        0x1409 Declining Time
+            : Decl  S1+21  Props=Read+Write
+            : Value S1+22  3 B  XXD format (tenths s)
+            : Field Prof_DeclineTmr
+
+    section PID Service 0x1500  |  UUID base CUSTOM_PID_SERVICE_UUID_BASE
+        0x1501 P Term
+            : Decl  S2+1  Props=Read+Write
+            : Value S2+2  4 B  XXXD format
+            : Field Pid_P_term  default 9.52156
+        0x1502 I Term
+            : Decl  S2+3  Props=Read+Write
+            : Value S2+4  3 B  XXD format
+            : Field Pid_I_term  default 0.3
+        0x1503 I Max
+            : Decl  S2+5  Props=Read+Write
+            : Value S2+6  4 B  XXXD format
+            : Field Pid_Imax_term  default 100.0
+        0x1504 I Windup
+            : Decl  S2+7  Props=Read+Write
+            : Value S2+8  1 B  ASCII '0'=off '1'=on
+            : Field Pid_Iwindup_term
+        0x1505 D Term
+            : Decl  S2+9  Props=Read+Write
+            : Value S2+10  3 B  XXD format
+            : Field Pid_D_term  default 0.0
+        0x1506 D LPF
+            : Decl  S2+11  Props=Read+Write
+            : Value S2+12  4 B  XXXD format
+            : Field Pid_Dlpf_term
+        0x1507 Gain
+            : Decl  S2+13  Props=Read+Write
+            : Value S2+14  4 B  XXXD format
+            : Field Pid_Gain_term
