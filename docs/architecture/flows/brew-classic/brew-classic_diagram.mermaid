@@ -1,0 +1,63 @@
+flowchart LR
+    subgraph switches["🔘 AC Switches"]
+        direction LR
+        SW_BREW["Brew Switch\n(AC toggle)"]
+        SW_STEAM["Steam Switch\n(AC toggle)"]
+    end
+
+    subgraph ac_drv["🔌 ac_inputs_drv"]
+        direction LR
+        ISR_B["acinBrew_eventHandler()\nISR counter++"]
+        ISR_S["acinSteam_eventHandler()\nISR counter++"]
+        SENSE["fcn_SenseACinputs_Sixty_ms()\nthreshold evaluation"]
+        GET_B["fcn_GetInputStatus_Brew()"]
+        GET_S["fcn_GetInputStatus_Steam()"]
+    end
+
+    subgraph main_sched["📋 main.c Scheduler"]
+        direction LR
+        TF_BTN["tf_ReadButton\n60ms"]
+        TF_SVC["tf_svc_EspressoApp\n100ms"]
+    end
+
+    subgraph classic["⚙️ BLEspressoServices — Classic Mode"]
+        direction LR
+        SM["State Machine\ncl_idle → cl_Mode_1..3"]
+        IGAIN["Adaptive I-Gain\nPhase1: ×6.5\nPhase2: ×2.0"]
+        MONITOR["Monitor Tick\n500ms: read temp\nrun PID"]
+    end
+
+    subgraph outputs["🔥 SSR Outputs"]
+        direction LR
+        SSR_H["Boiler Heater\nfcn_boilerSSR_pwrUpdate()"]
+        SSR_P["Pump Motor\nfcn_pumpSSR_pwrUpdate()"]
+        SSR_S["Solenoid Valve\nfcn_SolenoidSSR_On/Off()"]
+    end
+
+    subgraph temp_loop["🌡️ Temp Feedback"]
+        direction LR
+        RTD["MAX31865\nBoiler Temp"]
+        PID["PID-IMC Type A\n→ heatingPwr"]
+    end
+
+    SW_BREW -->|"AC zero-cross"| ISR_B
+    SW_STEAM -->|"AC zero-cross"| ISR_S
+    ISR_B --> SENSE
+    ISR_S --> SENSE
+    SENSE --> GET_B
+    SENSE --> GET_S
+
+    TF_BTN -->|"60ms"| SENSE
+    TF_SVC -->|"100ms"| SM
+    GET_B --> SM
+    GET_S --> SM
+
+    SM -->|"Brew ON"| SSR_P
+    SM -->|"Brew ON"| SSR_S
+    SM -->|"Steam ON"| IGAIN
+    SM --> MONITOR
+
+    MONITOR --> RTD
+    RTD --> PID
+    PID --> SSR_H
+    IGAIN -.-> PID

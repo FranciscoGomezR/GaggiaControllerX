@@ -1,0 +1,61 @@
+flowchart LR
+    subgraph boot["🚀 Boot Sequence"]
+        direction LR
+        INIT["stgCtrl_Init()\nReset + JEDEC ID"]
+        CHK["stgCtrl_ChkForUserData()\nRead magic key"]
+        LOAD["stgCtrl_ReadUserData()\n65 bytes → struct"]
+    end
+
+    subgraph nvm["💾 W25Q64 Flash — Page 0"]
+        direction LR
+        KEY["0x04: Magic Key\n0x00AA00AA"]
+        WCYC["0x00: Write Cycles\nMSW=Shot, LSW=Ctrl"]
+        SHOT_NVM["0x08–0x27: Shot Profile\n32 bytes"]
+        CTRL_NVM["0x28–0x40: Controller\n25 bytes"]
+    end
+
+    subgraph profile["📋 blEspressoProfile"]
+        direction LR
+        BREW_F["temp_Target\nprof_preInfuse*\nprof_Infuse*\nProf_Decline*"]
+        PID_F["Pid_P/I/Imax\nPid_D/Dlpf/Gain\nPid_Iwindup"]
+    end
+
+    subgraph ble_trigger["📱 BLE Trigger"]
+        direction LR
+        FLG_B["flg_BrewCfg = 1\n(after DeclineTmr write)"]
+        FLG_P["flg_PidCfg = 1\n(after Gain write)"]
+    end
+
+    subgraph store["💾 Store Operations"]
+        direction LR
+        RD["Read 65B\nfrom NVM"]
+        SHOT_WR["stgCtrl_StoreShotProfileData()\nPreserve ctrl section\nEncode brew floats\nIncrement MSW cycle\nSector erase + write"]
+        CTRL_WR["stgCtrl_StoreControllerData()\nPreserve shot section\nEncode PID floats\nIncrement LSW cycle\nSector erase + write"]
+    end
+
+    subgraph propagate["⚡ Propagate to Controllers"]
+        direction LR
+        TO_PUMP["fcn_LoadNewPumpParameters()"]
+        TO_PID["fcn_loadPID_ParamToCtrl_Temp()"]
+    end
+
+    INIT --> CHK
+    CHK -->|"key match"| LOAD
+    KEY --> CHK
+    SHOT_NVM --> LOAD
+    CTRL_NVM --> LOAD
+    LOAD --> BREW_F
+    LOAD --> PID_F
+    BREW_F --> TO_PUMP
+    PID_F --> TO_PID
+
+    FLG_B --> SHOT_WR
+    FLG_P --> CTRL_WR
+    BREW_F --> SHOT_WR
+    PID_F --> CTRL_WR
+    SHOT_WR --> RD
+    CTRL_WR --> RD
+    RD --> SHOT_NVM
+    RD --> CTRL_NVM
+    SHOT_WR --> WCYC
+    CTRL_WR --> WCYC

@@ -1,0 +1,56 @@
+flowchart LR
+    subgraph profile["📋 blEspressoProfile"]
+        direction LR
+        TEMP_B["temp_Boiler"]
+        TEMP_T["temp_Target"]
+        SP_BREW["sp_BrewTemp\nsp_StemTemp"]
+        PROF["prof_preInfusePwr/Tmr\nprof_InfusePwr/Tmr\nProf_DeclinePwr/Tmr"]
+        PID_P["Pid_P/I/Iboost\nImax/D/Iwindup"]
+        NVM_F["All fields\n(for NVM store)"]
+    end
+
+    subgraph tempCtrl["🎛️ tempController"]
+        direction LR
+        TC_UPD["fcn_updateTemperatureController()\nreads: temp_Boiler, temp_Target"]
+        TC_LOAD["fcn_loadPID_ParamToCtrl_Temp()\nreads: Pid_* fields"]
+        TC_BOOST["fcn_loadIboost_ParamToCtrl_Temp()\nreads: Pid_Iboost_term"]
+        TC_SP["fcn_loaddSetPoint_ParamToCtrl_Temp()\nreads: sp_BrewTemp/StemTemp"]
+    end
+
+    subgraph pumpCtrl["⚡ PumpController"]
+        direction LR
+        PC_LOAD["fcn_LoadNewPumpParameters()\nreads: prof_* fields"]
+    end
+
+    subgraph bleSvcs["⚙️ BLEspressoServices"]
+        direction LR
+        BS_MODE["Classic/Profile Mode\nreads: all fields\nwrites: temp_Target"]
+    end
+
+    subgraph btDrv["☁️ bluetooth_drv"]
+        direction LR
+        BT_TX["ble_update_boilerWaterTemp()\nreads: temp_Boiler"]
+    end
+
+    subgraph storCtrl["💾 StorageController"]
+        direction LR
+        SC_SHOT["stgCtrl_StoreShotProfileData()\nreads: brew prof fields"]
+        SC_CTRL["stgCtrl_StoreControllerData()\nreads: PID fields"]
+    end
+
+    TEMP_B --> TC_UPD
+    TEMP_T --> TC_UPD
+    PID_P --> TC_LOAD
+    PID_P --> TC_BOOST
+    SP_BREW --> TC_SP
+
+    PROF --> PC_LOAD
+
+    TEMP_T --> BS_MODE
+    SP_BREW --> BS_MODE
+    PROF --> BS_MODE
+
+    TEMP_B --> BT_TX
+
+    NVM_F --> SC_SHOT
+    NVM_F --> SC_CTRL

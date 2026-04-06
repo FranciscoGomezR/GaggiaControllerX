@@ -1,0 +1,54 @@
+flowchart TB
+    subgraph L0["Layer 0 — Hardware & SDK"]
+        direction LR
+        SD["S132 SoftDevice\n(BLE 5.0 stack)"]
+        SPI_HW["nrf_drv_spi\n(SPI Master)"]
+        TMR_HW["nrf_drv_timer\n(HW Timers 1–3)"]
+        GPIO_HW["nrf_drv_gpiote\n(GPIO + ISR)"]
+        PWM_HW["nrf_drv_pwm\n(PWM output)"]
+        APPTMR["app_timer\n(SW timer on RTC1)"]
+    end
+
+    subgraph L1["Layer 1 — Peripheral Drivers"]
+        direction LR
+        SPI_D["spi_Devices\nMAX31865 + W25Q64"]
+        SSR_D["solidStateRelay_Controller\nBoiler + Pump + Solenoid"]
+        AC_D["ac_inputs_drv\nBrew + Steam switches"]
+        DC12_D["dc12Vouput_drv\n12V PWM"]
+    end
+
+    subgraph L1U["Layer 1 — Utilities"]
+        direction LR
+        PID_U["x205_PID_Block\nPID-IMC algorithms"]
+        FLT_U["x201_DigitalFilters\nRC low-pass"]
+        NUM_U["x04_Numbers\nfloat↔char, clamp"]
+        SM_U["x01_StateMachine\nx02_FlagValues"]
+    end
+
+    subgraph L2["Layer 2 — Application Controllers"]
+        direction LR
+        TEMP_C["tempController\nPID-IMC boiler regulation"]
+        PUMP_C["PumpController\n3-stage pressure profile"]
+        STOR_C["StorageController\nNVM persistence"]
+        BSVC["BLEspressoServices\nClassic · Profile · StepFcn"]
+    end
+
+    subgraph L3["Layer 3 — BLE Communication"]
+        direction LR
+        BT_DRV["bluetooth_drv\nStack init, event routing,\nGATT notifications"]
+        BLE_CUS["ble_cus\nCustom GATT services:\n0x1400 (Brew)\n0x1500 (PID)"]
+    end
+
+    subgraph L4["Layer 4 — Scheduler / Main"]
+        direction LR
+        MAIN["main.c\n20ms tick → flag scheduler\nInit sequence"]
+    end
+
+    L4 --> L3
+    L4 --> L2
+    L2 --> L1
+    L2 --> L1U
+    L3 --> L2
+    L1 --> L0
+    L1U --> L0
+    L3 --> L0

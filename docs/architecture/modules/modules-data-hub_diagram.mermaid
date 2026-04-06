@@ -1,0 +1,43 @@
+flowchart LR
+    subgraph Writers["✍️ Writers → blEspressoProfile"]
+        direction TB
+        W1["bluetooth_drv\ncus_evt_handler()\nBLE char writes"]
+        W2["StorageController\nstgCtrl_ReadUserData()\nNVM boot load"]
+        W3["main.c\nspim_ReadRTDconverter()\n→ temp_Boiler"]
+        W4["BLEspressoServices\nMode switches\n→ temp_Target"]
+        W5["main.c\n(test data)\ncompile-time defaults"]
+    end
+
+    subgraph Profile["📋 blEspressoProfile"]
+        direction TB
+        P1["nvmWcycles / nvmKey"]
+        P2["temp_Target / temp_Boiler"]
+        P3["sp_BrewTemp / sp_StemTemp"]
+        P4["prof_preInfusePwr/Tmr"]
+        P5["prof_InfusePwr/Tmr"]
+        P6["Prof_DeclinePwr/Tmr"]
+        P7["Pid_P/I/Iboost/Imax/D"]
+        P8["Pid_Iwindup/Dlpf/Gain"]
+    end
+
+    subgraph Readers["📖 Readers ← blEspressoProfile"]
+        direction TB
+        R1["tempController\nfcn_updateTemperatureController()\nreads: temp_Boiler, temp_Target"]
+        R2["PumpController\nfcn_LoadNewPumpParameters()\nreads: prof_* fields"]
+        R3["BLEspressoServices\nreads: all fields\nfor mode logic"]
+        R4["bluetooth_drv\nble_update_boilerWaterTemp()\nreads: temp_Boiler"]
+        R5["StorageController\nstgCtrl_Store*()\nwrites to NVM"]
+        R6["ble_cus\ncustom_value_char_add()\ninit characteristic values"]
+    end
+
+    W1 --> Profile
+    W2 --> Profile
+    W3 --> Profile
+    W4 --> Profile
+    W5 --> Profile
+    Profile --> R1
+    Profile --> R2
+    Profile --> R3
+    Profile --> R4
+    Profile --> R5
+    Profile --> R6

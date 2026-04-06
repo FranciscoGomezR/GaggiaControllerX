@@ -1,0 +1,59 @@
+flowchart LR
+    subgraph trigger["🔘 Trigger"]
+        direction LR
+        BREW_SW["Brew Switch\nAC_SWITCH_ASSERTED"]
+    end
+
+    subgraph profile_sm["⚙️ Profile Mode State Machine"]
+        direction LR
+        IDLE["prof_idle"]
+        PRE["prof_Mode\nPre-Infusion"]
+        INF["prof_Mode_Infuse\nInfusion"]
+        DEC["prof_Mode_Decline\nDecline"]
+        HALT["prof_Mode_Halt"]
+    end
+
+    subgraph ramp["📈 Ramp Engine"]
+        direction LR
+        GROWTH["a_expGrowth[]\n0→39→63→...→100%"]
+        DECAY["a_expDecay[]\n100→60→37→...→0%"]
+        DELTA["delta_pumpPwr\n= target - base"]
+        PWR["pumpPwr\n= base + delta × table[i]"]
+    end
+
+    subgraph params["📋 blEspressoProfile"]
+        direction LR
+        P1["prof_preInfusePwr\nprof_preInfuseTmr"]
+        P2["prof_InfusePwr\nprof_InfuseTmr"]
+        P3["Prof_DeclinePwr\nProf_DeclineTmr"]
+    end
+
+    subgraph outputs["🔥 Actuators"]
+        direction LR
+        SOL["Solenoid SSR\nON at start\nOFF at halt"]
+        PUMP["Pump SSR\nfcn_pumpSSR_pwrUpdate()"]
+        HEAT["Boiler Heater\nPID concurrent"]
+    end
+
+    BREW_SW -->|"assert"| IDLE
+    IDLE --> PRE
+    PRE -->|"timer expires"| INF
+    INF -->|"timer expires"| DEC
+    DEC -->|"timer expires"| HALT
+    HALT -->|"ramp to 0"| IDLE
+
+    P1 -->|"power, time"| PRE
+    P2 -->|"power, time"| INF
+    P3 -->|"power, time"| DEC
+
+    PRE --> DELTA
+    INF --> DELTA
+    DEC --> DELTA
+    DELTA --> GROWTH
+    DELTA --> DECAY
+    GROWTH --> PWR
+    DECAY --> PWR
+
+    PRE -->|"solenoid ON"| SOL
+    PWR -->|"100ms updates"| PUMP
+    HALT -->|"solenoid OFF"| SOL

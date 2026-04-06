@@ -1,0 +1,52 @@
+flowchart LR
+    subgraph Input["📱 Setpoint Source"]
+        direction LR
+        BLE["BLE App\n(mobile phone)"]
+        NVM["W25Q64\n(stored params)"]
+    end
+
+    subgraph Controller["🎛️ PID-IMC Type A Controller"]
+        direction LR
+        SP["Setpoint\ntemp_Target"]
+        SUM(("+\n−"))
+        PID["PID Block\nKp·e + Ki·∫e·dt\n+ Kd·d²e/dt²"]
+        SAT["Output\nClamp\n0–1000"]
+        AW["Anti-Windup\nClamp"]
+    end
+
+    subgraph Adaptive["⚡ Adaptive I-Gain"]
+        direction LR
+        PHI1["Phase 1\nKi × 6.5\n(pump active)"]
+        PHI2["Phase 2\nKi × 2.0\n(recovery)"]
+        PHI0["Steady\nKi × 1.0"]
+    end
+
+    subgraph Plant["🔥 Boiler Plant"]
+        direction LR
+        SSR["SSR Driver\n(zero-cross)"]
+        BOILER["Boiler\nHeater"]
+    end
+
+    subgraph Sensor["🌡️ Temperature Sensor"]
+        direction LR
+        RTD["MAX31865\nRTD Sensor"]
+        SPI["SPI Read\n(100 ms)"]
+    end
+
+    BLE -->|"Write char 0x1403"| SP
+    NVM -->|"Boot load"| SP
+    SP --> SUM
+    SUM --> PID
+    PID --> SAT
+    SAT -->|"heatingPwr\n0–1000"| SSR
+    SSR --> BOILER
+    BOILER --> RTD
+    RTD --> SPI
+    SPI -->|"temp_Boiler"| SUM
+
+    SAT -.->|"saturated?"| AW
+    AW -.->|"reduce ∫e"| PID
+
+    PHI1 -.->|"during brew"| PID
+    PHI2 -.->|"post-brew"| PID
+    PHI0 -.->|"temp ≈ SP"| PID

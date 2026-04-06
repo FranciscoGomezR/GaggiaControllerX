@@ -1,0 +1,73 @@
+flowchart LR
+    subgraph sensor["🌡️ RTD Sensor"]
+        direction LR
+        PT100["PT100\nProbe"]
+        MAX["MAX31865\nADC"]
+    end
+
+    subgraph spi["🔌 spi_Devices"]
+        direction LR
+        READ["spim_ReadRTDconverter()\nSPI state machine"]
+        CVD["Callendar-Van Dusen\nquadratic → °C"]
+        TVAR["rtdTemperature"]
+    end
+
+    subgraph main_s["📋 main.c"]
+        direction LR
+        FLAG["tf_GetBoilerTemp\n100ms"]
+        STORE["blEspressoProfile\n.temp_Boiler"]
+    end
+
+    subgraph svc["⚙️ BLEspressoServices"]
+        direction LR
+        MON["SVC_MONITOR_TICK\n500ms"]
+        UPD["fcn_updateTemperatureController()"]
+    end
+
+    subgraph pid_ctrl["🎛️ tempController"]
+        direction LR
+        SP["SetPoint\n= temp_Target"]
+        PV["ProcessVar\n= temp_Boiler"]
+        PID["fcn_update_PIDimc_typeA()\nP + I + D"]
+        AW["Anti-Windup\nClamp"]
+        OUT["heatingPwr\n0–1000"]
+    end
+
+    subgraph adaptive["⚡ Adaptive Ki"]
+        direction LR
+        KI1["Brew ON\nKi × 6.5"]
+        KI2["Brew OFF\nKi × 2.0"]
+        KI0["Temp ≈ SP\nKi × 1.0"]
+    end
+
+    subgraph ssr["🔥 SSR Driver"]
+        direction LR
+        ZC["Zero-Cross\nDetector"]
+        BSSR["Boiler SSR\nGPIO"]
+        HEATER["Boiler\nHeater"]
+    end
+
+    PT100 --> MAX
+    MAX -->|"SPI"| READ
+    READ --> CVD
+    CVD --> TVAR
+    FLAG -->|"100ms"| READ
+    TVAR -->|"f_getBoilerTemperature()"| STORE
+
+    MON -->|"500ms"| UPD
+    STORE --> PV
+    UPD --> SP
+    UPD --> PV
+    SP --> PID
+    PV --> PID
+    PID --> AW
+    AW --> OUT
+
+    KI1 -.-> PID
+    KI2 -.-> PID
+    KI0 -.-> PID
+
+    OUT -->|"fcn_boilerSSR_pwrUpdate()"| ZC
+    ZC --> BSSR
+    BSSR --> HEATER
+    HEATER -.->|"heat transfer"| PT100

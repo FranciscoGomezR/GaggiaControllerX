@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> Advertising: Power On + BLE Init
+    Advertising --> Connected: GAP_EVT_CONNECTED
+    Advertising --> Sleep: ADV_EVT_IDLE (timeout)
+    Connected --> Advertising: GAP_EVT_DISCONNECTED
+    Connected --> Connected: GATTS_EVT_WRITE\n(update blEspressoProfile)
+    Connected --> Connected: Notification TX\n(temp every 1s)
+    Connected --> Advertising: GATT_TIMEOUT
+    Sleep --> [*]

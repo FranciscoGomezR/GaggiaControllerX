@@ -1,0 +1,63 @@
+flowchart LR
+    subgraph external["🌍 External"]
+        direction TB
+        PHONE["📱 Mobile App\n(BLE Client)"]
+        BREW_SW["🔘 Brew Switch"]
+        STEAM_SW["🔘 Steam Switch"]
+        RTD_S["🌡️ MAX31865\n(Boiler Temp)"]
+        NVM_S["💾 W25Q64\n(Flash Storage)"]
+    end
+
+    subgraph core["🎯 Core — blEspressoProfile"]
+        direction TB
+        PROF["blEspressoProfile\n──────────────\ntemp_Target / temp_Boiler\nsp_BrewTemp / sp_StemTemp\nprof_preInfuse* / prof_Infuse*\nProf_Decline*\nPid_P/I/Iboost/Imax/D\nnvmWcycles / nvmKey"]
+    end
+
+    subgraph controllers["⚙️ Controllers"]
+        direction TB
+        TEMP_C["tempController\nPID-IMC Type A\n→ heatingPwr"]
+        PUMP_C["PumpController\n3-Stage Ramp\n→ pumpPwr"]
+        MODE_C["BLEspressoServices\nClassic / Profile / StepFcn\nMode State Machines"]
+    end
+
+    subgraph actuators["🔥 Actuators"]
+        direction TB
+        BOILER["Boiler Heater SSR\n(zero-cross)"]
+        PUMP["Pump Motor SSR\n(phase-angle)"]
+        SOL["Solenoid Valve SSR\n(on/off)"]
+    end
+
+    subgraph scheduler["📋 main.c Scheduler"]
+        direction TB
+        SCH["20ms SW Timer\n─────────────\n60ms: Read Buttons\n100ms: Read Temp\n100ms: Run Service\n1000ms: BLE Update"]
+    end
+
+    %% Data into profile
+    PHONE -->|"BLE GATT writes\nchar → float → field"| PROF
+    RTD_S -->|"SPI 100ms\n→ temp_Boiler"| PROF
+    NVM_S -->|"Boot load\n65 bytes → struct"| PROF
+
+    %% Data out of profile
+    PROF -->|"temp_Boiler + temp_Target"| TEMP_C
+    PROF -->|"prof_* fields"| PUMP_C
+    PROF -->|"all fields"| MODE_C
+    PROF -->|"temp_Boiler\n(1s BLE notify)"| PHONE
+    PROF -->|"brew/PID config\n(on BLE trigger)"| NVM_S
+
+    %% Controllers → Actuators
+    TEMP_C -->|"heatingPwr 0–1000"| BOILER
+    PUMP_C -->|"pumpPwr 0–1000"| PUMP
+    MODE_C -->|"on/off"| SOL
+    MODE_C -->|"pump on/off (classic)"| PUMP
+
+    %% Switches → Mode
+    BREW_SW -->|"debounce 60ms"| MODE_C
+    STEAM_SW -->|"debounce 60ms"| MODE_C
+
+    %% Mode writes back to profile
+    MODE_C -->|"temp_Target\n(brew↔steam SP)"| PROF
+
+    %% Scheduler orchestrates
+    SCH --> MODE_C
+    SCH --> TEMP_C
+    SCH -->|"flag-based dispatch"| PROF

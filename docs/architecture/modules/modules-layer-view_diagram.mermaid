@@ -1,0 +1,71 @@
+flowchart TB
+    subgraph BLE_Layer["☁️ BLE Layer (SoftDevice S132)"]
+        direction LR
+        BDRV["bluetooth_drv"]
+        BCUS["ble_cus\n(GATT Services)"]
+        BDRV <--> BCUS
+    end
+
+    subgraph App_Layer["⚙️ Application Layer"]
+        direction LR
+        BSVC["BLEspressoServices\n(Mode State Machines)"]
+        TEMP["tempController\n(PID-IMC)"]
+        PUMP["PumpController\n(3-Stage Profile)"]
+        STOR["StorageController\n(NVM Persistence)"]
+    end
+
+    subgraph Util_Layer["🔧 Utilities Layer"]
+        direction LR
+        PIDB["x205_PID_Block"]
+        FILT["x201_DigitalFilters"]
+        NUMS["x04_Numbers"]
+        SMC["x01_StateMachine"]
+    end
+
+    subgraph Periph_Layer["🔌 Peripheral Drivers"]
+        direction LR
+        SPI["spi_Devices\n(MAX31865 + W25Q64)"]
+        SSR["solidStateRelay_Ctrl\n(Boiler + Pump + Solenoid)"]
+        ACIN["ac_inputs_drv\n(Brew + Steam)"]
+        DC12["dc12Vouput_drv"]
+    end
+
+    subgraph HW_Layer["🖥️ Hardware / SDK"]
+        direction LR
+        SPIH["nrf_drv_spi"]
+        TMRH["nrf_drv_timer"]
+        GPIOH["nrf_drv_gpiote"]
+        PWMH["nrf_drv_pwm"]
+        SD["SoftDevice S132"]
+    end
+
+    MAIN["main.c\n(Scheduler)"]
+
+    MAIN -->|"init + flags"| BSVC
+    MAIN -->|"tf_ReadButton\n60ms"| ACIN
+    MAIN -->|"tf_GetBoilerTemp\n100ms"| SPI
+    MAIN -->|"tf_ble_update\n1000ms"| BDRV
+    MAIN -->|"init"| STOR
+    MAIN -->|"init + start"| TEMP
+
+    BDRV -->|"cus_evt_handler\n→ blEspressoProfile"| BSVC
+    BCUS -->|"on_write events"| BDRV
+
+    BSVC -->|"fcn_updateTempCtrl"| TEMP
+    BSVC -->|"fcn_boilerSSR_pwrUpdate\nfcn_pumpSSR_pwrUpdate"| SSR
+    BSVC -->|"fcn_PumpStateDriver"| PUMP
+
+    TEMP -->|"fcn_update_PIDimc_typeA"| PIDB
+    TEMP -->|"fcn_boilerSSR_pwrUpdate"| SSR
+
+    PUMP -->|"fcn_pumpSSR_pwrUpdate\nfcn_SolenoidSSR_On/Off"| SSR
+
+    STOR -->|"spi_NVMemoryRead/Write"| SPI
+    NUMS -->|"fcn_ChrArrayToFloat\nfcn_FloatToChrArray"| BDRV
+
+    SPI --> SPIH
+    SSR --> TMRH
+    SSR --> GPIOH
+    ACIN --> GPIOH
+    DC12 --> PWMH
+    BLE_Layer --> SD

@@ -1,0 +1,42 @@
+flowchart LR
+    subgraph mobile["📱 Mobile App"]
+        direction LR
+        APP_BREW["Brew Config\nScreen"]
+        APP_PID["PID Tuning\nScreen"]
+    end
+
+    subgraph softdevice["☁️ SoftDevice S132"]
+        direction LR
+        SD_EVT["BLE_GATTS_EVT_WRITE"]
+    end
+
+    subgraph ble_cus["🔧 ble_cus.c"]
+        direction LR
+        ON_WRITE["on_write()\nMatch characteristic handle\n→ build ble_cus_evt_t"]
+    end
+
+    subgraph bt_drv["🔧 bluetooth_drv.c"]
+        direction LR
+        EVT_H["cus_evt_handler()\nswitch(evt_type)"]
+        PARSE["fcn_ChrArrayToFloat()\nASCII → float"]
+        FLG_BREW["flg_BrewCfg = 1\n(after DeclineTmr)"]
+        FLG_PID["flg_PidCfg = 1\n(after Gain)"]
+    end
+
+    subgraph profile["📋 blEspressoProfile"]
+        direction LR
+        TEMP["temp_Target\nsp_StemTemp"]
+        BREW["prof_preInfusePwr/Tmr\nprof_InfusePwr/Tmr\nProf_DeclinePwr/Tmr"]
+        PID["Pid_P/I/Imax/D\nPid_Iwindup/Dlpf/Gain"]
+    end
+
+    APP_BREW -->|"Write chars\n0x1403–0x140A"| SD_EVT
+    APP_PID -->|"Write chars\n0x1501–0x1507"| SD_EVT
+    SD_EVT --> ON_WRITE
+    ON_WRITE --> EVT_H
+    EVT_H --> PARSE
+    PARSE -->|"temp_Target"| TEMP
+    PARSE -->|"brew profile"| BREW
+    PARSE -->|"PID params"| PID
+    EVT_H --> FLG_BREW
+    EVT_H --> FLG_PID

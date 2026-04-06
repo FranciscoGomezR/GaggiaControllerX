@@ -1,0 +1,48 @@
+flowchart LR
+    subgraph sensor["🌡️ MAX31865 RTD Sensor"]
+        direction LR
+        RTD["RTD Probe\n(PT100)"]
+        ADC["MAX31865\nADC Register"]
+    end
+
+    subgraph spi_drv["🔌 spi_Devices.c"]
+        direction LR
+        SPI_READ["spim_ReadRTDconverter()\n100ms state machine"]
+        CALC["Callendar-Van Dusen\nADC → Resistance → °C"]
+        PRIV["rtdTemperature\n(private float)"]
+        GET["f_getBoilerTemperature()"]
+    end
+
+    subgraph main["📋 main.c — Scheduler"]
+        direction LR
+        TF_TEMP["tf_GetBoilerTemp\n(100ms flag)"]
+        STORE["blEspressoProfile\n.temp_Boiler = temp"]
+        TF_BLE["tf_ble_update\n(1000ms flag)"]
+    end
+
+    subgraph ble_drv["☁️ bluetooth_drv.c"]
+        direction LR
+        UPDATE["ble_update_boilerWaterTemp()\nfloat → ASCII 4-char"]
+        CUS_UP["ble_cus_BoilerWaterTemperature_update()\nGATT notification"]
+    end
+
+    subgraph mobile["📱 Mobile App"]
+        direction LR
+        NOTIF["Char 0x1402\nNotification RX"]
+        DISPLAY["Display\nBoiler Temp"]
+    end
+
+    RTD --> ADC
+    ADC -->|"SPI Mode 3"| SPI_READ
+    SPI_READ --> CALC
+    CALC --> PRIV
+    PRIV --> GET
+
+    TF_TEMP -->|"every 100ms"| SPI_READ
+    GET -->|"f_getBoilerTemperature()"| STORE
+
+    TF_BLE -->|"every 1000ms"| UPDATE
+    STORE -->|"temp_Boiler"| UPDATE
+    UPDATE --> CUS_UP
+    CUS_UP -->|"BLE Notification"| NOTIF
+    NOTIF --> DISPLAY

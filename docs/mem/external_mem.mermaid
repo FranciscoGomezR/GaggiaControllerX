@@ -1,0 +1,114 @@
+flowchart LR
+    subgraph host["🖥️ nRF52832 — SPI Master"]
+        direction LR
+        MCU["nRF52832\nnrf_drv_spi\nInstance 1\n1 MHz Mode 3"]
+        CS["GPIO 15\nSPI_NVM_CS_PIN\nChip Select"]
+        WP["GPIO 17\nSPI_NVM_WP_PIN\nWrite Protect"]
+        HD["GPIO 18\nSPI_NVM_HD_PIN\nHold"]
+    end
+
+    subgraph cmds["⚙️ NVM Command Set"]
+        direction LR
+        CMD_RST["0x66 / 0x99\nReset Enable\n+ Reset"]
+        CMD_ID["0x9F\nRead JEDEC ID\nMFR=0xEF\nDEV=0x4017"]
+        CMD_WE["0x06\nWrite Enable\n(before write)"]
+        CMD_RD["0x03\nRead Data\n(24-bit addr)"]
+        CMD_WR["0x02\nPage Program\n(256 B max)"]
+        CMD_ER["0x20\nSector Erase\n(4 KB)"]
+    end
+
+    subgraph device["💾 W25Q64FV — 64 Mbit Serial Flash"]
+        direction LR
+        subgraph overview["📐 Device Overview"]
+            direction LR
+            OV1["Capacity: 64 Mbit / 8 MB"]
+            OV2["Pages: 32,768 × 256 B"]
+            OV3["Sectors: 2,048 × 4 KB"]
+            OV4["SPI up to 104 MHz"]
+        end
+
+        subgraph addrspace["🗺️ Address Space  0x000000 – 0x7FFFFF"]
+            direction LR
+
+            subgraph page0["📄 Page 0  [0x000000–0x0000FF]  — USER DATA (65 / 256 bytes)"]
+                direction LR
+
+                subgraph wcycle["🔢 Write-Cycle Section  0x00–0x03  4 B"]
+                    direction LR
+                    WC1["0x00-0x01\nLSW: Controller\nWrite Count"]
+                    WC2["0x02-0x03\nMSW: Shot Profile\nWrite Count"]
+                end
+
+                subgraph keyblk["🔑 Key Section  0x04–0x07  4 B"]
+                    direction LR
+                    KEY["nvmKey\n0x00AA00AA = valid\n0xFFFFFFFF = empty"]
+                end
+
+                subgraph shotblk["☕ Shot Profile Section  0x08–0x27  32 B\nWritten by stgCtrl_StoreShotProfileData()"]
+                    direction LR
+                    SP1["0x08-0x0B\ntemp_Target\nfloat"]
+                    SP2["0x0C-0x0F\n(reserved)\n0x00000000"]
+                    SP3["0x10-0x13\nprof_preInfusePwr\nfloat"]
+                    SP4["0x14-0x17\nprof_preInfuseTmr\nfloat"]
+                    SP5["0x18-0x1B\nprof_InfusePwr\nfloat"]
+                    SP6["0x1C-0x1F\nprof_InfuseTmr\nfloat"]
+                    SP7["0x20-0x23\nProf_DeclinePwr\nfloat"]
+                    SP8["0x24-0x27\nProf_DeclineTmr\nfloat"]
+                end
+
+                subgraph ctrlblk["🎛️ Controller Section  0x28–0x40  25 B\nWritten by stgCtrl_StoreControllerData()"]
+                    direction LR
+                    CP1["0x28-0x2B\nPid_P_term\nfloat Kp"]
+                    CP2["0x2C-0x2F\nPid_I_term\nfloat Ki"]
+                    CP3["0x30-0x33\nPid_Imax_term\nfloat"]
+                    CP4["0x34-0x37\nPid_D_term\nfloat Kd"]
+                    CP5["0x38-0x3B\nPid_Dlpf_term\nfloat"]
+                    CP6["0x3C-0x3F\nPid_Gain_term\nfloat"]
+                    CP7["0x40\nPid_Iwindup_term\nbool"]
+                end
+
+                subgraph unused0["⬜ Unused  0x41–0xFF  191 B"]
+                    direction LR
+                    UN0["Available\nfor future use"]
+                end
+            end
+
+            subgraph restpages["⬜ Pages 1–32767  [0x000100–0x7FFFFF]  ~8 MB Unused"]
+                direction LR
+                REST["Not used by\ncurrent application"]
+            end
+        end
+    end
+
+    subgraph app["⚙️ Application — StorageController"]
+        direction LR
+        INIT["stgCtrl_Init()\nReset + JEDEC ID\nvalidate MFR 0xEF"]
+        CHK["stgCtrl_ChkForUserData()\nRead 0x04–0x07\ncheck nvmKey"]
+        RDUSR["stgCtrl_ReadUserData()\nRead 65 B Page 0\nparse → blEspressoProfile"]
+        WSHOT["stgCtrl_StoreShotProfileData()\nRead-modify-write\nShot section only\nIncrement MSW cycle"]
+        WCTRL["stgCtrl_StoreControllerData()\nRead-modify-write\nCtrl section only\nIncrement LSW cycle"]
+    end
+
+    MCU -->|"SPI bus\nMOSI/MISO/SCK"| CMD_ID
+    CS -->|"active low\nCS assert"| device
+    WP -->|"high = write\nenabled"| device
+    HD -->|"high = active"| device
+
+    CMD_RST --> device
+    CMD_ID --> device
+    CMD_WE --> device
+    CMD_RD --> device
+    CMD_WR --> device
+    CMD_ER --> device
+
+    INIT -->|"NVM_CMD_RESET\nNVM_CMD_JEDEC_ID"| CMD_ID
+    CHK -->|"NVM_CMD_READ\naddr 0x04"| CMD_RD
+    RDUSR -->|"NVM_CMD_READ\n65 bytes from 0x00"| CMD_RD
+    WSHOT -->|"NVM_CMD_SECTOR_ER\nNVM_CMD_WR_ENABLE\nNVM_CMD_PAGE_WR"| CMD_ER
+    WCTRL -->|"NVM_CMD_SECTOR_ER\nNVM_CMD_WR_ENABLE\nNVM_CMD_PAGE_WR"| CMD_ER
+
+    CMD_RD -->|"bytes 0x04–0x07"| keyblk
+    CMD_RD -->|"bytes 0x08–0x27"| shotblk
+    CMD_RD -->|"bytes 0x28–0x40"| ctrlblk
+    CMD_WR -->|"preserve ctrl\nupdate shot"| shotblk
+    CMD_WR -->|"preserve shot\nupdate ctrl"| ctrlblk
