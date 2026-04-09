@@ -264,7 +264,7 @@ uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData)
     //Key is already stored in nvm, proceed to store new data
     dataStatus=STORAGE_USERDATA_STORED;
     //Copy the read-keyd into the TX string
-    mempcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
+    memcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
             &rxUserData[PARAM_NVM_KEYSECTION_ADD],
             PARAM_NVM_KEYSECTION_SIZE);
   }else if(nvm_Key == PARAM_NVM_EMPTY_DATA){
@@ -294,7 +294,7 @@ uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData)
     txUserData[BE_USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
     txUserData[BE_USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
     //Copy the block section that will not be updated into the TX string (Controller profile)
-    mempcpy(&txUserData[PARAM_NVM_CONTROLLER_ADD],
+    memcpy(&txUserData[PARAM_NVM_CONTROLLER_ADD],
             &rxUserData[PARAM_NVM_CONTROLLER_ADD],
             PARAM_NVM_CONTROLLER_SIZE);
     //converting and pasting the new shot profule into TX string
@@ -350,7 +350,7 @@ uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData)
     //Key is already stored in nvm, proceed to store new data
     dataStatus=STORAGE_USERDATA_STORED;
     //Copy the read-keyd into the TX string
-    mempcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
+    memcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
             &rxUserData[PARAM_NVM_KEYSECTION_ADD],
             PARAM_NVM_KEYSECTION_SIZE);
   }else if(nvm_Key == PARAM_NVM_EMPTY_DATA){
@@ -380,7 +380,7 @@ uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData)
     txUserData[BE_USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
     txUserData[BE_USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
     //Copy the block section that will not be updated into the TX string (shot profile)
-    mempcpy(&txUserData[PARAM_NVM_SHOTPROFILE_ADD],
+    memcpy(&txUserData[PARAM_NVM_SHOTPROFILE_ADD],
             &rxUserData[PARAM_NVM_SHOTPROFILE_ADD],
             PARAM_NVM_SHOTPROFILE_SIZE);
     //converting and pasting the new controller profule into TX string

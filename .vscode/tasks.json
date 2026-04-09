@@ -1,0 +1,186 @@
+{
+  // See https://code.visualstudio.com/docs/debugtest/tasks for full reference.
+  // Run tasks via: Terminal > Run Task  (or Ctrl+Shift+P → "Tasks: Run Task")
+  // Default build task: Ctrl+Shift+B
+  "version": "2.0.0",
+  // Prepend the make.exe directory to PATH so all tasks find it
+  // regardless of whether the VS Code terminal session has a stale PATH.
+  "options": {
+    "env": {
+      "PATH": "C:\\Users\\franc\\AppData\\Local\\Microsoft\\WinGet\\Packages\\ezwinports.make_Microsoft.Winget.Source_8wekyb3d8bbwe\\bin;${env:PATH}"
+    }
+  },
+  "tasks": [
+
+    // -------------------------------------------------------------------------
+    // BUILD TASKS
+    // -------------------------------------------------------------------------
+    {
+      "label": "Build: ble_espresso_app",
+      "detail": "Compile all sources → _build/nrf52832_xxaa.hex",
+      "type": "shell",
+      "command": "make",
+      "args": ["-j4"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      // GCC problem matcher: surfaces errors/warnings in the Problems panel
+      "problemMatcher": {
+        "owner": "gcc",
+        "fileLocation": ["relative", "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "reveal": "always",   // always bring the terminal to front
+        "panel": "dedicated", // this task always reuses the same terminal pane
+        "clear": true,        // clear terminal before each run
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Build: clean",
+      "detail": "Remove _build output directory",
+      "type": "shell",
+      "command": "make",
+      "args": ["clean"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Build: verbose",
+      "detail": "Compile with full command echo (VERBOSE=1)",
+      "type": "shell",
+      "command": "make",
+      "args": ["-j4", "VERBOSE=1"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+
+    // -------------------------------------------------------------------------
+    // FLASH TASKS  (Terminal > Run Task → pick one of the three below)
+    // -------------------------------------------------------------------------
+
+    {
+      // OPTION 1 — Day-to-day workflow.
+      // Softdevice must already be on the chip.
+      // Builds the project first, then flashes only the application hex.
+      "label": "Flash: application only",
+      "detail": "Build → flash app hex. Use this for normal development iterations.",
+      "type": "shell",
+      "command": "make",
+      "args": ["flash"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "test",
+      "dependsOn": "Build: ble_espresso_app",   // always build before flashing
+      "dependsOrder": "sequence",                // build must finish first
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated", // dedicated terminal keeps flash log separate from build log
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+
+    {
+      // OPTION 2 — First-time chip setup.
+      // Flash the s132 v7.2.0 softdevice standalone.
+      // Run this once on a blank or freshly erased chip before flashing the app.
+      "label": "Flash: softdevice only (s132 v7.2.0)",
+      "detail": "Flash s132 softdevice alone. Run once on a new/erased chip.",
+      "type": "shell",
+      "command": "make",
+      "args": ["flash_softdevice"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "test",
+      // No dependsOn — softdevice flash is independent of the application build
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+
+    {
+      // OPTION 3 — Full reflash (recovery / clean slate).
+      // Chip erase → softdevice → application in one shot.
+      // Use when recovering a bricked device or doing a clean production flash.
+      "label": "Flash: full (erase + softdevice + application)",
+      "detail": "Chip erase → softdevice → app. Use for recovery or production programming.",
+      "type": "shell",
+      "command": "make",
+      "args": ["flash_all"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "test",
+      "dependsOn": "Build: ble_espresso_app",
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+
+    // -------------------------------------------------------------------------
+    // UTILITY
+    // -------------------------------------------------------------------------
+    {
+      "label": "Flash: erase chip only",
+      "detail": "Mass-erase all flash (softdevice + app). Chip will be blank after this.",
+      "type": "shell",
+      "command": "make",
+      "args": ["erase"],
+      "options": {
+        "cwd": "${workspaceFolder}/ble_espresso_app/pca10040/s132/armgcc"
+      },
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    }
+
+  ]
+}

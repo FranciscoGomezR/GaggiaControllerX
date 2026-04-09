@@ -1,0 +1,5 @@
+r
+loadfile ../../../../../nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/hex/s132_nrf52_7.2.0_softdevice.hex
+r
+g
+exit
