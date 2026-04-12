@@ -1,28 +1,3 @@
-
-/*************************************************************************************
-* 	Revision History:
-*
-*   Date          	CP#           Author
-*   DD-MM-YYYY      XXXXX:1		Initials	Description of change
-*   -----------   ------------  ---------   ------------------------------------
-*  	XX-XX-XXXX		X.X			ABCD		"CHANGE"	
-*
-*************************************************************************************
-*
-* File/
-
-*  "More detail description of the code"
-*
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-*  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-*  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-*  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-*  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-*  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*  DEALINGS IN THE SOFTWARE.
-*
-*/
 #ifndef BLESPRESSOSERVICES_H__
 #define BLESPRESSOSERVICES_H__
 //*****************************************************************************
@@ -117,30 +92,30 @@ Default:
   Both swtiches = Mode 3
 
 Mode1:
-•Active Elements:
+Active Elements:
   - 1st Solenoid vale 
   - 2nd Pump (100ms after)(contonously)
-•Goal:
+Goal:
   - pull a shot of espresso
-•Description:
+Description:
   - Forces water from the reservoir tank into the boiler and then into the group head;
     Water is at target Temperature (The electric resistors ARE ACTIVE)
  
 Mode2:
-•Active Elements:
+Active Elements:
   - Electric resistors
-•Goal:
+Goal:
   - Generate steam
-•Description:
+Description:
   - 
 
 Mode3:
-•Active Elements:
+Active Elements:
   - Electric resistors
   - Pump
-•Goal:
+Goal:
   - circulate hot water through the group head without activarting the solenoid;
-•Description:
+Description:
   - 
 */
 void fcn_service_ClassicMode(acInput_status_t swBrew, acInput_status_t swSteam);
@@ -154,20 +129,20 @@ Default:
   Both swtiches = Mode 3
 
 Mode1:
-•Active Elements:
+Active Elements:
   - 1st Solenoid vale 
   - 2nd Pump (100ms after)(contonously)
-•Goal:
+Goal:
   - pull a shot of espresso
-•Description:
+Description:
   - Forces water from the reservoir tank into the boiler and then into the group head;
     Water is at target Temperature (The electric resistors ARE ACTIVE)
  
 Mode2:
-•Goal: Same behaviour as classic mode
+Goal: Same behaviour as classic mode
   - 
 Mode3:
-•Goal: Same behaviour as classic mode
+Goal: Same behaviour as classic mode
   - 
 */
 void fcn_service_ProfileMode(acInput_status_t swBrew, acInput_status_t swSteam);
@@ -176,22 +151,22 @@ void fcn_service_ProfileMode(acInput_status_t swBrew, acInput_status_t swSteam);
     Brew switch   = Mode 1
     Steam Switch  = Mode 2
 Mode1:
-•Active Elements:
+Active Elements:
   - 1st Solenoid vale 
   - 2nd Pump (500ms after)(contonously)
-•Goal:
+Goal:
   - Fill the boiler with water
-•Description:
+Description:
   - Forces water from the reservoir tank into the boiler and then into the group head;
     Water is not heated (The electric resistors are not active)
 
 Mode2:
-•Active Elements:
+Active Elements:
   - Electric resistors
-•Goal:
+Goal:
   - Run Step Function
   - Print boiler temp into COM port (500ms)
-•Description:
+Description:
   - Start printing boiler temperature every 500ms.
   - Wait for 5 seconds before activating electric resistors.
   - activate resistors at full power

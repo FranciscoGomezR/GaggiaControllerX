@@ -7,8 +7,6 @@
 #include "bluetooth_drv.h"
 #include "BLEspressoServices.h"
 #include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 #include "x04_Numbers.h"
 
 //*****************************************************************************
