@@ -1,5 +1,7 @@
 # Unit Testing Plan — GaggiaControllerX
 
+> **TDD Implementation:** Phase 1 and Phase 2 tests are implemented via the TDD workflow in [TDD_TESTPLAN.md](TDD_TESTPLAN.md) — covers known issues H1, H3, H4, H5, M1, M5 as Red-Green-Refactor targets.
+
 ## Test Strategy
 
 Six sequential phases, each building on the previous. Each phase has one environment, one scope, and one set of pass criteria. A phase must pass before starting the next.
