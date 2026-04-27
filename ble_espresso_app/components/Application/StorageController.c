@@ -4,6 +4,7 @@
 //
 //*****************************************************************************
 #include "StorageController.h"
+#include "x04_Numbers.h"
 #include "bluetooth_drv.h"
 #include "nrf_fstorage.h"
 #include "nrf_fstorage_sd.h"
@@ -100,6 +101,13 @@
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
+/* Validate and clamp every float field in the profile struct.
+ * Returns PROFILE_VALID if all fields were within safe ranges.
+ * Returns PROFILE_CLAMPED if any field had to be corrected.
+ * Used by StorageController after NVM read and by bluetooth_drv after BLE writes. */
+profileValidation_status_t fcn_ValidateAndClampProfile(
+    bleSpressoUserdata_struct *profile);
+
 void parsingBytesToFloat(uint8_t* ptr_Fbytes, float* ptr_Fnumber);
 void parsingBytesTo32bitVar(uint8_t* ptr_Fbytes, uint32_t* ptr_number);
 void encodeFloatToBytes(float fnumber, uint8_t* ptr_Fbytes);
@@ -227,6 +235,9 @@ uint32_t stgCtrl_ReadUserData(bleSpressoUserdata_struct* ptr_rxData)
 
     ptr_rxData->Pid_Iwindup_term = rxUserData[BE_USERDATA_PID_IWINDUPTERM];
     dataStatus=STORAGE_USERDATA_LOADED;
+    /* M3 fix: validate all deserialized float fields and clamp out-of-range
+     * values to safe defaults.  Protects against corrupted flash data. */
+    fcn_ValidateAndClampProfile(ptr_rxData);
   }else{
     dataStatus=STORAGE_USERDATA_EMPTY;
   }
@@ -529,4 +540,45 @@ void encodeFloatToBytes(float fnumber, uint8_t* ptr_Fbytes)
   *ptr_Fbytes++ = (uint8_t)((hexTemp >> 8) & 0xFF);
   *ptr_Fbytes++ = (uint8_t)((hexTemp >> 16) & 0xFF);
   *ptr_Fbytes =   (uint8_t)((hexTemp >> 24) & 0xFF);  // MSB
+}
+
+
+/* ---------------------------------------------------------------------------
+ * fcn_ValidateAndClampProfile
+ *
+ * Validates every user-configurable float field in the profile struct.
+ * Out-of-range or non-finite values are replaced with safe defaults.
+ * Returns PROFILE_VALID if no corrections were needed, PROFILE_CLAMPED if
+ * at least one field was corrected.
+ * --------------------------------------------------------------------------- */
+profileValidation_status_t fcn_ValidateAndClampProfile(
+    bleSpressoUserdata_struct *profile)
+{
+    bool all_valid = true;
+
+    /* ---- Temperature setpoints ---- */
+    all_valid &= fcn_ValidateFloat_InRange(&profile->temp_Target,       20.0f, 110.0f,  95.5f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->sp_BrewTemp,       20.0f, 110.0f,  95.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->sp_StemTemp,      100.0f, 160.0f, 110.0f);
+
+    /* ---- Brew profile — power (0–100 %) ---- */
+    all_valid &= fcn_ValidateFloat_InRange(&profile->prof_preInfusePwr,  0.0f, 100.0f,  75.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->prof_InfusePwr,     0.0f, 100.0f, 100.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Prof_DeclinePwr,    0.0f, 100.0f,  85.0f);
+
+    /* ---- Brew profile — timers (seconds) ---- */
+    all_valid &= fcn_ValidateFloat_InRange(&profile->prof_preInfuseTmr,  0.0f,  15.0f,  8.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->prof_InfuseTmr,     0.0f,  60.0f,  8.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Prof_DeclineTmr,    0.0f,  30.0f,  8.0f);
+
+    /* ---- PID gains ---- */
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_P_term,         0.0f, 100.0f,   9.5f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_I_term,         0.0f,  10.0f,   0.3f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Iboost_term,    0.0f,  20.0f,   6.5f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Imax_term,      0.0f, 500.0f, 100.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_D_term,         0.0f,  50.0f,   0.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Dlpf_term,      0.0f,   1.0f,   0.0f);
+    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Gain_term,     0.01f,  10.0f,   0.0f);
+
+    return all_valid ? PROFILE_VALID : PROFILE_CLAMPED;
 }

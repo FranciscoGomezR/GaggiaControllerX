@@ -1,0 +1,71 @@
+---
+:source:
+  :file: test/test_ProfileValidator.c
+  :dirname: test
+  :basename: test_ProfileValidator.c
+:successes:
+- :test: test_H2_SingleField_InRange_Valid
+  :line: 58
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_SingleField_OutOfRange_Clamped
+  :line: 67
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_SingleField_AtLowerBoundary_Valid
+  :line: 76
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_SingleField_AtUpperBoundary_Valid
+  :line: 85
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_ValidProfile_ReturnsValid
+  :line: 98
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_TempTarget_NaN_ClampedToDefault
+  :line: 109
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_TempTarget_Inf_ClampedToDefault
+  :line: 119
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_TempTarget_Negative_ClampedToDefault
+  :line: 129
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_TempTarget_TooHigh_ClampedToDefault
+  :line: 139
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_PidPterm_Negative_Clamped
+  :line: 149
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_PidIterm_TooHigh_Clamped
+  :line: 158
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_ProfTimerZero_IsValid
+  :line: 167
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_ProfDeclineTmr_Negative_Clamped
+  :line: 177
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H2_MultipleFieldsInvalid_AllClamped
+  :line: 186
+  :message: ''
+  :unity_test_time: 0
+:failures: []
+:ignores: []
+:counts:
+  :total: 14
+  :passed: 14
+  :failed: 0
+  :ignored: 0
+:stdout: []
+:time: 0.16313119999904302

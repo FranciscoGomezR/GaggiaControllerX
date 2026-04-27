@@ -640,7 +640,9 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_DEBUG("BLE -> New target Temperature");
             #endif
-            blEspressoProfile.temp_Target = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);              
+            blEspressoProfile.temp_Target = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerTempTarget.ptr_data,3,1);
+            /* H2 fix: reject values outside safe operating range */
+            fcn_ValidateFloat_InRange(&blEspressoProfile.temp_Target, 20.0f, 110.0f, 93.0f);              
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)blEspressoProfile.temp_Target);
             #endif
@@ -651,6 +653,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             NRF_LOG_DEBUG("BLE -> New steam target Temperature");
             #endif
             blEspressoProfile.sp_StemTemp = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sBoilerSteamTemp.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.sp_StemTemp, 100.0f, 160.0f, 130.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m STEAM SETPOINT: %d . %d \r\n \033[0;40m", (int)blEspressoProfile.sp_StemTemp);
             #endif
@@ -682,6 +685,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_POWER
         case BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT:
             blEspressoProfile.prof_preInfusePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_preInfusePwr.ptr_data,2,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.prof_preInfusePwr, 0.0f, 100.0f, 50.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m PreInfusion POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_preInfusePwr);
             #endif
@@ -689,6 +693,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_TIME
         case BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT:
             blEspressoProfile.prof_preInfuseTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_preInfuseTmr.ptr_data,2,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.prof_preInfuseTmr, 0.0f, 15.0f, 3.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m PreInfusion TIME: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_preInfuseTmr);
             #endif
@@ -696,6 +701,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  BREW_INFUSION_POWER
         case BLE_BREW_INFUSION_POWER_CHAR_RX_EVT:   
             blEspressoProfile.prof_InfusePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_InfusePwr.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.prof_InfusePwr, 0.0f, 100.0f, 100.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Infusion POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_InfusePwr);
             #endif
@@ -703,6 +709,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
      //Event -> Get new value from mobile for char:  BREW_INFUSION_TIME
         case BLE_BREW_INFUSION_TIME__CHAR_RX_EVT:
             blEspressoProfile.prof_InfuseTmr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_InfuseTmr.ptr_data,2,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.prof_InfuseTmr, 0.0f, 60.0f, 25.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Infusion TIME: %d \r\n \033[0;40m", (int)blEspressoProfile.prof_InfuseTmr);
             #endif
@@ -710,6 +717,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  BREW_DECLINING_PR_POWER
         case BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT:
             blEspressoProfile.Prof_DeclinePwr = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.s_DeclinePwr.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Prof_DeclinePwr, 0.0f, 100.0f, 60.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Declining Pressure POWER: %d \r\n \033[0;40m", (int)blEspressoProfile.Prof_DeclinePwr);
             #endif
@@ -727,6 +735,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  PID_P_TERM
         case PID_P_TERM_CHAR_RX_EVT:
             blEspressoProfile.Pid_P_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_P_term.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Pid_P_term, 0.0f, 100.0f, 9.5f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m P Term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_P_term);
             #endif
@@ -734,6 +743,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  PID_I_TERM
         case PID_I_TERM_CHAR_RX_EVT:
             blEspressoProfile.Pid_I_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_I_term.ptr_data,2,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Pid_I_term, 0.0f, 10.0f, 0.3f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m I term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_I_term);
             #endif
@@ -741,6 +751,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     //Event -> Get new value from mobile for char:  PID_I_TERM
         case PID_I_TERM_INT_CHAR_RX_EVT:
             blEspressoProfile.Pid_Imax_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Imax_term.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Pid_Imax_term, 0.0f, 500.0f, 100.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Imax Term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_Imax_term);
             #endif
@@ -769,6 +780,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
      //Event -> Get new value from mobile for char:  PID_D_TERM
         case PID_D_TERM_CHAR_RX_EVT:
             blEspressoProfile.Pid_D_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_D_term.ptr_data,2,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Pid_D_term, 0.0f, 50.0f, 0.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m D term: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_D_term);
             #endif
@@ -776,6 +788,7 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
      //Event -> Get new value from mobile for char:  PID_D_TERM_LPF
         case PID_D_TERM_LPF_CHAR_RX_EVT:
             blEspressoProfile.Pid_Dlpf_term = (float) fcn_ChrArrayToFloat((char *)p_evt->param_command.sPid_Dlpf_term.ptr_data,3,1);
+            fcn_ValidateFloat_InRange(&blEspressoProfile.Pid_Dlpf_term, 0.0f, 1.0f, 0.0f);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m D Low-Pass Filter: %d \r\n \033[0;40m", (int)blEspressoProfile.Pid_Dlpf_term);
             #endif

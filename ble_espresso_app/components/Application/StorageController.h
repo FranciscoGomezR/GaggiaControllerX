@@ -53,6 +53,12 @@ typedef enum {
   STORAGE_CONTROLLERDATA_STORED,
   STORAGE_USERDATA_ERROR
 } storageCtrl_status_t;
+
+typedef enum {
+    PROFILE_VALID    = 0,  /* all fields within range — no change */
+    PROFILE_CLAMPED  = 1,  /* one or more fields were out of range and clamped to safe default */
+    PROFILE_REJECTED = 2   /* NaN or Inf detected — all fields reset (not currently used) */
+} profileValidation_status_t;
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION

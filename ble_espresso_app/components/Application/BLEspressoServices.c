@@ -30,6 +30,9 @@
 #define SERVICE_BASE_T_MS       100                       //time in ms
 #define SVC_MONITOR_TICK          (500/SERVICE_BASE_T_MS)   //Ticks
 
+/* H5: Maximum continuous brew duration.  120 s @ 100 ms/tick = 1200 ticks. */
+#define MAX_BREW_TICKS            (120000 / SERVICE_BASE_T_MS)
+
 #define SVC_LOG_LEN             80
 
 static const char *TAG_SYS_MONITOR ="[System]  <Monitor:";
@@ -145,6 +148,12 @@ static s_profile_data_t profileData = {
 
 //Data to be printed into the Serial Terminal 
 static uint32_t serviceTick=0;
+
+#ifdef TEST
+void     test_set_serviceTick(uint32_t t) { serviceTick = t; }
+uint32_t test_get_serviceTick(void)       { return serviceTick; }
+#endif
+
 static uint32_t app_timeStamp;
 static uint16_t app_PumpPwr;
 static uint16_t app_HeatPwr;
@@ -179,7 +188,7 @@ uint32_t intservice_GetSwitcheState(void);
 void fcn_service_ClassicMode(acInput_status_t swBrew, acInput_status_t swSteam)
 {
   float svrDurationT;
-  uint8_t  aLogText[SVC_LOG_LEN]={0};
+  char  aLogText[SVC_LOG_LEN]={0};
   static bool espApp_initialized = false;  // persists across calls
 
   if (!espApp_initialized) {
@@ -238,6 +247,14 @@ void fcn_service_ClassicMode(acInput_status_t swBrew, acInput_status_t swSteam)
         //SWITCH Activation: Brew
         if(swBrew == AC_SWITCH_ASSERTED )
         {
+          /* M5 fix: revert phase2 recovery gain before applying a new I-boost.
+           * Prevents gain stacking when the user cycles brew ON/OFF rapidly
+           * before the boiler recovers to target temperature. */
+          if (classicData.b_boostI_phase2) {
+            fcn_multiplyI_ParamToCtrl_Temp((bleSpressoUserdata_struct*)&blEspressoProfile, 1.0f);
+            classicData.b_boostI_phase2 = false;
+            classicData.b_normalI = true;
+          }
           //Save: Strating time
           classicData.svcStartT = serviceTick;
           //ACTION: Increase I gain
@@ -279,6 +296,20 @@ void fcn_service_ClassicMode(acInput_status_t swBrew, acInput_status_t swSteam)
     break;
 
     case cl_Mode_1:
+        /* H5: enforce maximum brew duration — auto-stop after 120 s */
+        if ((serviceTick - classicData.svcStartT) >= MAX_BREW_TICKS) {
+          espressoService_Status.sRunning = cl_idle;
+          classicData.pumpPwr = PUMP_PWR_OFF;
+          #if SERVICE_PUMP_ACTION_EN == 1
+            fcn_pumpSSR_pwrUpdate(classicData.pumpPwr);
+          #endif
+          fcn_multiplyI_ParamToCtrl_Temp((bleSpressoUserdata_struct*)&blEspressoProfile, 2.0f);
+          classicData.b_boostI_phase1 = false;
+          classicData.b_boostI_phase2 = true;
+          b_phase2_flag = true;
+          fcn_SolenoidSSR_Off();
+          break;
+        }
         //SWITCH Deactivation: Brew
         if(swBrew == AC_SWITCH_ASSERTED )
         {}else{
@@ -481,6 +512,12 @@ void fcn_service_ProfileMode(acInput_status_t swBrew, acInput_status_t swSteam)
         //SWITCH Activation: Brew
         if(swBrew == AC_SWITCH_ASSERTED )
         {
+          /* M5 fix: revert phase2 recovery gain before starting a new brew cycle. */
+          if (profileData.b_boostI_phase2) {
+            fcn_multiplyI_ParamToCtrl_Temp((bleSpressoUserdata_struct*)&blEspressoProfile, 1.0f);
+            profileData.b_boostI_phase2 = false;
+            profileData.b_normalI = true;
+          }
           profileData.b_activeFlg=true;
           profileData.b_normalI=false;
           profileData.b_boostI_phase1=true;
@@ -541,6 +578,18 @@ void fcn_service_ProfileMode(acInput_status_t swBrew, acInput_status_t swSteam)
     break;
 
     case prof_Mode:
+      /* H5: enforce maximum brew duration — auto-stop after 120 s */
+      if ((serviceTick - profileData.svcStartT) >= MAX_BREW_TICKS) {
+        profileData.b_activeFlg = false;
+        profileData.b_boostI_phase1 = false;
+        profileData.b_boostI_phase2 = true;
+        fcn_multiplyI_ParamToCtrl_Temp((bleSpressoUserdata_struct*)&blEspressoProfile, 2.0f);
+        app_PumpPwr = PUMP_PWR_OFF;
+        fcn_pumpSSR_pwrUpdate(app_PumpPwr);
+        fcn_SolenoidSSR_Off();
+        profileService_Status.sRunning = prof_idle;
+        break;
+      }
       //SWITCH deactivation: Brew
       if(swBrew == AC_SWITCH_ASSERTED )
       {
@@ -996,6 +1045,20 @@ void fcn_service_StepFunction(acInput_status_t swBrew, acInput_status_t swSteam)
     break;
 
     case sf_Mode_2b:
+        /* H4 fix: continuous overheat guard.
+         * If the boiler temperature exceeds the safe operating limit while the
+         * step function is actively applying 100 % heater power, shut the heater
+         * off immediately and exit this mode.  Without this check the heater
+         * runs at 100 % indefinitely even if the temperature overshoots to an
+         * unsafe level. */
+        if ((float)blEspressoProfile.temp_Boiler > 150.0f)
+        {
+          app_HeatPwr = PUMP_PWR_OFF;
+          fcn_boilerSSR_pwrUpdate(app_HeatPwr);
+          Stpfcn_HeatingStatus = false;
+          stepfcnService_Status.sRunning = sf_Mode_max;
+          break;
+        }
         //EXECUTION: Only one time
         if(!Stpfcn_HeatingStatus)
         {

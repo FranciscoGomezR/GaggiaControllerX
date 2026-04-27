@@ -1,0 +1,75 @@
+---
+:source:
+  :file: test/test_x04_Numbers.c
+  :dirname: test
+  :basename: test_x04_Numbers.c
+:successes:
+- :test: test_Constrain_ValueWithinLimits
+  :line: 25
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Constrain_ValueAboveUpper
+  :line: 33
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Constrain_ValueBelowLower
+  :line: 43
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Constrain_ValueAtUpperBoundary
+  :line: 51
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Constrain_ValueAtLowerBoundary
+  :line: 59
+  :message: ''
+  :unity_test_time: 0
+- :test: test_ChrArrayToFloat_93_5
+  :line: 71
+  :message: ''
+  :unity_test_time: 0
+- :test: test_ChrArrayToFloat_Zero
+  :line: 78
+  :message: ''
+  :unity_test_time: 0
+- :test: test_ChrArrayToFloat_130_0
+  :line: 85
+  :message: ''
+  :unity_test_time: 0
+- :test: test_FloatToChrArray_RoundTrip_93_5
+  :line: 96
+  :message: ''
+  :unity_test_time: 0
+- :test: test_FloatToChrArray_RoundTrip_Zero
+  :line: 104
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Hysteresis_WithinBand_UpdatesToNewValue
+  :line: 116
+  :message: ''
+  :unity_test_time: 0
+- :test: test_Hysteresis_OutsideBand_NoChange
+  :line: 123
+  :message: ''
+  :unity_test_time: 0
+- :test: test_HysteresisMinusOffset_BelowLower_ZerosValue
+  :line: 134
+  :message: ''
+  :unity_test_time: 0
+- :test: test_HysteresisMinusOffset_InBand_SubtractsLower
+  :line: 141
+  :message: ''
+  :unity_test_time: 0
+- :test: test_HysteresisMinusOffset_NegativeInput_BelowLower
+  :line: 148
+  :message: ''
+  :unity_test_time: 0
+:failures: []
+:ignores: []
+:counts:
+  :total: 15
+  :passed: 15
+  :failed: 0
+  :ignored: 0
+:stdout: []
+:time: 0.13559140000143088

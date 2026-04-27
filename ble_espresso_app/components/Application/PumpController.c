@@ -327,7 +327,16 @@ void fcn_LoadPumpParam(Struct_PumpProfileData *prt_ProfileParam, Struct_PumpPara
   prt_PumpParam->tCounts_2ndP     = (uint16_t)(prt_ProfileParam->Time_2ndP_ms / PUMP_BASETIME_T_MS);
   /* Counts (time) from step 5 to 6 */
   prt_PumpParam->tCounts_3rdP     = (uint16_t)(prt_ProfileParam->Time_3rdP_ms / PUMP_BASETIME_T_MS);
-  
+
+  /* H1 fix: guard all slope divisors against zero.
+   * A BLE write of 0 for any timing parameter maps to a tCounts of 0.
+   * Integer-division by zero is undefined behaviour and causes a hard fault.
+   * Clamp to 1 so the slope is calculated as a single-step ramp rather
+   * than crashing; the resulting pump profile is non-ideal but safe. */
+  if (prt_PumpParam->RampUp_tCounts   == 0) prt_PumpParam->RampUp_tCounts   = 1;
+  if (prt_PumpParam->RampDown_tCounts == 0) prt_PumpParam->RampDown_tCounts = 1;
+  if (prt_PumpParam->tCounts_3rdP     == 0) prt_PumpParam->tCounts_3rdP     = 1;
+
   /*SLOPES BETWEEN STEPS CALCULATION */
   /* Slope calc from Step 0 to 1  */
   prt_PumpParam->SlopeTo_1stP     = (int16_t)     prt_ProfileParam->Pwr_1stP / prt_PumpParam->RampUp_tCounts;

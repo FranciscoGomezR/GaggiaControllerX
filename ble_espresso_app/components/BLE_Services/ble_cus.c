@@ -223,8 +223,9 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 {
     ble_cus_t * p_cus = (ble_cus_t *) p_context;
-    
-    NRF_LOG_INFO("BLE event received. Event type = %d\r\n", p_ble_evt->header.evt_id); 
+    #if NRF_LOG_CUS_EVT_ENABLED == 1
+      NRF_LOG_INFO("BLE event received. Event type = %d\r\n", p_ble_evt->header.evt_id); 
+    #endif
     if (p_cus == NULL || p_ble_evt == NULL)
     {
         return;

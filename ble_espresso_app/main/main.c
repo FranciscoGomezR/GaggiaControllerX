@@ -179,6 +179,18 @@ static void application_timers_start(void)
     APP_ERROR_CHECK(err_code);
 }
 
+  /**@brief Function for handling the idle state (main loop).
+ *
+ * @details If there is no pending log operation, then sleep until next the next event occurs.
+ */
+static void idle_state_handle(void)
+{
+    if (NRF_LOG_PROCESS() == false)
+    {
+        nrf_pwr_mgmt_run();
+    }
+}
+
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
@@ -485,21 +497,13 @@ int main(void)
       sSchedulerFlags.tf_ble_update = false;
       ble_update_boilerWaterTemp(blEspressoProfile.temp_Boiler);
     }else{}  
+
+    if (NRF_LOG_PROCESS() == false){idle_state_handle();}
   }
 }
 
 
-  /**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-static void idle_state_handle(void)
-{
-    if (NRF_LOG_PROCESS() == false)
-    {
-        nrf_pwr_mgmt_run();
-    }
-}
+
 
    
 void fcn_DO_NOTHING(void)

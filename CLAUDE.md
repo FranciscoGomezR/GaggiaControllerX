@@ -1,9 +1,44 @@
 # GaggiaController
-## Objective 2: Apply TDD to GaggiaController
-I want to explore how to apply TDD (Test Driven Development) in this project that it is alsmot completed. However, I want to explore how can you create small tests to for bug detection, better modularity, refactoring safety, test's document, regression prevention.
+## Objective 3: Phase 2/3 and Phase 3 TDD
+Continue TDD implementation with Phase 2/3 (remaining application issues) and Phase 3 (Ceedling + CMock migration).
 
-Create a plan on how would you implement/apply TDD to this project and present it to me.
-Use these links as starting point to understand what you need to implement:
+### Phase 2/3 — Remaining Application Issues (Unity + FFF)
+Issues deferred from Phase 2, now fully planned in TDD_TESTPLAN.md:
+- **H2**: BLE input validation — extracted into new `ProfileValidator.c` (pure-logic, testable on host)
+- **H5**: Maximum brew time limit — `MAX_BREW_TICKS` guard in `BLEspressoServices.c`
+- **M5**: I-gain boost rapid cycling — revert phase2 recovery before re-boost in `cl_idle`/`prof_idle`
+- **M3 fix**: NVM range validation — call `fcn_ValidateAndClampProfile()` in `stgCtrl_ReadUserData()`
+
+New files to create:
+- `ble_espresso_app/components/Application/ProfileValidator.c` + `.h`
+- `tests/test_profile_validator.c`
+
+Estimated new tests: ~23 (13 H2 + 3 H5 + 3 M5 + 4 M3)
+
+### Phase 3 — Ceedling + CMock Migration
+Migrate Phase 2/3 tests to Ceedling + CMock for:
+- Auto-generated mocks from headers (replaces manual FFF fakes)
+- Strict call ordering via `_Expect()` (fails on out-of-order calls)
+- Unexpected call detection (any unmocked call = failure)
+- Built-in gcov coverage reports
+
+New directory: `tests_ceedling/` with `project.yml` and ported test files.
+Both `tests/` (Makefile + FFF) and `tests_ceedling/` (Ceedling) coexist.
+
+### Reference documents:
+- TDD_TESTPLAN.md — full implementation plan (Phases 1–3)
+- TEST_PLAN.md — master test strategy (Phases 1–6)
+- tests/docs/phase1_test_report.md — Phase 1 results
+- tests/docs/phase2_test_report.md — Phase 2 results
+## End of Objective 3
+
+## Objective 2: Apply TDD to GaggiaController <COMPLETED>
+Phase 1 complete: 32/32 tests, BUG-001 fixed.
+Phase 2 complete: 34/34 tests, H1/H3/H4/M1 fixed, M3 documented.
+Total: 66/66 tests passing.
+
+TDD plan created and documented in TDD_TESTPLAN.md.
+Reference links used:
 - https://medium.com/@encodedots/test-driven-development-in-c-complete-guide-to-tdd-with-c-781787935465
 - https://snyk.io/articles/claude-skills-embedded-systems-engineers/
 - https://www.beningo.com/claude-code-skills-embedded-developers/

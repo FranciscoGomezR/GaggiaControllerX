@@ -1,0 +1,43 @@
+---
+:source:
+  :file: test/test_PumpController.c
+  :dirname: test
+  :basename: test_PumpController.c
+:successes:
+- :test: test_PC_Init_Returns_OK
+  :line: 67
+  :message: ''
+  :unity_test_time: 0
+- :test: test_PC_Init_StateDriver_Returns_IDLE
+  :line: 77
+  :message: ''
+  :unity_test_time: 0
+- :test: test_PC_LoadNewParams_Valid_Returns_OK
+  :line: 87
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H1_ZeroDeclineTime_NoCrash_Returns_OK
+  :line: 98
+  :message: ''
+  :unity_test_time: 0
+- :test: test_H1_AllZeroTimes_NoCrash
+  :line: 111
+  :message: ''
+  :unity_test_time: 0
+- :test: test_PC_StartBrew_ThenDriver_CallsSolenoidOn
+  :line: 131
+  :message: ''
+  :unity_test_time: 0
+- :test: test_PC_CancelBrew_StopsPump
+  :line: 164
+  :message: ''
+  :unity_test_time: 0
+:failures: []
+:ignores: []
+:counts:
+  :total: 7
+  :passed: 7
+  :failed: 0
+  :ignored: 0
+:stdout: []
+:time: 0.1933389999976498

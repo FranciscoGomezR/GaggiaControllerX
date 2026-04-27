@@ -48,6 +48,16 @@ static PID_IMC_Block_fStruct sctrl_profile_phi2;
 static struct_HWTimer sHwTmr_Miliseconds;
 static volatile uint32_t milisTicks=0;
 
+/* ---- Test-only accessors -------------------------------------------------
+ * These helpers are compiled ONLY when -DTEST is set (host-side unit tests).
+ * They are never included in the firmware build.
+ * ----------------------------------------------------------------------- */
+#ifdef TEST
+void     test_set_milisTicks(uint32_t t)  { milisTicks = t; }
+uint32_t test_get_milisTicks(void)        { return (uint32_t)milisTicks; }
+float    test_get_integral_error(void)    { return sctrl_profile_main.HistoryError; }
+#endif /* TEST */
+
 //*****************************************************************************
 //
 //			PRIVATE FUNCTIONS
@@ -195,7 +205,13 @@ tempCtrl_LoadSP_t fcn_loaddSetPoint_ParamToCtrl_Temp(bleSpressoUserdata_struct *
   if( Setpoint == SETPOINT_STEAM)
   {
     prt_profData->temp_Target = prt_profData->sp_StemTemp;
-  }else{} 
+  }else{}
+  /* M1 fix: reset the integral accumulator whenever the setpoint changes.
+   * Without this, accumulated integral from the previous operating mode
+   * (e.g. brew) carries over to the new operating mode (e.g. steam),
+   * causing an overshoot transient.
+   * PID_IMC_Block_fStruct stores the running integral in its HistoryError field. */
+  sctrl_profile_main.HistoryError = 0.0f;
   return TEMPCTRL_SP_LOAD_OK;
 }
 
@@ -244,7 +260,17 @@ void fcn_stopTempCtrlSamplingTmr(void)
  *****************************************************************************/
 float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData)
 {
-  sctrl_profile_main.feedPIDblock.ProcessVariable  = (float)prt_profData->temp_Boiler;
+  /* H3 fix: detect open-circuit (reads near 0 °C) or shorted sensor (reads > 200 °C).
+   * If temperature is outside the physically plausible operating range,
+   * return 0 % output to shut the heater off rather than letting the PID
+   * command 100 % power based on a bogus reading. */
+  float boilerTemp = (float)prt_profData->temp_Boiler;
+  if (boilerTemp < 5.0f || boilerTemp > 200.0f)
+  {
+    return 0.0f;  /* sensor fault — safe default: no heating */
+  }
+
+  sctrl_profile_main.feedPIDblock.ProcessVariable  = boilerTemp;
   sctrl_profile_main.feedPIDblock.SetPoint         = (float)prt_profData->temp_Target;
   sctrl_profile_main.feedPIDblock.TimeMilis        = (uint32_t)milisTicks;
   return (float)fcn_update_PIDimc_typeA((PID_IMC_Block_fStruct *)&sctrl_profile_main);

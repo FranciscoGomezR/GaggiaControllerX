@@ -2,7 +2,7 @@
  * x04_Numbers.h
  *
  *  Created on: 09/03/2017
- *      Author: Juan Fco. Gómez
+ *      Author: Juan Fco. Gmez
  */
 #ifndef X04_NUMBERS_H_
 #define X04_NUMBERS_H_
@@ -46,6 +46,11 @@
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
+/* Validate a single float field.
+ * If *value is NaN, Inf, or outside [min, max] it is replaced by safeDefault.
+ * Returns true if the value was already valid, false if it was corrected. */
+bool fcn_ValidateFloat_InRange(float *value, float min, float max, float safeDefault);
+
 extern int8_t fcn_Constrain_WithinFloats( float* Number, float LowerLimit, float UpperLimit);
 extern void fcn_Constrain_WithinIntValues( long* Number,  long UpperLimit,  long LowerLimit);
 extern void fcn_AddHysteresis_WithinFloat( float* Number, float NumberWihtoutHyst, float OffsetLimit);

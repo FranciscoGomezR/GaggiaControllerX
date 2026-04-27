@@ -7,8 +7,9 @@
 #include "ble_srv_common.h"
 #include "BLEspressoServices.h"
 
-#define BLE_CUS_BLE_OBSERVER_PRIO               2
+#define NRF_LOG_CUS_EVT_ENABLED                 0
 
+#define BLE_CUS_BLE_OBSERVER_PRIO               2
 #define BLE_SERVICE_BLEESPRESSO_UUID            0x1400
 
 #define BLE_CHAR_BLESPRESSO_STATUS__UUID        0x1401
