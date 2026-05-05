@@ -1,16 +1,15 @@
-#ifndef BLESPRESSOSERVICES_H__
-#define BLESPRESSOSERVICES_H__
+#ifndef ESPRESSOMACHINESERVICES_H__
+#define ESPRESSOMACHINESERVICES_H__
 //*****************************************************************************
 //
 //			INCLUDE FILE SECTION FOR THIS MODULE
 //
 //*****************************************************************************
-#include "bluetooth_drv.h"
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "ac_inputs_drv.h"
-
+//#include "bluetooth_drv.h"
 //#include "nrf_log.h"
 //#include "nrf_log_ctrl.h"
 //#include "nrf_log_default_backends.h"
@@ -20,6 +19,7 @@
 //			PUBLIC DEFINES SECTION
 // 
 //*****************************************************************************
+
 #define LOAD_USERDATA_FROM_NVM_EN     0
 #define ALLOW_USERDATA_WR_NVM__EN     1
 #define SET_TEST_USERDATA_EN          1
@@ -32,32 +32,32 @@
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-  typedef struct bleSpressoUserdata_struct{
+  typedef struct{
     uint32_t nvmWcycles;
     uint32_t nvmKey;
-    float temp_Target;
-    float temp_Boiler;
 
-    float sp_BrewTemp;
-    float sp_StemTemp;
+    float boilerTempDegC;
+    float boilerTempSetpointDegC;
+    float brewTempDegC;
+    float steamTempDegC;
 
-    float prof_preInfusePwr;
-    float prof_preInfuseTmr;
-    float prof_InfusePwr;
-    float prof_InfuseTmr;
-    float Prof_DeclinePwr;
-    float Prof_DeclineTmr;
+    float profPreInfusePwr;
+    float profPreInfuseTmr;
+    float profInfusePwr;
+    float profInfuseTmr;
+    float profTaperingPwr;
+    float profTaperingTmr;
 
-    float Pid_P_term;
-    float Pid_I_term;
-    float Pid_Iboost_term;
-    float Pid_Imax_term;
-    bool  Pid_Iwindup_term;
-    float Pid_D_term;
+    float pidPTerm;
+    float pidITerm;
+    float pidIboostTerm;
+    float pidImaxTerm;
+    bool  pidIwindupTerm;
+    float pidDTerm;
 
-    float Pid_Dlpf_term;  //to Be Deleted
-    float Pid_Gain_term;  //to Be Deleted
-   }bleSpressoUserdata_struct;
+    float pidDlpfTerm;  //to Be Deleted
+    float pidGainTerm;  //to Be Deleted
+   }espresso_user_config_t;
    //Old Format
    //   14 floats
    //   2 uint32_t
@@ -65,17 +65,18 @@
    // Equal to 65 bytes
 
 typedef enum {
-  machine_Tune = 0,
-  machine_App
-} s_machine_mode_t;
+  ESPRESSO_MODE__TUNE = 0,
+  ESPRESSO_MODE__MANUAL,
+  ESPRESSO_MODE__AUTOMATIC
+} machine_mode_t;
 
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
 //
 //*****************************************************************************
-extern volatile bleSpressoUserdata_struct blEspressoProfile;
-static uint32_t appModeToRun=machine_App;
+extern volatile espresso_user_config_t g_Espresso_user_config_s;
+static uint32_t g_operation_mode = ESPRESSO_MODE__MANUAL;
 
 //*****************************************************************************
 //
@@ -176,4 +177,4 @@ Description:
 */
 void fcn_service_StepFunction(acInput_status_t swBrew, acInput_status_t swSteam);
 
-#endif // BLESPRESSOSERVICES_H__
+#endif // ESPRESSOMACHINESERVICES_H__

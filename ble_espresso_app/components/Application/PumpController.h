@@ -7,8 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "nrf.h"
-#include  "x01_StateMachineControls.h"
-#include "BLEspressoServices.h"
+#include "x01_StateMachineControls.h"
+#include "espressoMachineServices.h"
 
 //*****************************************************************************
 //
@@ -91,8 +91,8 @@
 //
 //*****************************************************************************
 pumpCtrl_status_t fcn_initPumpController(void);
-pumpCtrl_status_t fcn_PumpStateDriver(void);
-pumpCtrl_status_t fcn_LoadNewPumpParameters(bleSpressoUserdata_struct *prt_profData);
+pumpCtrl_status_t pump_state_driver(void);
+pumpCtrl_status_t load_new_pump_parameters(espresso_user_config_t *ptr_prof_data);
 
-void fcn_StartBrew(void);
-void fcn_CancelBrew(void);
+void start_brew(void);
+void cancel_brew(void);

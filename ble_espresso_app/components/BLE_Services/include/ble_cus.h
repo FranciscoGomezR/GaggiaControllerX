@@ -5,26 +5,27 @@
 #include <stdbool.h>
 #include "ble.h"
 #include "ble_srv_common.h"
-#include "BLEspressoServices.h"
+#include "espressoMachineServices.h"
 
 #define NRF_LOG_CUS_EVT_ENABLED                 0
-
 #define BLE_CUS_BLE_OBSERVER_PRIO               2
-#define BLE_SERVICE_BLEESPRESSO_UUID            0x1400
 
-#define BLE_CHAR_BLESPRESSO_STATUS__UUID        0x1401
-#define BLE_CHAR_BOILER_WATER__TEMP_UUID        0x1402
-#define BLE_CHAR_BOILER_TARGET_TEMP_UUID        0x1403
-#define BLE_CHAR_BOILER_STEAM_TARGET_TEMP_UUID  0x140A
+#define BLE_SERVICE_ESPRESSO_MACHINE_UUID       0x1400
 
-#define BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID   0x1404
-#define BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID   0x1405
-#define BLE_CHAR_BREW_INFUSION_POWER_UUID       0x1406
-#define BLE_CHAR_BREW_INFUSION_TIME__UUID       0x1407
-#define BLE_CHAR_BREW_DECLINING_PR_POWER_UUID   0x1408
-#define BLE_CHAR_BREW_DECLINING_PR_TIME__UUID   0x1409
+#define BLE_CHAR_MACHINE_STATUS__UUID           0x1401
+#define BLE_CHAR_BOILER_WATER_TEMP_UUID         0x1402
+#define BLE_CHAR_BOILER_SET_POINT_TEMP_UUID     0x1403
+#define BLE_CHAR_BREW_TEMP_UUID                 0x1404
+#define BLE_CHAR_STEAM_TEMP_UUID                0x1405
 
-#define BLE_SERVICE_PIDESPRESSO_UUID            0x1500
+#define BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID   0x1406
+#define BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID   0x1407
+#define BLE_CHAR_BREW_INFUSION_POWER_UUID       0x1408
+#define BLE_CHAR_BREW_INFUSION_TIME__UUID       0x1409
+#define BLE_CHAR_BREW_DECLINING_PR_POWER_UUID   0x140A
+#define BLE_CHAR_BREW_DECLINING_PR_TIME__UUID   0x140B
+
+#define BLE_SERVICE_CONTROLLER_UUID             0x1500
 
 #define BLE_CHAR_PID_P_TERM_UUID                0x1501
 #define BLE_CHAR_PID_I_TERM_UUID                0x1502
@@ -58,15 +59,17 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
 
 																					
 /**@brief Custom Service event type. */
+//Event type: xxxx_CHAR_RX_EVT -> this event will occur when client write to this char
 typedef enum
 {
-    BLESPRESSO_STATUS_CHAR_NOTIFICATION_ENABLED,
-    BLESPRESSO_STATUS_CHAR_NOTIFICATION_DISABLED,
-    BLE_BOILER_TEMP_CHAR_NOTIFICATION_ENABLED,                             /**< Custom value notification enabled event. */
-    BLE_BOILER_TEMP_CHAR_NOTIFICATION_DISABLED,                             /**< Custom value notification disabled event. */
-    BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE,  //  CHAR_RX_EVT
-    //Evetn type: CHAR_RX_EVT -> this event will occur when client write to this char
-    BLE_BOILER_STEAM_TEMP_CHAR_RX_EVT,       // write to steam target setpoint
+    BLE_MACHINE_STATUS_CHAR_NOTIFY_ENABLED,       /**< MAchine status notification enabled event. */
+    BLE_MACHINE_STATUS_CHAR_NOTIFY_DISABLED,      /**< MAchine notification disabled event. */
+    BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_ENABLED,  /**< Boiler water temp notification enabled event. */
+    BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_DISABLED, /**< Boiler water temp notification disabled event. */
+    
+    BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT,     /* write new set point for the Boiler temperature */
+    BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT,            /* write to Brew preset setpoint for the Boiler */
+    BLE_MACHINE_STEAM_TEMP_CHAR_RX_EVT,           /* write to Steam preset setpoint for the Boiler */
 
     BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT,
     BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT,
@@ -99,22 +102,24 @@ typedef struct
     ble_cus_evt_type_t evt_type;     /**< Type of event. */
     //add strucutre of data (string type)to be pass from mobile to BLe stack Youtube-TimeSTamp: 37:00
     union{
-      struct_CharData sBoilerTempTarget;
-      struct_CharData sBoilerSteamTemp;  // data for steam target temp writes
-      struct_CharData s_preInfusePwr;
-      struct_CharData s_preInfuseTmr;
-      struct_CharData s_InfusePwr;
-      struct_CharData s_InfuseTmr;
-      struct_CharData s_DeclinePwr;
-      struct_CharData s_DeclineTmr;
+      struct_CharData Boiler_temp_set_point_s;
+      struct_CharData Brew_temp_s;      // data for Brew preset set point temp writes
+      struct_CharData Steam_temp_s;      // data for Brew preset set point temp writes
 
-      struct_CharData sPid_P_term;
-      struct_CharData sPid_I_term;
-      struct_CharData sPid_Imax_term;
-      struct_CharData sPid_Iwindup_term;
-      struct_CharData sPid_D_term;
-      struct_CharData sPid_Dlpf_term;
-      struct_CharData sPid_Gain_term;
+      struct_CharData PreInfusePwr_s;
+      struct_CharData PreInfuseTmr_s;
+      struct_CharData InfusePwr_s;
+      struct_CharData InfuseTmr_s;
+      struct_CharData TaperingPwr_s;
+      struct_CharData TaperingTmr_s;
+
+      struct_CharData PidPTerm_s;
+      struct_CharData PidITerm_s;
+      struct_CharData PidImaxTerm_s;
+      struct_CharData PidIwindupTerm_s;
+      struct_CharData PidDTerm_s;
+      struct_CharData PidDlpfTerm_s;
+      struct_CharData PidGainTerm_s;
     }param_command;
 } ble_cus_evt_t;
 
@@ -132,9 +137,11 @@ typedef struct
     ble_cus_evt_handler_t         evt_handler;                    /**< Event handler to be called for handling events in the Custom Service. */
     uint8_t                       initial_custom_value;           /**< Initial custom value */
      
-    ble_srv_cccd_security_mode_t  blespressoStatus_char_attr_md; 
-    ble_srv_cccd_security_mode_t  boilerTemp_char_attr_md;     /**< Initial security level for Custom characteristics attribute -> For char with notification */
-    ble_srv_cccd_security_mode_t  boilerTargetTemp_char_attr_md;
+    ble_srv_cccd_security_mode_t  machine_status_char_attr_md; 
+    ble_srv_cccd_security_mode_t  boiler_water_temp_char_attr_md;     /**< Initial security level for Custom characteristics attribute -> For char with notification */
+    ble_srv_cccd_security_mode_t  boiler_set_point_temp_char_attr_md;
+    ble_srv_cccd_security_mode_t  boiler_brew_temp_char_attr_md;
+    ble_srv_cccd_security_mode_t  boiler_steam_temp_char_attr_md;
 
     ble_srv_cccd_security_mode_t  brewPreInfussionPower_char_attr;
     ble_srv_cccd_security_mode_t  brewPreInfussiontime__char_attr;
@@ -156,23 +163,24 @@ typedef struct
 /**@brief Custom Service structure. This contains various status information for the service. */
 struct ble_cus_s
 {
-    ble_cus_evt_handler_t         evt_handler;                    /**< Event handler to be called for handling events in the Custom Service. */
-    uint16_t                      service_handle;                 /**< Handle of Custom Service (as provided by the BLE stack). */
-    ble_gatts_char_handles_t      blespressoStatus_char_handles;
-    ble_gatts_char_handles_t      boilerTemp_char_handles;           /**< Handles related to the Custom Value characteristic. */
-    ble_gatts_char_handles_t      boilerTargetTemp_char_handles;
-    ble_gatts_char_handles_t      boilerSteamTargetTemp_char_handles;  /**< Handles for steam target characteristic */
+    ble_cus_evt_handler_t         evt_handler;                          /**< Event handler to be called for handling events in the Custom Service. */
+    uint16_t                      service_handle;                       /**< Handle of Custom Service (as provided by the BLE stack). */
+    ble_gatts_char_handles_t      machine_status_char_handles;          /**< Handles NOTIFICATION characteristic to inform APP */
+    ble_gatts_char_handles_t      boiler_water_temp_char_handles;       /**< Handles NOTIFICATION characteristic to inform APP */
+    ble_gatts_char_handles_t      boiler_temp_set_point_char_handles;   /**< Handles boiler Set point temperature characteristic */
+    ble_gatts_char_handles_t      brew_temp_char_handles;               /**< Handles for brew preset temperature characteristic */
+    ble_gatts_char_handles_t      steam_temp_char_handles;              /**< Handles for brew preset temperature characteristic */
 
-    ble_gatts_char_handles_t      brewPreInfussionPower_char_handles;
-    ble_gatts_char_handles_t      brewPreInfussiontime__char_handles;
-    ble_gatts_char_handles_t      brewInfussionPower_char_handles;
-    ble_gatts_char_handles_t      brewInfussiontime__char_handles;
-    ble_gatts_char_handles_t      brewDecliningPower_char_handles;
-    ble_gatts_char_handles_t      brewDecliningtime__char_handles;
+    ble_gatts_char_handles_t      preInfuse_power_char_handles;
+    ble_gatts_char_handles_t      preInfuse_time_char_handles;
+    ble_gatts_char_handles_t      infuse_power_char_handles;
+    ble_gatts_char_handles_t      infuse_time_char_handles;
+    ble_gatts_char_handles_t      taper_power_char_handles;
+    ble_gatts_char_handles_t      taper_time_char_handles;
 
-    ble_gatts_char_handles_t      pid_Pterm_char_handles;
-    ble_gatts_char_handles_t      pid_Iterm_char_handles;
-    ble_gatts_char_handles_t      pid_ImaxTerm_char_handles;
+    ble_gatts_char_handles_t      pid_p_term_char_handles;
+    ble_gatts_char_handles_t      pid_i_term_char_handles;
+    ble_gatts_char_handles_t      pid_i_max_term_char_handles;
     ble_gatts_char_handles_t      pid_Iwindup_char_handles;
     ble_gatts_char_handles_t      pid_Dterm_char_handles;
     ble_gatts_char_handles_t      pid_DlpfTerm_char_handles;
@@ -184,14 +192,14 @@ struct ble_cus_s
 
 /**@brief Function for initializing the Custom Service.
  *
- * @param[out]  p_cus       Custom Service structure. This structure will have to be supplied by
- *                          the application. It will be initialized by this function, and will later
- *                          be used to identify this particular service instance.
- * @param[in]   p_cus_init  Information needed to initialize the service.
- *
+ * @param[out]  p_cus         Custom Service structure. This structure will have to be supplied by
+ *                            the application. It will be initialized by this function, and will later
+ *                            be used to identify this particular service instance.
+ * @param[in]   p_cus_init    Information needed to initialize the service.
+ * @param[in]   ptr_init_data Initial Information to be load into each CUS characteristics.
  * @return      NRF_SUCCESS on successful initialization of service, otherwise an error code.
  */
-uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init);
+uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espresso_user_config_t* ptr_init_data);
 
 /**@brief Function for handling the Application's BLE Stack events.
  *
@@ -216,6 +224,6 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
  *
  * @return      NRF_SUCCESS on success, otherwise an error code.
  */
-uint32_t ble_cus_BoilerWaterTemperature_update(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle);
+uint32_t ble_cus_notify_boiler_water_temp(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle);
 
 #endif // BLE_CUS_H__

@@ -63,11 +63,9 @@
     <folder Name="Application">
       <folder Name="components">
         <folder Name="Application">
-          <file file_name="../../../components/Application/BLEspressoServices.c" />
-          <file file_name="../../../components/Application/PumpController.c" />
-          <file file_name="../../../components/Application/StorageController.c">
-            <configuration Name="Release" build_exclude_from_build="No" />
-          </file>
+          <file file_name="../../../components/Application/espressoMachineServices.c" />
+          <file file_name="../../../components/Application/pumpController.c" />
+          <file file_name="../../../components/Application/storageController.c" />
           <file file_name="../../../components/Application/tempController.c" />
         </folder>
         <folder Name="BLE">
@@ -90,7 +88,9 @@
         <folder Name="Utilities">
           <file file_name="../../../components/Utilities/x01_StateMachineControls.h" />
           <file file_name="../../../components/Utilities/x04_Numbers.c" />
-          <file file_name="../../../components/Utilities/x201_DigitalFiltersAlgorithm.c" />
+          <file file_name="../../../components/Utilities/x201_DigitalFiltersAlgorithm.c">
+            <configuration Name="Debug" build_exclude_from_build="Yes" />
+          </file>
           <file file_name="../../../components/Utilities/x205_PID_Block.c" />
         </folder>
       </folder>

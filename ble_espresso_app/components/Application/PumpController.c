@@ -4,7 +4,7 @@
 //			INCLUDE FILE SECTION FOR THIS MODULE
 //
 //*****************************************************************************
-#include "PumpController.h"
+#include "pumpController.h"
 #include "solidStateRelay_Controller.h"
 #include "app_config.h"
 
@@ -20,19 +20,19 @@
 //			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
 //
 //*****************************************************************************
-enum{
-  s0_Idle = 0,
-  s00_CloseSolenoid,
-  s01_RampupTo1stP,
-  s12_Keep1stP,
-  s23_RampupTo2ndP,
-  s34_Keep2ndP,
-  s45_RampdownTo3rdP,
-  s56_Keep3rdP,
-  s67_RampdownToStop,
-  st_Timer,
-  st_Stop
-};
+typedef enum {
+  S0_IDLE = 0,
+  S00_CLOSE_SOLENOID,
+  S01_RAMPUP_TO_1ST,
+  S12_KEEP_1ST,
+  S23_RAMPUP_TO_2ND,
+  S34_KEEP_2ND,
+  S45_RAMPDOWN_TO_3RD,
+  S56_KEEP_3RD,
+  S67_RAMPDOWN_TO_STOP,
+  ST_TIMER,
+  ST_STOP
+} pump_state_t;
 
 typedef struct
 {
@@ -44,7 +44,7 @@ typedef struct
   uint16_t Time_3rdP_ms;
   uint16_t Time_Rampup_ms;
   uint16_t Time_Rampdown_ms;
-}Struct_PumpProfileData;
+}pump_profile_data_t;
 
 typedef struct
 {
@@ -61,7 +61,7 @@ typedef struct
   int16_t  SlopeTo_Stop;
   uint16_t Counter;
   int16_t  Slope;
-}Struct_PumpParam;
+}pump_param_t;
 
 //*****************************************************************************
 //
@@ -69,8 +69,8 @@ typedef struct
 //
 //****************************************************************************
 /* This variable contains timer's Counts, power slopes and power values for the pump  */
-/*  Note: this values are obtain from the sPumpProfData var. a copy from bleSpressoUserdata_struct */
-Struct_PumpParam sPumpParam;
+/*  Note: this values are obtain from the sPumpProfData var. a copy from espresso_user_config_t */
+pump_param_t g_Pump_param_s;
 
 //*****************************************************************************
 //
@@ -83,7 +83,7 @@ Struct_PumpParam sPumpParam;
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_LoadPumpParam(Struct_PumpProfileData *prt_ProfileParam, Struct_PumpParam *prt_PumpParam);
+static void load_pump_param(pump_profile_data_t *ptr_profile_param, pump_param_t *ptr_pump_param);
 
 //*****************************************************************************
 //
@@ -101,10 +101,10 @@ pumpCtrl_status_t fcn_initPumpController(void)
 {
   /* Load default Pump PARAMETER  */ 
   /* in case the NVM does not contain user data */
-  sPumpParam.PumpPower        = 0;
-  sPumpParam.smPump.sRunning  = s0_Idle;
+  g_Pump_param_s.PumpPower        = 0;
+  g_Pump_param_s.smPump.sRunning  = S0_IDLE;
 
-  Struct_PumpProfileData sPumpProfData;
+  pump_profile_data_t sPumpProfData;
   sPumpProfData.Pwr_2ndP         = (uint16_t)PUMP_BREWPWR_DEFAULT;
   sPumpProfData.Pwr_1stP         = (uint16_t)PUMP_PREINFUSSIONPWR_DEFAULT;
   sPumpProfData.Pwr_3rdP         = (uint16_t)PUMP_DECLINING_PWR_DEFAULT;
@@ -114,189 +114,189 @@ pumpCtrl_status_t fcn_initPumpController(void)
   sPumpProfData.Time_Rampup_ms   = (uint16_t)PUMP_RAMPUP_T_MS_DEFAULT;
   sPumpProfData.Time_Rampdown_ms = (uint16_t)PUMP_RAMPDOWN_T_MS_DEFAULT;
   /* Load Pump paramenter based on Default Pump Controller values */
-  fcn_LoadPumpParam(&sPumpProfData,&sPumpParam); 
+  load_pump_param(&sPumpProfData,&g_Pump_param_s); 
  
 
   return  PUMPCTRL_INIT_OK;
 }
 
 /*****************************************************************************
-* Function: 	fcn_LoadNewPumpParameters
+* Function: 	load_new_pump_parameters
 * Description: loads new parameter into the controller
 *              This fcn has to be called once BLE receives new data from the user
 * Parameters:	
 * Return:      pumpCtrl_status_t
 *****************************************************************************/
-pumpCtrl_status_t fcn_LoadNewPumpParameters(bleSpressoUserdata_struct *prt_profData)
+pumpCtrl_status_t load_new_pump_parameters(espresso_user_config_t *ptr_prof_data)
 {
   /* Load Pump paramenter based on New Pump Controller values */
-  Struct_PumpProfileData sPumpProfData;
-  sPumpProfData.Pwr_1stP         = (uint16_t)prt_profData->prof_preInfusePwr;
-  sPumpProfData.Pwr_2ndP         = (uint16_t)prt_profData->prof_InfusePwr;
-  sPumpProfData.Pwr_3rdP         = (uint16_t)prt_profData->Prof_DeclinePwr;
-  sPumpProfData.Time_1stP_ms     = ((uint16_t)prt_profData->prof_preInfuseTmr)*1000;
-  sPumpProfData.Time_2ndP_ms     = ((uint16_t)prt_profData->prof_InfuseTmr)*1000;
-  sPumpProfData.Time_3rdP_ms     = ((uint16_t)prt_profData->Prof_DeclineTmr)*1000;
+  pump_profile_data_t sPumpProfData;
+  sPumpProfData.Pwr_1stP         = (uint16_t)ptr_prof_data->profPreInfusePwr;
+  sPumpProfData.Pwr_2ndP         = (uint16_t)ptr_prof_data->profInfusePwr;
+  sPumpProfData.Pwr_3rdP         = (uint16_t)ptr_prof_data->profTaperingPwr;
+  sPumpProfData.Time_1stP_ms     = ((uint16_t)ptr_prof_data->profPreInfuseTmr)*1000;
+  sPumpProfData.Time_2ndP_ms     = ((uint16_t)ptr_prof_data->profInfuseTmr)*1000;
+  sPumpProfData.Time_3rdP_ms     = ((uint16_t)ptr_prof_data->profTaperingTmr)*1000;
   sPumpProfData.Time_Rampup_ms   = (uint16_t)PUMP_RAMPUP_T_MS_DEFAULT;
   sPumpProfData.Time_Rampdown_ms = (uint16_t)PUMP_RAMPDOWN_T_MS_DEFAULT;
 
-  /* Load NEW Pump paramenter into: sPumpParam  */
-  fcn_LoadPumpParam(&sPumpProfData,&sPumpParam); 
+  /* Load NEW Pump paramenter into: g_Pump_param_s  */
+  load_pump_param(&sPumpProfData,&g_Pump_param_s); 
   return PUMPCTRL_LOAD_OK;
 }
 
 /*****************************************************************************
-* Function: 	fcn_PumpStateDriver
+* Function: 	pump_state_driver
 * Description: 
 * Caveats:     State timing: 100ms
 * Parameters:	
 * Return:      pumpCtrl_status_t
 *****************************************************************************/
-pumpCtrl_status_t fcn_PumpStateDriver(void)
+pumpCtrl_status_t pump_state_driver(void)
 {
-  int pumpStatus;
-  int solenoidStatus;
-  switch(sPumpParam.smPump.sRunning)
+  int pump_status;
+  int solenoid_status;
+  switch(g_Pump_param_s.smPump.sRunning)
   {
-      case s0_Idle:
-        pumpStatus = PUMPCTRL_IDLE;
+      case S0_IDLE:
+        pump_status = PUMPCTRL_IDLE;
       break;
 
-      case s00_CloseSolenoid:
+      case S00_CLOSE_SOLENOID:
         //Close Pump's valve by activating solenoid
         fcn_SolenoidSSR_On();
         // Now, we need to wait until is engage to move to next state 
-        solenoidStatus = get_SolenoidSSR_State();
-        if( solenoidStatus == SSR_STATE_ENGAGE)
+        solenoid_status = get_SolenoidSSR_State();
+        if( solenoid_status == SSR_STATE_ENGAGE)
         {
-          sPumpParam.smPump.sRunning  = s01_RampupTo1stP;
+          g_Pump_param_s.smPump.sRunning  = S01_RAMPUP_TO_1ST;
         }else{}
       break;
 
       /* Ramp Up Pwr from: Step 0 to 1  */
-      case s01_RampupTo1stP:
+      case S01_RAMPUP_TO_1ST:
         //Ramp-up pressure to pre-infussion power level
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s12_Keep1stP;
-        sPumpParam.Counter = sPumpParam.RampUp_tCounts+1;
-        sPumpParam.Slope   = sPumpParam.SlopeTo_1stP;
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S12_KEEP_1ST;
+        g_Pump_param_s.Counter = g_Pump_param_s.RampUp_tCounts+1;
+        g_Pump_param_s.Slope   = g_Pump_param_s.SlopeTo_1stP;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_1ST;
+        pump_status = PUMPCTRL_STEP_1ST;
       break;
       /* Keep Pwr from: Step 1 to 2  */
-      case s12_Keep1stP:
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s23_RampupTo2ndP;
-        sPumpParam.Counter = sPumpParam.tCounts_1stP+1;
+      case S12_KEEP_1ST:
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S23_RAMPUP_TO_2ND;
+        g_Pump_param_s.Counter = g_Pump_param_s.tCounts_1stP+1;
         //Pressure in pump remains intact -> Slope = 0
-        sPumpParam.Slope   = 0;
+        g_Pump_param_s.Slope   = 0;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_1ST;
+        pump_status = PUMPCTRL_STEP_1ST;
       break;
       /* Ramp Up Pwr from: Step 2 to 3  */
-      case s23_RampupTo2ndP:
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s34_Keep2ndP;
-        sPumpParam.Counter = sPumpParam.RampUp_tCounts+1;
-        sPumpParam.Slope   = sPumpParam.SlopeTo_2ndP;
+      case S23_RAMPUP_TO_2ND:
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S34_KEEP_2ND;
+        g_Pump_param_s.Counter = g_Pump_param_s.RampUp_tCounts+1;
+        g_Pump_param_s.Slope   = g_Pump_param_s.SlopeTo_2ndP;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_2ND;
+        pump_status = PUMPCTRL_STEP_2ND;
       break;
       /* Keep Pwr from: Step 3 to 4  */
-      case s34_Keep2ndP:
+      case S34_KEEP_2ND:
         //Load timer to mantain th maximum pressure power for a certain time
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s45_RampdownTo3rdP;
-        sPumpParam.Counter = sPumpParam.tCounts_2ndP;
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S45_RAMPDOWN_TO_3RD;
+        g_Pump_param_s.Counter = g_Pump_param_s.tCounts_2ndP;
         //Pressure in pump remains intact -> Slope = 0
-        sPumpParam.Slope   = 0;     
+        g_Pump_param_s.Slope   = 0;     
         //Send driver status 
-        pumpStatus = PUMPCTRL_STEP_2ND;
+        pump_status = PUMPCTRL_STEP_2ND;
       break;
       /* Ramp Down Pwr from: Steo 4 to 5  */
-      case s45_RampdownTo3rdP:
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s56_Keep3rdP;
-        sPumpParam.Counter = sPumpParam.RampDown_tCounts+1;
-        sPumpParam.Slope   = sPumpParam.SlopeTo_3rdP;
+      case S45_RAMPDOWN_TO_3RD:
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S56_KEEP_3RD;
+        g_Pump_param_s.Counter = g_Pump_param_s.RampDown_tCounts+1;
+        g_Pump_param_s.Slope   = g_Pump_param_s.SlopeTo_3rdP;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_3RD;
+        pump_status = PUMPCTRL_STEP_3RD;
       break;
       /* Keep Pwr from: Step 5 to 6  */
-      case s56_Keep3rdP:
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = s67_RampdownToStop;
-        sPumpParam.Counter = sPumpParam.tCounts_3rdP+1;
+      case S56_KEEP_3RD:
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = S67_RAMPDOWN_TO_STOP;
+        g_Pump_param_s.Counter = g_Pump_param_s.tCounts_3rdP+1;
         //Pressure in pump remains intact -> Slope = 0
-        sPumpParam.Slope   = 0;
+        g_Pump_param_s.Slope   = 0;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_3RD;
+        pump_status = PUMPCTRL_STEP_3RD;
       break;
       /* Ramp Down Pwr from: Steo 6 to 7  */
-      case s67_RampdownToStop:
-        sPumpParam.smPump.sRunning  = st_Timer;
-        sPumpParam.smPump.sNext = st_Stop;
-        sPumpParam.Counter = sPumpParam.RampDown_tCounts+1;
-        sPumpParam.Slope   = sPumpParam.SlopeTo_Stop;
+      case S67_RAMPDOWN_TO_STOP:
+        g_Pump_param_s.smPump.sRunning  = ST_TIMER;
+        g_Pump_param_s.smPump.sNext = ST_STOP;
+        g_Pump_param_s.Counter = g_Pump_param_s.RampDown_tCounts+1;
+        g_Pump_param_s.Slope   = g_Pump_param_s.SlopeTo_Stop;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_STOP;
+        pump_status = PUMPCTRL_STEP_STOP;
       break;
 
-      case st_Timer:
-        if(-- sPumpParam.Counter != 0 )
+      case ST_TIMER:
+        if(-- g_Pump_param_s.Counter != 0 )
         {
 
-          if( sPumpParam.Slope != 0)
+          if( g_Pump_param_s.Slope != 0)
           {
-            volatile int16_t PumpPwr = (int16_t)sPumpParam.PumpPower;
-            PumpPwr += (int16_t)sPumpParam.Slope;
-            sPumpParam.PumpPower = PumpPwr;
-            //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, sPumpParam.PumpPower);
-            fcn_pumpSSR_pwrUpdate(sPumpParam.PumpPower);
+            volatile int16_t pump_pwr = (int16_t)g_Pump_param_s.PumpPower;
+            pump_pwr += (int16_t)g_Pump_param_s.Slope;
+            g_Pump_param_s.PumpPower = pump_pwr;
+            //fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, g_Pump_param_s.PumpPower);
+            fcn_pumpSSR_pwrUpdate(g_Pump_param_s.PumpPower);
           }else{}
           
         }else{
-          sPumpParam.smPump.sRunning = sPumpParam.smPump.sNext;
+          g_Pump_param_s.smPump.sRunning = g_Pump_param_s.smPump.sNext;
         }
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_TIME;
+        pump_status = PUMPCTRL_STEP_TIME;
       break;
 
-      case st_Stop:
+      case ST_STOP:
         //Open Pump's valve by deactivating selenoid
         fcn_SolenoidSSR_Off();
-        sPumpParam.PumpPower = 0;
-        fcn_pumpSSR_pwrUpdate(sPumpParam.PumpPower);
-        sPumpParam.smPump.sRunning  = s0_Idle;
+        g_Pump_param_s.PumpPower = 0;
+        fcn_pumpSSR_pwrUpdate(g_Pump_param_s.PumpPower);
+        g_Pump_param_s.smPump.sRunning  = S0_IDLE;
         //Send driver status
-        pumpStatus = PUMPCTRL_STEP_STOP;
+        pump_status = PUMPCTRL_STEP_STOP;
       break;
 
       default:
-        //smPumpCtrl.smPump.sRunning  = s0_Idle;
+        //smPumpCtrl.smPump.sRunning  = S0_IDLE;
         //Send driver status
-        pumpStatus = PUMPCTRL_ERROR;
+        pump_status = PUMPCTRL_ERROR;
       break;
   }
-  return pumpStatus;
+  return pump_status;
 }
 
 /*****************************************************************************
  * Function: 	InitClocks
  * Description: 
  *****************************************************************************/
-void fcn_StartBrew(void)
+void start_brew(void)
 {
-    sPumpParam.smPump.sRunning = s00_CloseSolenoid;
+    g_Pump_param_s.smPump.sRunning = S00_CLOSE_SOLENOID;
 }
 
 /*****************************************************************************
 * Function: 	InitClocks
 * Description: 
 *****************************************************************************/
-void fcn_CancelBrew(void)
+void cancel_brew(void)
 {
-   sPumpParam.smPump.sRunning = s67_RampdownToStop;
+   g_Pump_param_s.smPump.sRunning = S67_RAMPDOWN_TO_STOP;
 }
 
 //*****************************************************************************
@@ -306,45 +306,45 @@ void fcn_CancelBrew(void)
 //*****************************************************************************
 
 /*****************************************************************************
- * Function: 	fcn_LoadPumpParam
+ * Function: 	load_pump_param
  * Description: 
  * Caveats:
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_LoadPumpParam(Struct_PumpProfileData *prt_ProfileParam, Struct_PumpParam *prt_PumpParam)
+static void load_pump_param(pump_profile_data_t *ptr_profile_param, pump_param_t *ptr_pump_param)
 {
   /* STEPS TIME DURATION - TIMER COUNT's CALCULATION */
   /* Counts (time) from step 0 to 1 */
   /* Counts (time) from step 2 to 3 */
-  prt_PumpParam->RampUp_tCounts   = (uint16_t)(prt_ProfileParam->Time_Rampup_ms / PUMP_BASETIME_T_MS);
+  ptr_pump_param->RampUp_tCounts   = (uint16_t)(ptr_profile_param->Time_Rampup_ms / PUMP_BASETIME_T_MS);
   /* Counts (time) from step 4 to 5 */
   /* Counts (time) from step 6 to 7 */
-  prt_PumpParam->RampDown_tCounts = (uint16_t)(prt_ProfileParam->Time_Rampdown_ms / PUMP_BASETIME_T_MS);
+  ptr_pump_param->RampDown_tCounts = (uint16_t)(ptr_profile_param->Time_Rampdown_ms / PUMP_BASETIME_T_MS);
   /* Counts (time) from step 1 to 2 */
-  prt_PumpParam->tCounts_1stP     = (uint16_t)(prt_ProfileParam->Time_1stP_ms / PUMP_BASETIME_T_MS);
+  ptr_pump_param->tCounts_1stP     = (uint16_t)(ptr_profile_param->Time_1stP_ms / PUMP_BASETIME_T_MS);
   /* Counts (time) from step 3 to 4 */
-  prt_PumpParam->tCounts_2ndP     = (uint16_t)(prt_ProfileParam->Time_2ndP_ms / PUMP_BASETIME_T_MS);
+  ptr_pump_param->tCounts_2ndP     = (uint16_t)(ptr_profile_param->Time_2ndP_ms / PUMP_BASETIME_T_MS);
   /* Counts (time) from step 5 to 6 */
-  prt_PumpParam->tCounts_3rdP     = (uint16_t)(prt_ProfileParam->Time_3rdP_ms / PUMP_BASETIME_T_MS);
+  ptr_pump_param->tCounts_3rdP     = (uint16_t)(ptr_profile_param->Time_3rdP_ms / PUMP_BASETIME_T_MS);
 
   /* H1 fix: guard all slope divisors against zero.
    * A BLE write of 0 for any timing parameter maps to a tCounts of 0.
    * Integer-division by zero is undefined behaviour and causes a hard fault.
    * Clamp to 1 so the slope is calculated as a single-step ramp rather
    * than crashing; the resulting pump profile is non-ideal but safe. */
-  if (prt_PumpParam->RampUp_tCounts   == 0) prt_PumpParam->RampUp_tCounts   = 1;
-  if (prt_PumpParam->RampDown_tCounts == 0) prt_PumpParam->RampDown_tCounts = 1;
-  if (prt_PumpParam->tCounts_3rdP     == 0) prt_PumpParam->tCounts_3rdP     = 1;
+  if (ptr_pump_param->RampUp_tCounts   == 0) ptr_pump_param->RampUp_tCounts   = 1;
+  if (ptr_pump_param->RampDown_tCounts == 0) ptr_pump_param->RampDown_tCounts = 1;
+  if (ptr_pump_param->tCounts_3rdP     == 0) ptr_pump_param->tCounts_3rdP     = 1;
 
   /*SLOPES BETWEEN STEPS CALCULATION */
   /* Slope calc from Step 0 to 1  */
-  prt_PumpParam->SlopeTo_1stP     = (int16_t)     prt_ProfileParam->Pwr_1stP / prt_PumpParam->RampUp_tCounts;
+  ptr_pump_param->SlopeTo_1stP     = (int16_t)     ptr_profile_param->Pwr_1stP / ptr_pump_param->RampUp_tCounts;
   /* Slope calc from Step 2 to 3  */
-  prt_PumpParam->SlopeTo_2ndP     = (int16_t)  (( prt_ProfileParam->Pwr_2ndP - prt_ProfileParam->Pwr_1stP) / prt_PumpParam->RampUp_tCounts)+1; 
+  ptr_pump_param->SlopeTo_2ndP     = (int16_t)  (( ptr_profile_param->Pwr_2ndP - ptr_profile_param->Pwr_1stP) / ptr_pump_param->RampUp_tCounts)+1;
   /* Slope calc from Step 4 to 5  */
-  prt_PumpParam->SlopeTo_3rdP     = (int16_t) -(((prt_ProfileParam->Pwr_2ndP - prt_ProfileParam->Pwr_3rdP) / prt_PumpParam->tCounts_3rdP)+1);
+  ptr_pump_param->SlopeTo_3rdP     = (int16_t) -(((ptr_profile_param->Pwr_2ndP - ptr_profile_param->Pwr_3rdP) / ptr_pump_param->tCounts_3rdP)+1);
   /* Slope calc from Step 6 to 7  */
-  prt_PumpParam->SlopeTo_Stop     = (int16_t) -(( prt_ProfileParam->Pwr_3rdP / prt_PumpParam->RampDown_tCounts)+2); 
+  ptr_pump_param->SlopeTo_Stop     = (int16_t) -(( ptr_profile_param->Pwr_3rdP / ptr_pump_param->RampDown_tCounts)+2);
 }
 

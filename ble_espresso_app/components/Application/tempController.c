@@ -4,8 +4,8 @@
 //
 //*****************************************************************************
 #include "tempController.h"
-#include "spi_Devices.h"
-#include "solidStateRelay_Controller.h"
+//#include "spi_Devices.h"
+//#include "solidStateRelay_Controller.h"
 
 //*****************************************************************************
 //
@@ -27,8 +27,8 @@ typedef struct
     nrfx_timer_event_handler_t  hwTmr_isr_handler;
     uint32_t                    tmrPeriod_us;
     uint32_t                    tmrPeriod_ticks;
-    bool                        status;
-} struct_HWTimer;
+    bool                        is_active;
+} hw_timer_t;
 
 //*****************************************************************************
 //
@@ -42,20 +42,20 @@ typedef struct
 //			PRIVATE VARIABLES
 //
 //*****************************************************************************
-static PID_IMC_Block_fStruct sctrl_profile_main;
-static PID_IMC_Block_fStruct sctrl_profile_phi1;
-static PID_IMC_Block_fStruct sctrl_profile_phi2;
-static struct_HWTimer sHwTmr_Miliseconds;
-static volatile uint32_t milisTicks=0;
+static pid_imc_block_t Profile_ctrl_main_s;
+static pid_imc_block_t Profile_ctrl_phi1_s;
+static pid_imc_block_t Profile_ctrl_phi2_s;
+static hw_timer_t Hw_Tmr_msecs_s;
+static volatile uint32_t elapsed_msecs=0;
 
 /* ---- Test-only accessors -------------------------------------------------
  * These helpers are compiled ONLY when -DTEST is set (host-side unit tests).
  * They are never included in the firmware build.
  * ----------------------------------------------------------------------- */
 #ifdef TEST
-void     test_set_milisTicks(uint32_t t)  { milisTicks = t; }
-uint32_t test_get_milisTicks(void)        { return (uint32_t)milisTicks; }
-float    test_get_integral_error(void)    { return sctrl_profile_main.HistoryError; }
+void     test_set_elapsed_msecs(uint32_t t)  { elapsed_msecs = t; }
+uint32_t test_get_elapsed_msecs(void)        { return (uint32_t)elapsed_msecs; }
+float    test_get_integral_error(void)    { return Profile_ctrl_main_s.HistoryError; }
 #endif /* TEST */
 
 //*****************************************************************************
@@ -63,9 +63,7 @@ float    test_get_integral_error(void)    { return sctrl_profile_main.HistoryErr
 //			PRIVATE FUNCTIONS
 //
 //*****************************************************************************
-tempCtrl_status_t fcn_loadI_ParamToCtrl_Temp(PID_IMC_Block_fStruct *ptrParam);
-
-void fcn_initMilisecondHWTimer(void);
+static void hw_timer_init_msecs_tick(void);
 
 //*****************************************************************************
 //
@@ -73,14 +71,14 @@ void fcn_initMilisecondHWTimer(void);
 //
 //*****************************************************************************
 /*****************************************************************************
- * Function: 	isr_HwTmr3_Period_EventHandler
+ * Function: 	temp_ctrl_sampling_timer_event_handler
  * Description: increment counter tick every 1ms
  *****************************************************************************/
-void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_context)
+void temp_ctrl_sampling_timer_event_handler(nrf_timer_event_t event_type, void* p_context)
 {
     //GPIO29 controls the LED_HeartBeat - for measurieng purposes.
     //nrf_drv_gpiote_out_toggle(29);
-    milisTicks++;
+    elapsed_msecs++;
 }
 
 //*****************************************************************************
@@ -89,193 +87,193 @@ void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_contex
 //
 //*****************************************************************************
 /*****************************************************************************
- * Function: 	fcn_initCntrl_Temp
+ * Function: 	temp_ctrl_init
  * Description: 
  * Return:      N/A
  *****************************************************************************/
-tempCtrl_status_t fcn_initCntrl_Temp(void)
+tempCtrl_status_t temp_ctrl_init(void)
 {
   //PID PARAMETERS VALUE SETUP
   //------------------------------------------------------------------------------
-  sctrl_profile_main.P_TERM_CTRL       = ACTIVE;
-  sctrl_profile_main.Kp                = TEMP_CTRL_KP;
-  sctrl_profile_main.I_TERM_CTRL       = ACTIVE;
-  sctrl_profile_main.Ki                = TEMP_CTRL_KI;
-  sctrl_profile_main.IntegralLimit     = TEMP_CTRL_HIST_LIMIT;
-  sctrl_profile_main.I_ANTIWINDUP_CTRL = ACTIVE;
+  Profile_ctrl_main_s.P_TERM_CTRL       = ACTIVE;
+  Profile_ctrl_main_s.Kp                = TEMP_CTRL_KP;
+  Profile_ctrl_main_s.I_TERM_CTRL       = ACTIVE;
+  Profile_ctrl_main_s.Ki                = TEMP_CTRL_KI;
+  Profile_ctrl_main_s.IntegralLimit     = TEMP_CTRL_HIST_LIMIT;
+  Profile_ctrl_main_s.I_ANTIWINDUP_CTRL = ACTIVE;
 
-  sctrl_profile_main.D_TERM_CTRL       = ACTIVE;
-  sctrl_profile_main.D_TERM_FILTER_CTRL= NOT_ACTIVE;
-  sctrl_profile_main.Kd                = TEMP_CTRL_KD;
+  Profile_ctrl_main_s.D_TERM_CTRL       = ACTIVE;
+  Profile_ctrl_main_s.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  Profile_ctrl_main_s.Kd                = TEMP_CTRL_KD;
  
-  sctrl_profile_main.OutputLimit       = TEMP_CTRL_MAX;
+  Profile_ctrl_main_s.OutputLimit       = TEMP_CTRL_MAX;
 
   //PID PARAMETERS PHASE 1
   //------------------------------------------------------------------------------
-  sctrl_profile_phi1.P_TERM_CTRL       = NOT_ACTIVE;
-  sctrl_profile_phi1.Kp                = 0.0f;
+  Profile_ctrl_phi1_s.P_TERM_CTRL       = NOT_ACTIVE;
+  Profile_ctrl_phi1_s.Kp                = 0.0f;
 
-  sctrl_profile_phi1.I_TERM_CTRL       = sctrl_profile_main.I_TERM_CTRL;
-  sctrl_profile_phi1.Ki                = sctrl_profile_main.Ki * 6.5f;
-  sctrl_profile_phi1.IntegralLimit     = sctrl_profile_main.IntegralLimit;
+  Profile_ctrl_phi1_s.I_TERM_CTRL       = Profile_ctrl_main_s.I_TERM_CTRL;
+  Profile_ctrl_phi1_s.Ki                = Profile_ctrl_main_s.Ki * 6.5f;
+  Profile_ctrl_phi1_s.IntegralLimit     = Profile_ctrl_main_s.IntegralLimit;
 
-  sctrl_profile_phi1.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
-  sctrl_profile_phi1.D_TERM_CTRL       = NOT_ACTIVE;
-  sctrl_profile_phi1.D_TERM_FILTER_CTRL= NOT_ACTIVE;
-  sctrl_profile_phi1.Kd                = 0.0f;
-  sctrl_profile_phi1.OutputLimit       = 0.0f;
+  Profile_ctrl_phi1_s.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
+  Profile_ctrl_phi1_s.D_TERM_CTRL       = NOT_ACTIVE;
+  Profile_ctrl_phi1_s.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  Profile_ctrl_phi1_s.Kd                = 0.0f;
+  Profile_ctrl_phi1_s.OutputLimit       = 0.0f;
 
   //PID PARAMETERS PHASE 1
   //------------------------------------------------------------------------------
-  sctrl_profile_phi2.P_TERM_CTRL       = NOT_ACTIVE;
-  sctrl_profile_phi2.Kp                = 0.0f;
+  Profile_ctrl_phi2_s.P_TERM_CTRL       = NOT_ACTIVE;
+  Profile_ctrl_phi2_s.Kp                = 0.0f;
 
-  sctrl_profile_phi2.I_TERM_CTRL       = sctrl_profile_main.I_TERM_CTRL;
-  sctrl_profile_phi2.Ki                = sctrl_profile_main.Ki * 2.0f;
-  sctrl_profile_phi2.IntegralLimit     = sctrl_profile_main.IntegralLimit;
+  Profile_ctrl_phi2_s.I_TERM_CTRL       = Profile_ctrl_main_s.I_TERM_CTRL;
+  Profile_ctrl_phi2_s.Ki                = Profile_ctrl_main_s.Ki * 2.0f;
+  Profile_ctrl_phi2_s.IntegralLimit     = Profile_ctrl_main_s.IntegralLimit;
 
-  sctrl_profile_phi2.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
-  sctrl_profile_phi2.D_TERM_CTRL       = NOT_ACTIVE;
-  sctrl_profile_phi2.D_TERM_FILTER_CTRL= NOT_ACTIVE;
-  sctrl_profile_phi2.Kd                = 0.0f;
-  sctrl_profile_phi2.OutputLimit       = 0.0f;
+  Profile_ctrl_phi2_s.I_ANTIWINDUP_CTRL = NOT_ACTIVE;
+  Profile_ctrl_phi2_s.D_TERM_CTRL       = NOT_ACTIVE;
+  Profile_ctrl_phi2_s.D_TERM_FILTER_CTRL= NOT_ACTIVE;
+  Profile_ctrl_phi2_s.Kd                = 0.0f;
+  Profile_ctrl_phi2_s.OutputLimit       = 0.0f;
 
 
   //TIMER SECTION TO TRACK TIME IN MILISECONDS
   //------------------------------------------------------------------------------
-  fcn_initMilisecondHWTimer();
-  return TEMPCTRL_INIT_OK;
+  hw_timer_init_msecs_tick();
+  return TEMP_CTRL_INIT_OK;
 }
 
 /*****************************************************************************
- * Function: 	fcn_loadPID_ParamToCtrl_Temp
- * Description: This function load/copy the value from blEspressoProfile (bleSpressoUserdata_struct)
-                into private PID boiler temp. controller variable: sctrl_profile_main
+ * Function: 	temp_ctrl_set_pid_config
+ * Description: This function load/copy the value from g_Espresso_user_config_s (espresso_user_config_t)
+                into private PID boiler temp. controller variable: Profile_ctrl_main_s
  *****************************************************************************/
-tempCtrl_status_t fcn_loadPID_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData)
+tempCtrl_status_t temp_ctrl_set_pid_config(espresso_user_config_t *ptr_prof_data)
 {
   //PID PARAMETERS VALUE COPY
   //------------------------------------------------------------------------------
-  if( prt_profData->Pid_P_term == 0.0f )
+  if( ptr_prof_data->pidPTerm == 0.0f )
   {
-    sctrl_profile_main.P_TERM_CTRL            = NOT_ACTIVE;
-    sctrl_profile_main.Kp                     = 0.0f;
+    Profile_ctrl_main_s.P_TERM_CTRL            = NOT_ACTIVE;
+    Profile_ctrl_main_s.Kp                     = 0.0f;
   }else{
-    sctrl_profile_main.P_TERM_CTRL            = ACTIVE;
-    sctrl_profile_main.Kp                     = prt_profData->Pid_P_term;
+    Profile_ctrl_main_s.P_TERM_CTRL            = ACTIVE;
+    Profile_ctrl_main_s.Kp                     = ptr_prof_data->pidPTerm;
   }
-  if( prt_profData->Pid_I_term == 0.0f )
+  if( ptr_prof_data->pidITerm == 0.0f )
   {
-    sctrl_profile_main.I_TERM_CTRL            = NOT_ACTIVE;
-    sctrl_profile_main.Ki                     = 0.0f;
-    sctrl_profile_main.IntegralLimit          = 0.0f;
-    sctrl_profile_main.I_ANTIWINDUP_CTRL      = NOT_ACTIVE;
+    Profile_ctrl_main_s.I_TERM_CTRL            = NOT_ACTIVE;
+    Profile_ctrl_main_s.Ki                     = 0.0f;
+    Profile_ctrl_main_s.IntegralLimit          = 0.0f;
+    Profile_ctrl_main_s.I_ANTIWINDUP_CTRL      = NOT_ACTIVE;
   }else{
-    sctrl_profile_main.I_TERM_CTRL            = ACTIVE;
-    sctrl_profile_main.Ki                     = prt_profData->Pid_I_term;
-    sctrl_profile_main.IntegralLimit          = prt_profData->Pid_Imax_term;
-    sctrl_profile_main.I_ANTIWINDUP_CTRL      = prt_profData->Pid_Iwindup_term;
+    Profile_ctrl_main_s.I_TERM_CTRL            = ACTIVE;
+    Profile_ctrl_main_s.Ki                     = ptr_prof_data->pidITerm;
+    Profile_ctrl_main_s.IntegralLimit          = ptr_prof_data->pidImaxTerm;
+    Profile_ctrl_main_s.I_ANTIWINDUP_CTRL      = ptr_prof_data->pidIwindupTerm;
   }
-  if( prt_profData->Pid_D_term == 0.0f )
+  if( ptr_prof_data->pidDTerm == 0.0f )
   {
-    sctrl_profile_main.D_TERM_CTRL            = NOT_ACTIVE;
-    sctrl_profile_main.Kd                     = 0.0f;
-    sctrl_profile_main.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
+    Profile_ctrl_main_s.D_TERM_CTRL            = NOT_ACTIVE;
+    Profile_ctrl_main_s.Kd                     = 0.0f;
+    Profile_ctrl_main_s.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
   }else{
-    sctrl_profile_main.D_TERM_CTRL            = ACTIVE;
-    sctrl_profile_main.Kd                     = prt_profData->Pid_D_term;
-    sctrl_profile_main.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
+    Profile_ctrl_main_s.D_TERM_CTRL            = ACTIVE;
+    Profile_ctrl_main_s.Kd                     = ptr_prof_data->pidDTerm;
+    Profile_ctrl_main_s.D_TERM_FILTER_CTRL     = NOT_ACTIVE;
   }
-  return TEMPCTRL_LOAD_OK;
+  return TEMP_CTRL_LOAD_OK;
   /*This code line is not part of this function's scope
-  sctrl_profile_main.feedPIDblock.SetPoint = 45.0f;
+  Profile_ctrl_main_s.feedPIDblock.SetPoint = 45.0f;
   */
 }
 
 /*****************************************************************************
- * Function: 	fcn_loaddSetPoint_ParamToCtrl_Temp
+ * Function: 	temp_ctrl_set_boiler_setpoint
  * Description: Loads a new Setpoint determined by the second fcn paramater into the Temp Ctrl. 
  *****************************************************************************/
-tempCtrl_LoadSP_t fcn_loaddSetPoint_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, tempCtrl_LoadSP_t Setpoint)
+tempCtrl_LoadSP_t temp_ctrl_set_boiler_setpoint(espresso_user_config_t *ptr_prof_data, tempCtrl_LoadSP_t Setpoint)
 {
-  if( Setpoint == SETPOINT_BREW)
+  if( Setpoint == SET_POINT_BREW)
   {
-    prt_profData->temp_Target = prt_profData->sp_BrewTemp;
+    ptr_prof_data->boilerTempSetpointDegC = ptr_prof_data->brewTempDegC;
   }else{}
-  if( Setpoint == SETPOINT_STEAM)
+  if( Setpoint == SET_POINT_STEAM)
   {
-    prt_profData->temp_Target = prt_profData->sp_StemTemp;
+    ptr_prof_data->boilerTempSetpointDegC = ptr_prof_data->steamTempDegC;
   }else{}
   /* M1 fix: reset the integral accumulator whenever the setpoint changes.
    * Without this, accumulated integral from the previous operating mode
    * (e.g. brew) carries over to the new operating mode (e.g. steam),
    * causing an overshoot transient.
-   * PID_IMC_Block_fStruct stores the running integral in its HistoryError field. */
-  sctrl_profile_main.HistoryError = 0.0f;
-  return TEMPCTRL_SP_LOAD_OK;
+   * pid_imc_block_t stores the running integral in its HistoryError field. */
+  Profile_ctrl_main_s.HistoryError = 0.0f;
+  return SET_POINT_LOAD_OK;
 }
 
 /*****************************************************************************
  * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi1
  * Description: Loads only the I gain into the mainCtrl during Phase-1 (Pump Active)
  *****************************************************************************/
-tempCtrl_status_t fcn_loadIboost_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData)
+tempCtrl_status_t temp_ctrl_set_operational_integral_gain(espresso_user_config_t *ptr_prof_data)
 {
-  sctrl_profile_main.Ki = prt_profData->Pid_Iboost_term;
-  return TEMPCTRL_I_LOAD_OK;
+  Profile_ctrl_main_s.Ki = ptr_prof_data->pidIboostTerm;
+  return TEMP_CTRL_I_LOAD_OK;
 }
 /*****************************************************************************
  * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi2
  * Description: Loads only the I gain into the mainCtrl during Phase-2 (time after pump deactivation)
  *****************************************************************************/
-tempCtrl_status_t fcn_multiplyI_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, float factor)
+tempCtrl_status_t temp_ctrl_scale_integral_gain(espresso_user_config_t *ptr_prof_data, float factor)
 {
-  sctrl_profile_main.Ki = (float)(prt_profData->Pid_I_term * factor);
-  return TEMPCTRL_I_LOAD_OK;
+  Profile_ctrl_main_s.Ki = (float)(ptr_prof_data->pidITerm * factor);
+  return TEMP_CTRL_I_LOAD_OK;
 }
 
 /*****************************************************************************
- * Function: 	fcn_startTempCtrlSamplingTmr
+ * Function: 	temp_ctrl_start_sampling_timer
  * Description: 
  *****************************************************************************/
-void fcn_startTempCtrlSamplingTmr(void)
+void temp_ctrl_start_sampling_timer(void)
 {
-  nrf_drv_timer_enable((nrfx_timer_t const *)&sHwTmr_Miliseconds.hwTmr);
-  sHwTmr_Miliseconds.status = ACTIVE;
+  nrf_drv_timer_enable((nrfx_timer_t const *)&Hw_Tmr_msecs_s.hwTmr);
+  Hw_Tmr_msecs_s.is_active = ACTIVE;
 }
 
 /*****************************************************************************
- * Function: 	fcn_stopTempCtrlSamplingTmr
+ * Function: 	temp_ctrl_stop_sampling_timer
  * Description: 
  *****************************************************************************/
-void fcn_stopTempCtrlSamplingTmr(void)
+void temp_ctrl_stop_sampling_timer(void)
 {
-  nrf_drv_timer_disable((nrfx_timer_t const *)&sHwTmr_Miliseconds.hwTmr);
-  sHwTmr_Miliseconds.status = NOT_ACTIVE;
+  nrf_drv_timer_disable((nrfx_timer_t const *)&Hw_Tmr_msecs_s.hwTmr);
+  Hw_Tmr_msecs_s.is_active = NOT_ACTIVE;
 }
 
 /*****************************************************************************
- * Function: 	fcn_updateTemperatureController
+ * Function: 	temp_ctrl_update
  * Description: 
  *****************************************************************************/
-float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData)
+float temp_ctrl_update(espresso_user_config_t *ptr_prof_data)
 {
   /* H3 fix: detect open-circuit (reads near 0 °C) or shorted sensor (reads > 200 °C).
    * If temperature is outside the physically plausible operating range,
    * return 0 % output to shut the heater off rather than letting the PID
    * command 100 % power based on a bogus reading. */
-  float boilerTemp = (float)prt_profData->temp_Boiler;
+  float boilerTemp = (float)ptr_prof_data->boilerTempDegC;
   if (boilerTemp < 5.0f || boilerTemp > 200.0f)
   {
     return 0.0f;  /* sensor fault — safe default: no heating */
   }
 
-  sctrl_profile_main.feedPIDblock.ProcessVariable  = boilerTemp;
-  sctrl_profile_main.feedPIDblock.SetPoint         = (float)prt_profData->temp_Target;
-  sctrl_profile_main.feedPIDblock.TimeMilis        = (uint32_t)milisTicks;
-  return (float)fcn_update_PIDimc_typeA((PID_IMC_Block_fStruct *)&sctrl_profile_main);
+  Profile_ctrl_main_s.feedPIDblock.ProcessVariable  = boilerTemp;
+  Profile_ctrl_main_s.feedPIDblock.SetPoint         = (float)ptr_prof_data->boilerTempSetpointDegC;
+  Profile_ctrl_main_s.feedPIDblock.TimeMilis        = (uint32_t)elapsed_msecs;
+  return (float)pid_imc_compute((pid_imc_block_t *)&Profile_ctrl_main_s);
 
-  //fcn_boilerSSR_pwrUpdate((uint16_t)sctrl_profile_main.Output);
+  //fcn_boilerSSR_pwrUpdate((uint16_t)Profile_ctrl_main_s.Output);
 }
 
 //*****************************************************************************
@@ -285,16 +283,16 @@ float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData)
 //*****************************************************************************
 
 /*****************************************************************************
- * Function: 	fcn_initMilisecondHWTimer
+ * Function: 	hw_timer_init_msecs_tick
  * Description: This function init the HW-timer no.3
                 to track units or tens of miliseconds.
                 WARNING: counter is defined by: HWTMR_PERIOD_US
  *****************************************************************************/
- void fcn_initMilisecondHWTimer(void)
+ static void hw_timer_init_msecs_tick(void)
  {
-    sHwTmr_Miliseconds.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(3);
-    sHwTmr_Miliseconds.hwTmr_isr_handler   = isr_HwTmr3_Period_EventHandler;
-    sHwTmr_Miliseconds.status              = false;
+    Hw_Tmr_msecs_s.hwTmr               = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(3);
+    Hw_Tmr_msecs_s.hwTmr_isr_handler   = temp_ctrl_sampling_timer_event_handler;
+    Hw_Tmr_msecs_s.is_active              = false;
 
     //TIMER SECTION TO SETUP SAMPLING TIME FOR PID CONTROLLER
     //------------------------------------------------------------------------------
@@ -303,20 +301,20 @@ float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData)
     nrf_drv_timer_config_t pid_timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
     pid_timer_cfg.bit_width = NRF_TIMER_BIT_WIDTH_32;
     pid_timer_cfg.frequency = NRF_TIMER_FREQ_1MHz;
-    //sHwTmr_Miliseconds.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f) ; //time per second
-    sHwTmr_Miliseconds.tmrPeriod_us = (uint32_t)(HWTMR_PERIOD_US) ; 
+    //Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f) ; //time per second
+    Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)(HWTMR_PERIOD_US) ; 
 
-    err_code = nrf_drv_timer_init((nrfx_timer_t const * const)&sHwTmr_Miliseconds.hwTmr, &pid_timer_cfg, sHwTmr_Miliseconds.hwTmr_isr_handler);
+    err_code = nrf_drv_timer_init((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, &pid_timer_cfg, Hw_Tmr_msecs_s.hwTmr_isr_handler);
     APP_ERROR_CHECK(err_code);
 
-    sHwTmr_Miliseconds.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&sHwTmr_Miliseconds.hwTmr, sHwTmr_Miliseconds.tmrPeriod_us );
+    Hw_Tmr_msecs_s.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, Hw_Tmr_msecs_s.tmrPeriod_us );
 
-    nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&sHwTmr_Miliseconds.hwTmr, 
+    nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, 
                                    NRF_TIMER_CC_CHANNEL0,
-                                   sHwTmr_Miliseconds.tmrPeriod_ticks, 
+                                   Hw_Tmr_msecs_s.tmrPeriod_ticks, 
                                    NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK,
                                    true);
     /* Timer will be enabled via this function: fcn_startTemperatureController  */
-    //nrf_drv_timer_enable(&sHwTmr_Miliseconds.hwTmr);
+    //nrf_drv_timer_enable(&Hw_Tmr_msecs_s.hwTmr);
     //nrf_drv_timer_enable(&TIMER_HW2); 
  }

@@ -1,80 +1,220 @@
-# GaggiaController
-## Objective 3: Phase 2/3 and Phase 3 TDD
-Continue TDD implementation with Phase 2/3 (remaining application issues) and Phase 3 (Ceedling + CMock migration).
+# GaggiaControllerX - Project Summary
 
-### Phase 2/3 — Remaining Application Issues (Unity + FFF)
-Issues deferred from Phase 2, now fully planned in TDD_TESTPLAN.md:
-- **H2**: BLE input validation — extracted into new `ProfileValidator.c` (pure-logic, testable on host)
-- **H5**: Maximum brew time limit — `MAX_BREW_TICKS` guard in `BLEspressoServices.c`
-- **M5**: I-gain boost rapid cycling — revert phase2 recovery before re-boost in `cl_idle`/`prof_idle`
-- **M3 fix**: NVM range validation — call `fcn_ValidateAndClampProfile()` in `stgCtrl_ReadUserData()`
+## Overview
+Embedded controller for a Gaggia Classic espresso machine running on an **nRF52832** (Cortex-M4) with the **nRF5 SDK 17.1.0** and **S132 SoftDevice** (BLE 5.0). Built with Segger Embedded Studio.
 
-New files to create:
-- `ble_espresso_app/components/Application/ProfileValidator.c` + `.h`
-- `tests/test_profile_validator.c`
+## Architecture
+```
+┌──────────────────────────────────────────────────┐
+│                 BLE (SoftDevice S132)             │
+│          "BLEspresso" Custom GATT Services       │
+│     Brew profile params (0x1400) │ PID (0x1500)  │
+└────────────────────┬─────────────────────────────┘
+                     │
+┌────────────────────▼─────────────────────────────┐
+│              Application Layer                    │
+│                                                   │
+│  BLEspressoServices ─── Main state machine        │
+│   ├─ Classic Mode  (on/off brew & steam)          │
+│   ├─ Profile Mode  (pressure profiling)           │
+│   └─ Step Fcn Mode (PID tuning/diagnostics)       │
+│                                                   │
+│  TempController ─── PID-IMC boiler regulation     │
+│  PumpController ─── Multi-stage ramp profiles     │
+│  StorageController ─ NVM parameter persistence    │
+└────────┬──────────────┬──────────────┬───────────┘
+         │              │              │
+┌────────▼──────────────▼──────────────▼───────────┐
+│              Peripheral Drivers                   │
+│                                                   │
+│  SPI:  MAX31865 RTD (boiler temp) + NVM flash     │
+│  SSR:  Boiler heater │ Pump motor │ Solenoid      │
+│  GPIO: Brew/Steam AC input sensing (debounced)    │
+│  PWM:  12V high-side switch output                │
+│  I2C:  TMP006 IR sensor (unused)                  │
+└──────────────────────────────────────────────────┘
+```
 
-Estimated new tests: ~23 (13 H2 + 3 H5 + 3 M5 + 4 M3)
+## Scheduler
 
-### Phase 3 — Ceedling + CMock Migration
-Migrate Phase 2/3 tests to Ceedling + CMock for:
-- Auto-generated mocks from headers (replaces manual FFF fakes)
-- Strict call ordering via `_Expect()` (fails on out-of-order calls)
-- Unexpected call detection (any unmocked call = failure)
-- Built-in gcov coverage reports
+A 20ms software timer drives all tasks via flags:
 
-New directory: `tests_ceedling/` with `project.yml` and ported test files.
-Both `tests/` (Makefile + FFF) and `tests_ceedling/` (Ceedling) coexist.
+| Task              | Period | Description                    |
+|-------------------|--------|--------------------------------|
+| AC Input Sensing  | 60ms   | Debounce brew/steam switches   |
+| Boiler Temp Read  | 100ms  | SPI read from MAX31865 RTD     |
+| Espresso Service  | 100ms  | Run active mode state machine  |
+| Step Function     | 100ms  | Tuning mode service            |
 
-### Reference documents:
-- TDD_TESTPLAN.md — full implementation plan (Phases 1–3)
-- TEST_PLAN.md — master test strategy (Phases 1–6)
-- tests/docs/phase1_test_report.md — Phase 1 results
-- tests/docs/phase2_test_report.md — Phase 2 results
-## End of Objective 3
+## Functional Description
 
-## Objective 2: Apply TDD to GaggiaController <COMPLETED>
-Phase 1 complete: 32/32 tests, BUG-001 fixed.
-Phase 2 complete: 34/34 tests, H1/H3/H4/M1 fixed, M3 documented.
-Total: 66/66 tests passing.
+### Temperature Control
+PID-IMC controller regulates boiler temperature via SSR zero-crossing control. Adaptive I-gain: [End-user programmable] boost during brew, [End-user programmable] during recovery, [End-user programmable] at steady state. 
+Hardware timer provides 1ms tick; PID updates every ~100ms.
 
-TDD plan created and documented in TDD_TESTPLAN.md.
-Reference links used:
-- https://medium.com/@encodedots/test-driven-development-in-c-complete-guide-to-tdd-with-c-781787935465
-- https://snyk.io/articles/claude-skills-embedded-systems-engineers/
-- https://www.beningo.com/claude-code-skills-embedded-developers/
-## End of Objective 2
+### Brew Modes
 
----
-## Documentation
-+   File: gaggiacontroller-build.md
-    PAth: \GaggiaController\docs\build
-    Description:  Contains build notes and what was fixed to move the project to the latest release of SEGGER embedded studio 8.26c + nRF52832-QFAB. 
-    ### Fix 1 — SDK Paths, 
-    ### Fix 2 — SEGGER ES 8.26c Compatibility,
-    ### Fix 3 — FDS Init Failure (`0x860A = FDS_ERR_NO_PAGES`),
-    ### Fix 4 — Debug Build Too Large for 92KB App Window
-    - Memory map was corrected to matche MCU nRF52832-QFAB size from 512kB to 256kB.
-      FLASH Mem used: 217KB of 256KB = 85%
-      RAM Mem used: 37.5KB of 64KB = 59%
+**Classic:** 
+Brew switch activates pump (100%) + solenoid. Steam switch changes setpoint to steam temperature. Simple on/off operation.
 
----
-## Objective 1: Code migration to latest SEGGER release <COMPLETED_DO_NOT_EXECUTE>
-### File generated: gaggiacontroller-build.md
-This project was build on an older version of SEGGER embedded studio and the goal is to compile it successfuly in new verison from:  Release 8.26c Build 2026021300.61129 and  higher. Additionally, improve Segger embedded studio setup to make it easy to work on this project from two different computers by forcing the user to store the project in the same location/path for each computer but make more easy to manage its location and the location of the SDK via MACROS.
-This Project relies in the SDK NRF52 environment: nRF5 SDK version: nRF5_SDK_17.1.0_ddde560
-MCU target: nRF52832-QFAB
-The project can be successfully build in an older verision of SEGGER embedde studio, which is the other computer. now we need to compile it in this computer.
+**Profile:** 
+Three-stage pressure profile with configurable power and duration per stage:
+1. Pre-infusion (low pressure soak)
+2. Infusion (full pressure extraction)
+3. Decline (pressure taper)
 
-1. build and compile project in this new version of SEGGER embedded studio: release 8.26c Build 2026021300.61129 
-    + fix any broken links or libraries that may changed between releases.
-    + Read section: ## Current compilation ERRORS to understand current compilation errors.
-    + Do not play with memory size and boundaries
+Exponential ramp tables provide smooth transitions between stages.
 
-2. Implement a Long-term solution, using  macro to point to the SDK and project, e.g. to make it easy for two engineer working in different computers.
-    + Assume current project and SDK location to create MACROS: 
-        + Project: C:\WS\NRF\GaggiaController
-        + SDK: C:\WS\NRF\nRF5_SDK_17.1.0_ddde560
-    + User's suggest to implement this changes that related to SEGGER embedded studio is to modify file: ble_espresso_app_pca10040_s132.emProject, but check and confirm.
+**Step Function:**
+Diagnostic mode (activated by holding both switches at startup). Applies 100% heater power and logs temperature for PID tuning.
 
-3. Read README.md for more information that will support your work toward the completion of objetive 1 and 2
-## End of Objective 1
+### BLE Interface
+Two custom GATT services allow a mobile app to:
+- Monitor boiler temperature (notifications)
+- Set brew/steam temperature targets
+- Configure pressure profile parameters (power & time per stage)
+- Tune PID gains (P, I, I-max, D, D-LPF, Gain)
+
+### Storage
+User-configured parameters (brew profile + PID gains) persist to internal flash via `nrf_fstorage`.
+
+## Key Files
+
+| Path | Role |
+|------|------|
+| `main/main.c` | Init sequence + scheduler loop |
+| `components/Application/BLEspressoServices.c` | Mode state machines |
+| `components/Application/tempController.c` | PID temperature control |
+| `components/Application/PumpController.c` | Pump ramp profiles |
+| `components/Peripherals/solidStateRelay_Controller.c` | SSR phase/zero-cross control |
+| `components/Peripherals/spi_Devices.c` | RTD + NVM SPI drivers |
+| `components/Peripherals/ac_inputs_drv.c` | Brew/Steam switch sensing |
+| `components/BLE_Services/ble_cus.c` | Custom BLE GATT services |
+| `components/Utilities/x205_PID_Block.c` | PID algorithm |
+
+All paths relative to `ble_espresso_app/`.
+
+## Code Convention
+Code Convention section does not apply to any function or variable declared inside **nRF5 SDK 17.1.0** and **S132 SoftDevice**
+
+### Coding Guidelines
+- A u or U suffix shall be applied to all integer constants that are represented in an unsigned type
+- The controlling expression of a #if or #elif preprocessing directive shall evaluate to 0 or 1
+- The value returned by a function having non-void return type shall be used	
+- An inline function shall be declared with the static storage class	
+- Arrays shall not be partially initialized
+- An element of an object shall not be initialized more than once
+
+### Naming Convention
+- variables and functions shall use: snake_case
+- structure element shall use: camelCase
+
+### Global Variables
+- Global variables should be prepended with a 'g_'.
+**DO NOT IMPLEMENT YET** - Global variables should be avoided whenever possible.
+```
+    For example:
+    Logger  g_log;
+    Logger *g_ptr_log;
+```
+### Include Units in Names
+If a variable represents time, weight, or some other unit then include the unit in the name so developers can more easily spot problems. 
+```
+    For example:
+    uint32 timeout_msecs;
+    uint32 my_temp_degC;
+```
+- For seconds:  secs
+- For miliseconds: msecs
+- For nanoseconds: nsecs
+- For power in percentage: pwr
+- For electrical power: watt
+- For temperature in Celcius: degC
+- For temperature in Farenheit: degF
+
+### Function Names
+Usually every function performs an action, so the name should make clear what it does: check_for_errors() instead of error_check(), dump_data_to_file() instead of data_file(). This will also make functions and data objects more distinguishable. By making function names verbs and following other naming conventions programs can be read more naturally.
+
+- Function names shall NOT use the prefix `fcn_`.
+- Private functions shall be declared `static`.
+
+    Suffixes are sometimes useful:
+    max - to mean the maximum value something can have.
+    cnt - the current count of a running count variable.
+    key - key value.
+    For example: retry_max to mean the maximum number of retries, retry_cnt to mean the current retry count.
+
+    Prefixes are sometimes useful:
+    is - to ask a question about something. Whenever someone sees Is they will know it's a question.
+    get - get a value.
+    set - set a value.
+    For example: is_hit_retry_limit.
+
+### Structure Names
+- Structs names shall be nouns.
+- Use **typedef struct** names end with: _t
+```
+    For example:
+    typedef struct 
+    {}ble_espresso_user_data_t;
+```
+- Struct Naming: All struct names must start with a capitalized letter and must have a suffix: _s 
+```
+    For example:
+    ble_espresso_user_data_t Ble_espresso_profile_t;
+```
+
+### Pointer Variables
+- place the * close to the variable name not pointer type
+- all pointers name shall use prefix: ptr_
+```
+    For example:
+    char *ptr_name= NULL;
+```
+
+### Arrays Names
+Arrays names shall have a name and a suffix: _arr 
+```
+    For example:
+    const float EXP_GROWTH_arr[14];
+```
+
+### Boolean Naming Conventions
+Use prefixes like: is_, has_, can_, should_ or flag_ to make boolean variables.
+```
+    For example:
+    bool is_boostI_phase1;
+    bool flag_active;
+```
+
+### Enum Names
+Labels All Upper Case with '_' Word Separators
+This is the standard rule for enum labels. No comma on the last element.
+Use **enum** names end with: _t
+```
+    For example:
+    enum  {
+        PIN_OFF,
+        PIN_ON
+    }pinStateType_t;
+```
+
+### Constants variables
+Constants should be all caps with '_' separators.
+
+### A Line Should Not Exceed 79 Characters
+Lines should not exceed 79 characters.
+
+### Add Comments to Closing Braces
+Adding a comment to closing braces can help when you are reading code because you don't have to find the begin brace to know what is going on.
+```
+    For example:
+    while(1) {
+    if (valid) {
+    
+    } /* if valid */
+    else {
+    } /* not valid */
+
+    } /* end forever */
+```

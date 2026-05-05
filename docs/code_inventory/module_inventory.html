@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Inventory Report — GaggiaController</title>
+<style>
+  :root {
+    --bg:         #0f1117;
+    --bg-card:    #1a1d27;
+    --bg-section: #14161f;
+    --border:     #2a2d3e;
+    --accent:     #4f8ef7;
+    --accent2:    #7c5cbf;
+    --green:      #3fb950;
+    --red:        #f85149;
+    --yellow:     #e3b341;
+    --cyan:       #39c5cf;
+    --orange:     #d29922;
+    --text:       #c9d1d9;
+    --text-dim:   #6e7681;
+    --text-head:  #f0f6fc;
+    --code-bg:    #161b22;
+    --toc-w:      260px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  #toc {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--toc-w);
+    height: 100vh;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 0;
+    z-index: 100;
+  }
+
+  #content {
+    margin-left: var(--toc-w);
+    padding: 40px 48px 80px;
+    max-width: 1200px;
+  }
+
+  /* ── TOC ── */
+  #toc h2 {
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 18px 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  #toc a {
+    display: block;
+    padding: 5px 18px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12.5px;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #toc a:hover {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(79,142,247,.07);
+  }
+
+  #toc .toc-section { margin-top: 6px; }
+
+  /* ── Headings ── */
+  h1 {
+    font-size: 26px;
+    color: var(--text-head);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .report-meta {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h2.module-title {
+    font-size: 20px;
+    color: var(--accent);
+    margin: 48px 0 4px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .module-files {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  h3 {
+    font-size: 15px;
+    color: var(--text-head);
+    margin: 24px 0 10px;
+    font-weight: 600;
+  }
+
+  h4 {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin: 16px 0 8px;
+    color: var(--text-dim);
+  }
+
+  /* ── Section h2 (Summary etc.) ── */
+  h2.section-title {
+    font-size: 18px;
+    color: var(--text-head);
+    margin: 36px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 12px; }
+
+  table {
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--bg-card);
+    border-radius: 6px;
+  }
+
+  thead tr {
+    background: var(--bg-section);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.025); }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #e6edf3;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .badge-pub    { background: rgba(63,185,80,.15);  color: var(--green);  border: 1px solid rgba(63,185,80,.3);  }
+  .badge-priv   { background: rgba(124,92,191,.15); color: var(--accent2);border: 1px solid rgba(124,92,191,.3); }
+  .badge-extern { background: rgba(79,142,247,.15); color: var(--accent); border: 1px solid rgba(79,142,247,.3); }
+  .badge-isr    { background: rgba(227,179,65,.15); color: var(--yellow); border: 1px solid rgba(227,179,65,.3); }
+  .badge-test   { background: rgba(57,197,207,.15); color: var(--cyan);   border: 1px solid rgba(57,197,207,.3); }
+  .badge-anom   { background: rgba(248,81,73,.15);  color: var(--red);    border: 1px solid rgba(248,81,73,.3);  }
+  .badge-dead   { background: rgba(210,153,34,.15); color: var(--orange); border: 1px solid rgba(210,153,34,.3); }
+
+  /* ── Anomaly callout ── */
+  .anomaly {
+    background: rgba(248,81,73,.08);
+    border: 1px solid rgba(248,81,73,.3);
+    border-left: 4px solid var(--red);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: #f0c0be;
+  }
+
+  .anomaly strong { color: var(--red); }
+
+  /* ── Note callout ── */
+  .note {
+    background: rgba(57,197,207,.07);
+    border: 1px solid rgba(57,197,207,.25);
+    border-left: 4px solid var(--cyan);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: #c0e8ea;
+  }
+
+  /* ── None placeholder ── */
+  .none {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 12.5px;
+    padding: 6px 0;
+  }
+
+  /* ── Summary stats ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  .stat-card .val {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .stat-card.warn .val { color: var(--red); }
+  .stat-card.ok   .val { color: var(--green); }
+  .stat-card.info .val { color: var(--cyan); }
+
+  /* ── Anomaly table row colour ── */
+  tr.anom-row td { color: #f0c0be; }
+  tr.anom-row td:first-child { color: var(--red); font-weight: 700; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── Strong highlight ── */
+  strong { color: var(--text-head); }
+
+  /* ── Rename cell (input-based) ── */
+  td.rename-cell {
+    padding: 4px 14px;
+    min-width: 190px;
+    vertical-align: middle;
+  }
+  td.rename-cell input {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    padding: 3px 7px;
+    width: 100%;
+    min-width: 160px;
+    outline: none;
+    display: block;
+  }
+  td.rename-cell input::placeholder {
+    color: var(--text-dim);
+    opacity: 0.5;
+  }
+  td.rename-cell input:focus {
+    border-color: var(--accent);
+    background: #111827;
+  }
+  td.rename-cell input:not(:placeholder-shown) {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* ── Export toolbar ── */
+  #export-bar {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    box-shadow: 0 4px 28px rgba(0,0,0,.55);
+    z-index: 300;
+  }
+  #proposal-count {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    min-width: 130px;
+  }
+  #proposal-count.has-proposals { color: var(--green); font-weight: 600; }
+  #export-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  #export-btn:hover  { opacity: .85; }
+  #export-btn:disabled { opacity: .35; cursor: not-allowed; }
+  #clear-btn {
+    background: #252830;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  #clear-btn:hover { background: #2e323e; color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SIDEBAR TOC
+═══════════════════════════════════════════════ -->
+<nav id="toc">
+  <h2>Modules</h2>
+  <a href="#summary">Summary</a>
+  <a href="#anomalies">Convention Anomalies</a>
+  <hr style="border-color:var(--border);margin:8px 0;">
+  <div class="toc-section">
+    <a href="#m1">1. BLEspressoServices</a>
+    <a href="#m2">2. PumpController</a>
+    <a href="#m3">3. StorageController</a>
+    <a href="#m4">4. tempController</a>
+    <a href="#m5">5. bluetooth_drv</a>
+    <a href="#m6">6. ble_cus</a>
+    <a href="#m7">7. spi_Devices</a>
+    <a href="#m8">8. ac_inputs_drv</a>
+    <a href="#m9">9. solidStateRelay_Controller</a>
+    <a href="#m10">10. dc12Vouput_drv</a>
+    <a href="#m11">11. i2c_sensors</a>
+    <a href="#m12">12. x04_Numbers</a>
+    <a href="#m13">13. x205_PID_Block</a>
+    <a href="#m14">14. x201_DigitalFiltersAlgorithm</a>
+    <a href="#m15">15. x01_StateMachineControls</a>
+    <a href="#m16">16. x02_FlagValues</a>
+    <a href="#m17">17. main</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════ -->
+<div id="content">
+
+  <h1>Module Inventory Report</h1>
+  <div class="report-meta">
+    Generated: 2026-04-30 &nbsp;·&nbsp;
+    Project: <strong>GaggiaController</strong> &nbsp;·&nbsp;
+    Target: nRF52832-QFAB, BLE Espresso Machine Controller
+  </div>
+
+  <!-- ── SUMMARY ── -->
+  <h2 class="section-title" id="summary">Summary</h2>
+
+  <div class="stats-grid">
+    <div class="stat-card info"><div class="val">17</div><div class="lbl">Modules documented</div></div>
+    <div class="stat-card"><div class="val">20</div><div class="lbl">Public variables</div></div>
+    <div class="stat-card ok"><div class="val">31</div><div class="lbl">Private (correctly static)</div></div>
+    <div class="stat-card warn"><div class="val">15</div><div class="lbl">Private missing static</div></div>
+    <div class="stat-card"><div class="val">7</div><div class="lbl">Extern declarations</div></div>
+    <div class="stat-card"><div class="val">55</div><div class="lbl">Public functions</div></div>
+    <div class="stat-card info"><div class="val">7</div><div class="lbl">Public ISRs</div></div>
+    <div class="stat-card ok"><div class="val">22</div><div class="lbl">Private (correctly static)</div></div>
+    <div class="stat-card warn"><div class="val">14</div><div class="lbl">Functions missing static</div></div>
+    <div class="stat-card"><div class="val">5</div><div class="lbl">Test accessor stubs</div></div>
+  </div>
+
+  <!-- ── ANOMALIES TABLE ── -->
+  <h2 class="section-title" id="anomalies">Convention Anomalies</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Location</th><th>Symbol(s)</th><th>Issue</th></tr></thead>
+      <tbody>
+        <tr class="anom-row"><td>A1</td><td><code>BLEspressoServices.h:9</code></td><td><code>appModeToRun</code></td><td><code>static</code> variable defined inside a header — each TU that includes the header gets its own independent copy</td></tr>
+        <tr class="anom-row"><td>A2</td><td><code>BLEspressoServices.c</code></td><td><code>intservice_GetSwitcheState</code></td><td>Prototype listed under "private" but missing <code>static</code> keyword</td></tr>
+        <tr class="anom-row"><td>A3</td><td><code>PumpController.c</code></td><td><code>sPumpParam</code></td><td>Listed under PUBLIC VARIABLES comment but has no <code>extern</code> in header; no other TU should see it — should be <code>static</code></td></tr>
+        <tr class="anom-row"><td>A4</td><td><code>PumpController.c</code></td><td><code>fcn_LoadPumpParam</code></td><td>Listed under "private" functions but missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A5</td><td><code>StorageController.c</code></td><td><code>fcn_ValidateAndClampProfile</code>, <code>parsingBytesToFloat</code>, <code>parsingBytesTo32bitVar</code>, <code>encodeFloatToBytes</code></td><td>All four private function prototypes missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A6</td><td><code>tempController.c</code></td><td><code>fcn_loadI_ParamToCtrl_Temp</code>, <code>fcn_initMilisecondHWTimer</code></td><td>Listed as private but missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A7</td><td><code>bluetooth_drv.h</code></td><td><code>m_gatt</code>, <code>m_qwr</code>, <code>m_advertising</code></td><td>SDK macro-expanded global instances defined in the header — should be in the <code>.c</code> file</td></tr>
+        <tr class="anom-row"><td>A8</td><td><code>bluetooth_drv.c</code></td><td><code>assert_nrf_callback</code></td><td>Listed under private prototypes but missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A9</td><td><code>spi_Devices.c</code></td><td><code>hwreg_SensorConfig</code>, <code>resistanceRTD</code>, <code>sm_SPIdevices</code></td><td>Listed under "PRIVATE VARIABLES" but all three lack <code>static</code></td></tr>
+        <tr class="anom-row"><td>A10</td><td><code>spi_Devices.c</code></td><td><code>spi_event_handler</code>, <code>spi_initTempDevCtrlPins</code>, <code>spi_initNvmDevCtrlPins</code>, <code>spi_NVMemoryCMDreset</code>, <code>spi_NVMemoryReadJEDECID</code>, <code>spi_NVMemoryWriteEnable</code>, <code>spi_NVMemoryWriteDisable</code>, <code>spi_NVMemoryEraseSector</code>, <code>NVMpageNoByteToW</code></td><td>Private function prototypes missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A11</td><td><code>solidStateRelay_Controller.c</code></td><td><code>sSSRcontroller</code>, <code>sBoilderSSRzc</code>, <code>sPumpSSRdrv</code>, <code>sSolenoidSSRdrv</code></td><td>Listed under "PRIVATE VARIABLES" but all lack <code>static</code></td></tr>
+        <tr class="anom-row"><td>A12</td><td><code>solidStateRelay_Controller.c</code></td><td><code>fcn_initSSRController</code>, <code>fcn_createSSRinstance</code>, <code>fcn_createOnOffSSRinstance</code>, <code>fcn_boilerSSR_ctrlUpdate</code>, <code>fcn_SSR_pwrUpdate</code>, <code>fcn_pumpSSR_ctrlUpdate</code>, <code>fcn_SSR_ctrlUpdate</code></td><td>Private function prototypes missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A13</td><td><code>dc12Vouput_drv.c</code></td><td><code>s12Vout</code>, <code>seqCounter</code>, <code>startFlag</code>, <code>seqOn</code>, <code>seqDimDown</code>, <code>seqDimUp</code>, <code>seqOff</code></td><td>Listed under "PRIVATE VARIABLES" but all lack <code>static</code></td></tr>
+        <tr class="anom-row"><td>A14</td><td><code>dc12Vouput_drv.c</code></td><td><code>sm_DC12Voutput_drv</code></td><td>Internal PWM state machine driver — no <code>static</code>, not declared in header</td></tr>
+        <tr class="anom-row"><td>A15</td><td><code>i2c_sensors.c</code></td><td><code>twi_handler</code></td><td>TWI event callback prototype listed as private but missing <code>static</code></td></tr>
+        <tr class="anom-row"><td>A16</td><td><code>main.c</code></td><td><code>fcn_DO_NOTHING</code></td><td>Dead-code stub with external linkage — not declared anywhere, never called</td></tr>
+        <tr class="anom-row"><td>A17</td><td><code>main.c</code></td><td><code>PrintTask_flag</code>, <code>ReadSensors_flag</code>, <code>OneSecond_flag</code>, <code>LightSeq_flag</code>, <code>PumpCtrl_flag</code></td><td>Volatile flags defined without <code>static</code>; appear unused (dead code remnants)</td></tr>
+        <tr class="anom-row"><td>A18</td><td><code>x04_Numbers.c:118</code></td><td><code>fcn_Constrain_WithinIntValues</code></td><td>Declared <code>inline void inline</code> — duplicate <code>inline</code> keyword, likely copy-paste error</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 1 — BLEspressoServices
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m1">1. BLEspressoServices</h2>
+  <div class="module-files">
+    ble_espresso_app/components/Application/BLEspressoServices.c &nbsp;|&nbsp;
+    BLEspressoServices.h
+  </div>
+
+  <h3>Variables</h3>
+
+  <h4><span class="badge badge-pub">Public</span> Global (no static)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>blEspressoProfile</code></td><td><code>volatile bleSpressoUserdata_struct</code></td><td>.c</td><td>Central data hub — single shared struct carrying all user-configurable parameters (setpoints, PID gains, brew profile) across every module</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>espressoService_Status</code></td><td><code>StateMachineCtrl_Struct</code></td><td>.c</td><td>Three-state machine (idle / cl_Mode_1 heating / cl_Mode_2 brewing) for Classic espresso service</td></tr>
+      <tr><td><code>profileService_Status</code></td><td><code>StateMachineCtrl_Struct</code></td><td>.c</td><td>Three-state machine for Profile (exponential ramp) espresso service</td></tr>
+      <tr><td><code>stepfcnService_Status</code></td><td><code>StateMachineCtrl_Struct</code></td><td>.c</td><td>Three-state machine for Step Function (PID tuning) service</td></tr>
+      <tr><td><code>classicData</code></td><td><code>s_classic_data_t</code></td><td>.c</td><td>Runtime values for Classic mode: current tick counter, heat/pump power computed per cycle</td></tr>
+      <tr><td><code>profileData</code></td><td><code>s_profile_data_t</code></td><td>.c</td><td>Runtime values for Profile mode including embedded exponential lookup table for temp ramp</td></tr>
+      <tr><td><code>serviceTick</code></td><td><code>uint32_t</code></td><td>.c</td><td>Software tick counter incremented each 20 ms scheduler call; drives brew-time and phase transitions</td></tr>
+      <tr><td><code>app_timeStamp</code></td><td><code>uint32_t</code></td><td>.c</td><td>Millisecond timestamp snapshot used to compute PID delta-time</td></tr>
+      <tr><td><code>app_PumpPwr</code></td><td><code>float</code></td><td>.c</td><td>Computed pump power (0–100 %) written to SSR driver each cycle</td></tr>
+      <tr><td><code>app_HeatPwr</code></td><td><code>float</code></td><td>.c</td><td>Computed boiler heater power (0–100 %) written to SSR driver each cycle</td></tr>
+      <tr><td><code>f_BoilerTemp</code></td><td><code>float</code></td><td>.c</td><td>Cached boiler temperature reading retrieved from SPI RTD sensor</td></tr>
+      <tr><td><code>f_BoilerTragetTemp</code></td><td><code>float</code></td><td>.c</td><td>Active temperature setpoint; may differ from profile value during brew phase transitions</td></tr>
+      <tr><td><code>b_phase2_flag</code></td><td><code>bool</code></td><td>.c</td><td>Latches true when brew phase 2 (phi2 recovery) has been entered; prevents re-entering phi1 boost</td></tr>
+      <tr><td><code>stpfcn_tickCounter</code></td><td><code>uint32_t</code></td><td>.c</td><td>Dedicated tick counter for Step Function mode; drives time-base for PID tuning steps</td></tr>
+      <tr><td><code>TAG_SYS_MONITOR</code></td><td><code>static const char[]</code></td><td>.c</td><td>NRF_LOG prefix string for system-monitor log lines</td></tr>
+      <tr><td><code>TAG_SYS_MSG</code></td><td><code>static const char[]</code></td><td>.c</td><td>NRF_LOG prefix string for general system messages</td></tr>
+      <tr><td><code>TAG_PROF_MODE</code></td><td><code>static const char[]</code></td><td>.c</td><td>NRF_LOG prefix string for Profile mode log lines</td></tr>
+      <tr><td><code>TAG_CLAS_MODE</code></td><td><code>static const char[]</code></td><td>.c</td><td>NRF_LOG prefix string for Classic mode log lines</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-extern">Extern</span> Declarations</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>blEspressoProfile</code></td><td><code>volatile bleSpressoUserdata_struct</code></td><td>.h</td><td>Forward declaration so other modules can share the central data hub</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="anomaly"><strong>Anomaly A1:</strong> <code>static uint32_t appModeToRun = machine_App;</code> is defined inside the <code>.h</code> file — each translation unit that includes the header gets its own independent, silently diverging copy.</div>
+
+  <h3>Functions</h3>
+
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_service_ClassicMode</code></td><td><code>void (void)</code></td><td>Cooperative task: runs one iteration of Classic espresso state machine — heats to setpoint then drives pump at fixed power for configured brew time</td></tr>
+      <tr><td><code>fcn_service_ProfileMode</code></td><td><code>void (void)</code></td><td>Cooperative task: runs one iteration of Profile mode — follows exponential temperature ramp table, switches from phi1 I-boost to phi2 recovery after brew start</td></tr>
+      <tr><td><code>fcn_service_StepFunction</code></td><td><code>void (void)</code></td><td>Cooperative task: runs one iteration of Step Function mode — applies a configurable step input for open-loop PID tuning observations</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>intservice_GetSwitcheState</code></td><td><code>uint32_t (void)</code></td><td>Reads debounced AC brew/steam switch state from <code>ac_inputs_drv</code> and returns combined bitmask — missing <code>static</code> (anomaly A2)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-test">Test Accessors</span> #ifdef TEST</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>test_set_serviceTick</code></td><td><code>void (uint32_t)</code></td><td>Injects a tick count value for unit-test control of time-based transitions</td></tr>
+      <tr><td><code>test_get_serviceTick</code></td><td><code>uint32_t (void)</code></td><td>Reads back <code>serviceTick</code> for assertion in tests</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 2 — PumpController
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m2">2. PumpController</h2>
+  <div class="module-files">ble_espresso_app/components/Application/PumpController.c &nbsp;|&nbsp; PumpController.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span> <span class="badge badge-anom">anomaly A3</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>sPumpParam</code></td><td><code>Struct_PumpParam</code></td><td>.c</td><td>Active pump profile and state machine; holds target flow, phase durations, and current state — <strong>should be <code>static</code></strong>, has no <code>extern</code> in header (anomaly A3)</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <p class="none">None — all private state is embedded inside <code>sPumpParam</code> or local to functions.</p>
+  <h4><span class="badge badge-extern">Extern</span></h4>
+  <p class="none">None</p>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initPumpController</code></td><td><code>void (void)</code></td><td>Initialises <code>sPumpParam</code> fields to safe defaults and resets the pump state machine to idle</td></tr>
+      <tr><td><code>fcn_PumpStateDriver</code></td><td><code>void (void)</code></td><td>Cooperative task: advances the pump state machine one step — sequences through pre-infusion, brew, and ramp-down phases</td></tr>
+      <tr><td><code>fcn_LoadNewPumpParameters</code></td><td><code>void (Struct_PumpProfileData*)</code></td><td>Copies a new pump profile into <code>sPumpParam</code> and validates phase durations</td></tr>
+      <tr><td><code>fcn_StartBrew</code></td><td><code>void (void)</code></td><td>Triggers the pump state machine to leave idle and begin the pre-infusion phase</td></tr>
+      <tr><td><code>fcn_CancelBrew</code></td><td><code>void (void)</code></td><td>Forces pump state machine back to idle and zeroes pump power immediately</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_LoadPumpParam</code></td><td><code>void (Struct_PumpProfileData*)</code></td><td>Internal helper that copies raw profile bytes into <code>sPumpParam</code> — missing <code>static</code> (anomaly A4)</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 3 — StorageController
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m3">3. StorageController</h2>
+  <div class="module-files">ble_espresso_app/components/Application/StorageController.c &nbsp;|&nbsp; StorageController.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>hexTemp</code></td><td><code>static uint32_t</code></td><td>.c (inside <code>encodeFloatToBytes</code>)</td><td>Scratch register used during float-to-4-byte little-endian encoding; static to avoid stack allocation on every NVM write</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-extern">Extern</span></h4><p class="none">None</p>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>stgCtrl_Init</code></td><td><code>storageCtrl_status_t (void)</code></td><td>Initialises the FDS (Flash Data Storage) subsystem and waits for the ready event</td></tr>
+      <tr><td><code>stgCtrl_ChkForUserData</code></td><td><code>storageCtrl_status_t (void)</code></td><td>Probes FDS for existing user records; returns status indicating whether first-time defaults are needed</td></tr>
+      <tr><td><code>stgCtrl_ReadUserData</code></td><td><code>storageCtrl_status_t (void)</code></td><td>Reads shot-profile and controller NVM records, decodes them into <code>blEspressoProfile</code>, then calls <code>fcn_ValidateAndClampProfile</code> to clamp out-of-range values (M3 fix)</td></tr>
+      <tr><td><code>stgCtrl_StoreShotProfileData</code></td><td><code>storageCtrl_status_t (void)</code></td><td>Encodes and writes only the shot-profile fields to NVM (read-modify-write; controller section untouched)</td></tr>
+      <tr><td><code>stgCtrl_StoreControllerData</code></td><td><code>storageCtrl_status_t (void)</code></td><td>Encodes and writes only the PID/controller fields to NVM (read-modify-write; shot-profile section untouched)</td></tr>
+      <tr><td><code>stgCtrl_PrintUserData</code></td><td><code>void (void)</code></td><td>Dumps current <code>blEspressoProfile</code> values to NRF_LOG for debugging</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A5</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_ValidateAndClampProfile</code></td><td><code>profileValidation_status_t (bleSpressoUserdata_struct*)</code></td><td>Clamps all float fields to safe engineering ranges using <code>fcn_ValidateFloat_InRange</code>; returns a bitmask of fields corrected — added for M3 NVM-corruption fix</td></tr>
+      <tr><td><code>parsingBytesToFloat</code></td><td><code>float (uint8_t*, uint8_t)</code></td><td>Reassembles 4 raw NVM bytes (little-endian) into an IEEE-754 float</td></tr>
+      <tr><td><code>parsingBytesTo32bitVar</code></td><td><code>uint32_t (uint8_t*, uint8_t)</code></td><td>Reassembles 4 raw NVM bytes (little-endian) into a uint32_t</td></tr>
+      <tr><td><code>encodeFloatToBytes</code></td><td><code>void (float, uint8_t*, uint8_t)</code></td><td>Converts an IEEE-754 float to 4 little-endian bytes for NVM storage</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 4 — tempController
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m4">4. tempController</h2>
+  <div class="module-files">ble_espresso_app/components/Application/tempController.c &nbsp;|&nbsp; tempController.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>sctrl_profile_main</code></td><td><code>PID_IMC_Block_fStruct</code></td><td>.c</td><td>PID instance for steady-state temperature hold (base Kp/Ki/Kd)</td></tr>
+      <tr><td><code>sctrl_profile_phi1</code></td><td><code>PID_IMC_Block_fStruct</code></td><td>.c</td><td>PID instance for brew-boost phase — I-gain multiplied ×6.5 to rapidly close the brew temperature drop</td></tr>
+      <tr><td><code>sctrl_profile_phi2</code></td><td><code>PID_IMC_Block_fStruct</code></td><td>.c</td><td>PID instance for post-brew recovery — I-gain multiplied ×2.0 for smooth return to setpoint</td></tr>
+      <tr><td><code>sHwTmr_Miliseconds</code></td><td><code>struct_HWTimer</code></td><td>.c</td><td>Hardware timer configuration struct for the 1 ms periodic interrupt that drives <code>milisTicks</code></td></tr>
+      <tr><td><code>milisTicks</code></td><td><code>volatile uint32_t</code></td><td>.c</td><td>Free-running millisecond counter incremented by the 1 ms HW timer ISR; used as PID delta-time source</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-extern">Extern</span></h4><p class="none">None</p>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initCntrl_Temp</code></td><td><code>void (void)</code></td><td>Initialises all three PID instances and the millisecond hardware timer</td></tr>
+      <tr><td><code>fcn_loadIboost_ParamToCtrl_Temp</code></td><td><code>void (PID_IMC_Block_fStruct*)</code></td><td>Loads the ×6.5 brew-boost I-gain into the active PID instance (phi1 transition)</td></tr>
+      <tr><td><code>fcn_multiplyI_ParamToCtrl_Temp</code></td><td><code>void (float)</code></td><td>Multiplies the current I-gain by a scalar factor — used for the ×2.0 phi2 recovery transition</td></tr>
+      <tr><td><code>fcn_loaddSetPoint_ParamToCtrl_Temp</code></td><td><code>void (float)</code></td><td>Updates the temperature setpoint in all three PID instances atomically</td></tr>
+      <tr><td><code>fcn_loadPID_ParamToCtrl_Temp</code></td><td><code>void (PID_IMC_Block_fStruct*)</code></td><td>Replaces PID coefficients in all instances from a source struct (e.g., after BLE reconfiguration)</td></tr>
+      <tr><td><code>fcn_updateTemperatureController</code></td><td><code>void (void)</code></td><td>Runs one PID-IMC Type-A iteration: reads <code>milisTicks</code>, updates <code>sctrl_profile_main</code>, writes result to <code>app_HeatPwr</code></td></tr>
+      <tr><td><code>fcn_startTempCtrlSamplingTmr</code></td><td><code>void (void)</code></td><td>Enables the 1 ms HW timer peripheral, starting <code>milisTicks</code> accumulation</td></tr>
+      <tr><td><code>fcn_stopTempCtrlSamplingTmr</code></td><td><code>void (void)</code></td><td>Disables the 1 ms HW timer to halt temperature sampling</td></tr>
+      <tr><td><code>isr_HwTmr3_Period_EventHandler</code> <span class="badge badge-isr">ISR</span></td><td><code>void (void)</code></td><td>1 ms hardware timer ISR — increments <code>milisTicks</code>; registered as a timer callback, requires public linkage</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A6</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_loadI_ParamToCtrl_Temp</code></td><td><code>void (PID_IMC_Block_fStruct*, float)</code></td><td>Writes a new Ki value into a single PID instance</td></tr>
+      <tr><td><code>fcn_initMilisecondHWTimer</code></td><td><code>void (void)</code></td><td>Configures and starts the nRF52 hardware timer peripheral for 1 ms period</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-test">Test Accessors</span> #ifdef TEST</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>test_set_milisTicks</code></td><td><code>void (uint32_t)</code></td><td>Injects a millisecond count for deterministic PID delta-time in unit tests</td></tr>
+      <tr><td><code>test_get_milisTicks</code></td><td><code>uint32_t (void)</code></td><td>Reads back <code>milisTicks</code> for assertion</td></tr>
+      <tr><td><code>test_get_integral_error</code></td><td><code>float (void)</code></td><td>Reads back <code>sctrl_profile_main.HistoryError</code> for I-term assertions</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 5 — bluetooth_drv
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m5">5. bluetooth_drv</h2>
+  <div class="module-files">ble_espresso_app/components/BLE/bluetooth_drv.c &nbsp;|&nbsp; components/BLE/include/bluetooth_drv.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span> Global</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>read_NvmData</code></td><td><code>volatile bleSpressoUserdata_struct</code></td><td>.c</td><td>Temporary buffer populated when the BLE client requests a read of current NVM settings</td></tr>
+      <tr><td><code>DataReceived[4]</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>Raw 4-byte BLE write payload buffer; filled by <code>on_write</code> GATT handler</td></tr>
+      <tr><td><code>iTagertTemp</code></td><td><code>volatile uint32_t</code></td><td>.c</td><td>Target temperature received over BLE as a fixed-point integer (°C × 10)</td></tr>
+      <tr><td><code>iTagertTemp2</code></td><td><code>volatile float</code></td><td>.c</td><td>Target temperature as float; decoded from <code>iTagertTemp</code> for PID setpoint loading</td></tr>
+      <tr><td><code>dataLen</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>Length of the most recent BLE characteristic write</td></tr>
+      <tr><td><code>flg_BrewCfg</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>Set to 1 when a brew-profile BLE write arrives; cleared after <code>stgCtrl_StoreShotProfileData</code></td></tr>
+      <tr><td><code>flg_PidCfg</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>Set to 1 when a PID-config BLE write arrives; cleared after <code>stgCtrl_StoreControllerData</code></td></tr>
+      <tr><td><code>flg_ReadCfg</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>Set to 1 when the BLE client requests a config read; triggers NVM read and notification</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>m_conn_handle</code></td><td><code>static uint16_t</code></td><td>.c</td><td>Active BLE connection handle; <code>BLE_CONN_HANDLE_INVALID</code> when disconnected</td></tr>
+      <tr><td><code>m_adv_uuids[]</code></td><td><code>static ble_uuid_t</code></td><td>.c</td><td>UUID table used during advertising data construction</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-extern">Extern</span> Declarations</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>DataReceived[4]</code></td><td><code>volatile uint8_t</code></td><td>.h</td><td>Exposed so Application layer can read incoming BLE payload bytes</td></tr>
+      <tr><td><code>iTagertTemp</code></td><td><code>volatile uint32_t</code></td><td>.h</td><td>Exposed so Application layer can consume the decoded setpoint</td></tr>
+      <tr><td><code>dataLen</code></td><td><code>volatile uint8_t</code></td><td>.h</td><td>Exposed so Application layer can check payload length</td></tr>
+      <tr><td><code>flg_BrewCfg</code></td><td><code>volatile uint8_t</code></td><td>.h</td><td>Exposed so main loop can detect pending brew-profile NVM write</td></tr>
+      <tr><td><code>flg_PidCfg</code></td><td><code>volatile uint8_t</code></td><td>.h</td><td>Exposed so main loop can detect pending PID-config NVM write</td></tr>
+      <tr><td><code>flg_ReadCfg</code></td><td><code>volatile uint8_t</code></td><td>.h</td><td>Exposed so main loop can detect pending config-read request</td></tr>
+    </tbody>
+  </table></div>
+  <div class="anomaly"><strong>Anomaly A7:</strong> <code>NRF_BLE_GATT_DEF(m_gatt)</code>, <code>NRF_BLE_QWR_DEF(m_qwr)</code>, <code>BLE_ADVERTISING_DEF(m_advertising)</code> are macro-expanded global definitions inside the <code>.h</code> file — each TU including the header would instantiate its own copy (currently only one TU includes it, masking the bug).</div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>BLE_bluetooth_init</code></td><td><code>void (void)</code></td><td>Top-level BLE stack initialisation: calls GAP, GATT, services, peer manager, advertising, and power management init in sequence</td></tr>
+      <tr><td><code>advertising_start</code></td><td><code>void (bool)</code></td><td>Starts undirected connectable advertising; <code>erase_bonds</code> flag triggers bond deletion before restart</td></tr>
+      <tr><td><code>sleep_mode_enter</code></td><td><code>void (void)</code></td><td>Puts the nRF52 into System OFF; called when no connection is present and no tasks are pending</td></tr>
+      <tr><td><code>ble_disconnect</code></td><td><code>void (void)</code></td><td>Issues a GAP disconnection request on the active connection</td></tr>
+      <tr><td><code>ble_restart_without_whitelist</code></td><td><code>void (void)</code></td><td>Restarts advertising without peer whitelist filtering (used after bond deletion)</td></tr>
+      <tr><td><code>ble_update_boilerWaterTemp</code></td><td><code>void (float)</code></td><td>Sends a BLE notification with the current boiler temperature to the connected client</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>pm_evt_handler</code></td><td><code>static void (pm_evt_t const*)</code></td><td>Peer Manager event handler — processes bond events and triggers advertising restart after deletion</td></tr>
+      <tr><td><code>gap_params_init</code></td><td><code>static void (void)</code></td><td>Sets device name, appearance, and PPCP connection parameters in the BLE stack</td></tr>
+      <tr><td><code>gatt_init</code></td><td><code>static void (void)</code></td><td>Initialises the BLE GATT module (MTU and data length negotiation)</td></tr>
+      <tr><td><code>nrf_qwr_error_handler</code></td><td><code>static void (uint32_t)</code></td><td>Queued Write Module error handler — calls <code>APP_ERROR_HANDLER</code> on any QWR failure</td></tr>
+      <tr><td><code>services_init</code></td><td><code>static void (void)</code></td><td>Registers the custom BLE service (<code>ble_cus</code>) with the BLE stack</td></tr>
+      <tr><td><code>db_discovery_init</code></td><td><code>static void (void)</code></td><td>Initialises the BLE DB discovery module (used for client-role discovery)</td></tr>
+      <tr><td><code>on_conn_params_evt</code></td><td><code>static void (ble_conn_params_evt_t*)</code></td><td>Connection parameter negotiation event handler — disconnects if negotiation fails</td></tr>
+      <tr><td><code>conn_params_error_handler</code></td><td><code>static void (uint32_t)</code></td><td>Connection parameter module error handler — calls <code>APP_ERROR_HANDLER</code></td></tr>
+      <tr><td><code>conn_params_init</code></td><td><code>static void (void)</code></td><td>Configures connection parameter update request timing</td></tr>
+      <tr><td><code>on_adv_evt</code></td><td><code>static void (ble_adv_evt_t)</code></td><td>Advertising event handler — starts <code>sleep_mode_enter</code> on idle timeout</td></tr>
+      <tr><td><code>ble_evt_handler</code></td><td><code>static void (ble_evt_t const*, void*)</code></td><td>Central BLE event dispatcher — handles connect, disconnect, and PHY update events; updates <code>m_conn_handle</code></td></tr>
+      <tr><td><code>ble_stack_init</code></td><td><code>static void (void)</code></td><td>Enables the SoftDevice with nRF52832 default clock config and registers <code>ble_evt_handler</code></td></tr>
+      <tr><td><code>peer_manager_init</code></td><td><code>static void (void)</code></td><td>Initialises the peer manager with security parameters (bonding, MITM = false, I/O = no-input-no-output)</td></tr>
+      <tr><td><code>delete_bonds</code></td><td><code>static void (void)</code></td><td>Erases all stored peer bonds from flash</td></tr>
+      <tr><td><code>advertising_init</code></td><td><code>static void (void)</code></td><td>Configures advertising data (UUID, name) and sets fast/slow advertising intervals</td></tr>
+      <tr><td><code>power_management_init</code></td><td><code>static void (void)</code></td><td>Initialises the nRF power management module</td></tr>
+      <tr><td><code>cus_evt_handler</code></td><td><code>static void (ble_cus_t*, ble_cus_evt_t*)</code></td><td>Custom service event handler — routes GATT write events to the appropriate BLE flag (<code>flg_BrewCfg</code>, <code>flg_PidCfg</code>, <code>flg_ReadCfg</code>)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="anomaly"><strong>Anomaly A8:</strong> <code>void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name)</code> is listed under private prototypes but has no <code>static</code> keyword.</div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 6 — ble_cus
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m6">6. ble_cus</h2>
+  <div class="module-files">ble_espresso_app/components/BLE_Services/ble_cus.c &nbsp;|&nbsp; components/BLE_Services/include/ble_cus.h</div>
+
+  <h3>Variables</h3>
+  <p class="none">No module-level variables — all state is embedded in the <code>ble_cus_t</code> instance owned by the caller.</p>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>ble_cus_init</code></td><td><code>uint32_t (ble_cus_t*, const ble_cus_init_t*)</code></td><td>Registers the custom GATT service and its characteristics (boiler temp notify + config write) with the SoftDevice</td></tr>
+      <tr><td><code>ble_cus_on_ble_evt</code></td><td><code>void (ble_evt_t const*, void*)</code></td><td>BLE event dispatcher registered with the SoftDevice observer — routes connect/disconnect/write events to private handlers</td></tr>
+      <tr><td><code>ble_cus_BoilerWaterTemperature_update</code></td><td><code>uint32_t (ble_cus_t*, float*)</code></td><td>Sends an HVX notification carrying the current boiler temperature float to the connected client</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>on_connect</code></td><td><code>static void (ble_cus_t*, ble_evt_t const*)</code></td><td>Stores the new connection handle into the <code>ble_cus_t</code> instance</td></tr>
+      <tr><td><code>on_disconnect</code></td><td><code>static void (ble_cus_t*, ble_evt_t const*)</code></td><td>Resets the connection handle to <code>BLE_CONN_HANDLE_INVALID</code></td></tr>
+      <tr><td><code>on_write</code></td><td><code>static void (ble_cus_t*, ble_evt_t const*)</code></td><td>Handles GATTS write events — copies payload into <code>DataReceived</code>, updates <code>dataLen</code>, and invokes the registered event handler</td></tr>
+      <tr><td><code>custom_value_char_add</code></td><td><code>static uint32_t (ble_cus_t*, const ble_cus_init_t*)</code></td><td>Adds the boiler-temperature notify characteristic to the GATT table</td></tr>
+      <tr><td><code>custom_value_PIDchar_add</code></td><td><code>static uint32_t (ble_cus_t*, const ble_cus_init_t*)</code></td><td>Adds the PID/brew-config write characteristic to the GATT table</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 7 — spi_Devices
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m7">7. spi_Devices</h2>
+  <div class="module-files">ble_espresso_app/components/Peripherals/spi_Devices.c &nbsp;|&nbsp; components/Peripherals/include/spi_Devices.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>rtdTemperature</code></td><td><code>static float</code></td><td>.c</td><td>Filtered boiler temperature in °C decoded from MAX31865 RTD register</td></tr>
+      <tr><td><code>spi</code></td><td><code>static nrf_drv_spi_t const</code></td><td>.c</td><td>nRF SPIM peripheral instance handle</td></tr>
+      <tr><td><code>spi_xfer_done</code></td><td><code>static volatile bool</code></td><td>.c</td><td>Transfer-complete flag set by <code>spi_event_handler</code>; polled by SPI read functions</td></tr>
+      <tr><td><code>nvm_tx_buf[256]</code></td><td><code>static uint8_t</code></td><td>.c</td><td>Transmit buffer for NVM (W25Q64FV) SPI operations</td></tr>
+      <tr><td><code>nvm_rx_buf[260]</code></td><td><code>static uint8_t</code></td><td>.c</td><td>Receive buffer for NVM SPI operations (extra 4 bytes for command/address overhead)</td></tr>
+      <tr><td><code>tmp_buf_len</code></td><td><code>static const uint8_t</code></td><td>.c</td><td>Fixed transfer length (3) for RTD sensor read/write transactions</td></tr>
+      <tr><td><code>tmp_tx_buf[3]</code></td><td><code>static uint8_t</code></td><td>.c</td><td>Transmit buffer for RTD (MAX31865) SPI transactions</td></tr>
+      <tr><td><code>tmp_rx_buf[3]</code></td><td><code>static uint8_t</code></td><td>.c</td><td>Receive buffer for RTD SPI transactions</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A9</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>hwreg_SensorConfig</code></td><td><code>volatile uint8_t</code></td><td>.c</td><td>MAX31865 configuration register shadow (bias on/off, fault clear, conversion mode)</td></tr>
+      <tr><td><code>resistanceRTD</code></td><td><code>volatile float</code></td><td>.c</td><td>Raw RTD resistance value computed from ADC counts before Callendar-Van Dusen conversion</td></tr>
+      <tr><td><code>sm_SPIdevices</code></td><td><code>StateMachineCtrl_Struct</code></td><td>.c</td><td>State machine controlling multi-step NVM read/write/erase sequences on the shared SPI bus</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>spim_init</code></td><td><code>void (void)</code></td><td>Initialises the nRF SPIM peripheral (SCK, MOSI, MISO pins, 4 MHz, mode 1) and configures CS GPIOs</td></tr>
+      <tr><td><code>spim_initNVmemory</code></td><td><code>void (void)</code></td><td>Sends the W25Q64FV wake/reset command sequence and reads the JEDEC ID to verify communication</td></tr>
+      <tr><td><code>spim_initRTDconverter</code></td><td><code>void (void)</code></td><td>Writes the MAX31865 configuration register to enable RTD bias and select 2-wire/4-wire mode</td></tr>
+      <tr><td><code>spim_ReadRTDconverter</code></td><td><code>void (void)</code></td><td>Reads the MAX31865 RTD MSB/LSB registers, computes resistance and temperature, stores into <code>rtdTemperature</code></td></tr>
+      <tr><td><code>spim_operation_done</code></td><td><code>bool (void)</code></td><td>Returns the current value of <code>spi_xfer_done</code>; used by callers to poll for non-blocking transfer completion</td></tr>
+      <tr><td><code>f_getBoilerTemperature</code></td><td><code>float (void)</code></td><td>Returns the last decoded boiler temperature from <code>rtdTemperature</code></td></tr>
+      <tr><td><code>spim_DevCommMng</code></td><td><code>void (void)</code></td><td>Cooperative state-machine task: advances <code>sm_SPIdevices</code> to sequence multi-step NVM operations</td></tr>
+      <tr><td><code>spi_NVMemoryRead</code></td><td><code>void (uint32_t, uint8_t*, uint16_t)</code></td><td>Sends a READ command to the W25Q64FV at the specified 24-bit address and populates <code>nvm_rx_buf</code></td></tr>
+      <tr><td><code>spi_NVMemoryWritePage</code></td><td><code>void (uint32_t, uint8_t*, uint16_t)</code></td><td>Enables write, issues a PAGE PROGRAM command, then polls the status register for write-complete</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A10</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>spi_event_handler</code></td><td><code>void (nrf_drv_spi_evt_t const*, void*)</code></td><td>nRF SPIM event callback — sets <code>spi_xfer_done</code> on transfer completion</td></tr>
+      <tr><td><code>spi_initTempDevCtrlPins</code></td><td><code>void (void)</code></td><td>Configures MAX31865 chip-select and DRDY GPIO pins</td></tr>
+      <tr><td><code>spi_initNvmDevCtrlPins</code></td><td><code>void (void)</code></td><td>Configures W25Q64FV chip-select GPIO pin</td></tr>
+      <tr><td><code>spi_NVMemoryCMDreset</code></td><td><code>void (void)</code></td><td>Sends Enable-Reset then Reset commands to W25Q64FV</td></tr>
+      <tr><td><code>spi_NVMemoryReadJEDECID</code></td><td><code>void (void)</code></td><td>Issues JEDEC-ID read command and logs manufacturer/device IDs</td></tr>
+      <tr><td><code>spi_NVMemoryWriteEnable</code></td><td><code>void (void)</code></td><td>Sends WRITE-ENABLE command and verifies the WEL status bit</td></tr>
+      <tr><td><code>spi_NVMemoryWriteDisable</code></td><td><code>void (void)</code></td><td>Sends WRITE-DISABLE command</td></tr>
+      <tr><td><code>spi_NVMemoryEraseSector</code></td><td><code>void (uint32_t)</code></td><td>Issues a 4 KB sector-erase command at the given address</td></tr>
+      <tr><td><code>NVMpageNoByteToW</code></td><td><code>uint8_t (uint32_t, uint8_t*, uint8_t)</code></td><td>Converts a 24-bit NVM address into the 3-byte address field of a SPI command frame</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> __STATIC_INLINE</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>spi_TempSensorCSenable</code></td><td><code>__STATIC_INLINE void (void)</code></td><td>Drives MAX31865 CS low to begin a SPI transaction</td></tr>
+      <tr><td><code>spi_TempSensorCSdisable</code></td><td><code>__STATIC_INLINE void (void)</code></td><td>Drives MAX31865 CS high to end a SPI transaction</td></tr>
+      <tr><td><code>spi_NVMemoryCSenable</code></td><td><code>__STATIC_INLINE void (void)</code></td><td>Drives W25Q64FV CS low to begin a SPI transaction</td></tr>
+      <tr><td><code>spi_NVMemoryCSdisable</code></td><td><code>__STATIC_INLINE void (void)</code></td><td>Drives W25Q64FV CS high to end a SPI transaction</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 8 — ac_inputs_drv
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m8">8. ac_inputs_drv</h2>
+  <div class="module-files">ble_espresso_app/components/Peripherals/ac_inputs_drv.c &nbsp;|&nbsp; components/Peripherals/include/ac_inputs_drv.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>sIO_ACinput</code></td><td><code>static struct_ControllerInputs</code></td><td>.c</td><td>Encapsulates both AC input channels (Brew + Steam); holds debounce counter, ISR counter, and latched logic state for each</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initACinput_drv</code></td><td><code>void (void)</code></td><td>Configures Brew and Steam GPIO pins as inputs with GPIOTE interrupt and initialises debounce counters</td></tr>
+      <tr><td><code>fcn_GetInputStatus_Brew</code></td><td><code>uint8_t (void)</code></td><td>Returns the debounced logic state of the AC Brew switch</td></tr>
+      <tr><td><code>fcn_GetInputStatus_Steam</code></td><td><code>uint8_t (void)</code></td><td>Returns the debounced logic state of the AC Steam switch</td></tr>
+      <tr><td><code>fcn_SenseACinputs_Sixty_ms</code></td><td><code>void (void)</code></td><td>Called every 60 ms from the scheduler; evaluates debounce counters for both channels via <code>fcn_acInputLogic</code></td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-isr">Public ISRs</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>acinBrew_eventHandler</code></td><td><code>void (nrf_drv_gpiote_pin_t, nrf_gpiote_polarity_t)</code></td><td>GPIOTE ISR for Brew AC input — increments <code>isr_Counter</code> for odd/even edge debounce</td></tr>
+      <tr><td><code>acinSteam_eventHandler</code></td><td><code>void (nrf_drv_gpiote_pin_t, nrf_gpiote_polarity_t)</code></td><td>GPIOTE ISR for Steam AC input — increments <code>isr_Counter</code> for odd/even edge debounce</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_acInputLogic</code></td><td><code>static void (struct_AcInputPin*)</code></td><td>Evaluates one AC input channel: compares ISR edge counts against <code>counterTop</code> to determine switch open/closed state</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 9 — solidStateRelay_Controller
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m9">9. solidStateRelay_Controller</h2>
+  <div class="module-files">ble_espresso_app/components/Peripherals/solidStateRelay_Controller.c &nbsp;|&nbsp; .h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A11</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>sSSRcontroller</code></td><td><code>volatile struct_SSRcontroller</code></td><td>.c</td><td>Master SSR controller state: holds phase-angle setpoints, ZC event counters, and output enable flags for boiler and pump</td></tr>
+      <tr><td><code>sBoilderSSRzc</code></td><td><code>volatile struct_SSR_ZC_instance</code></td><td>.c</td><td>Zero-cross sync instance for the boiler SSR — tracks half-cycle counter and fires at the computed phase-angle tick (conditional on ZERO_CROSS define)</td></tr>
+      <tr><td><code>sPumpSSRdrv</code></td><td><code>struct_SSRinstance</code></td><td>.c</td><td>Pump SSR drive instance — holds current power setting and phase-angle tick for TRIAC firing</td></tr>
+      <tr><td><code>sSolenoidSSRdrv</code></td><td><code>struct_OnOffSSRinstance</code></td><td>.c</td><td>Solenoid (3-way valve) SSR instance — simple on/off control with GPIO pin reference</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initSSRController_BLEspresso</code></td><td><code>void (void)</code></td><td>Initialises all SSR instances, configures GPIO outputs, and sets up zero-cross interrupt</td></tr>
+      <tr><td><code>fcn_boilerSSR_pwrUpdate</code></td><td><code>void (float)</code></td><td>Sets the boiler heater power percentage; updates <code>sSSRcontroller</code> phase-angle target</td></tr>
+      <tr><td><code>fcn_pumpSSR_pwrUpdate</code></td><td><code>void (float)</code></td><td>Sets the pump power percentage; updates <code>sPumpSSRdrv</code> phase-angle target</td></tr>
+      <tr><td><code>fcn_SolenoidSSR_On</code></td><td><code>void (void)</code></td><td>Drives the solenoid SSR GPIO high to energize the 3-way valve</td></tr>
+      <tr><td><code>fcn_SolenoidSSR_Off</code></td><td><code>void (void)</code></td><td>Drives the solenoid SSR GPIO low to de-energize the 3-way valve</td></tr>
+      <tr><td><code>get_SolenoidSSR_State</code></td><td><code>uint8_t (void)</code></td><td>Returns the current solenoid SSR output state (1 = energised)</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-isr">Public ISRs</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>isr_ZeroCross_EventHandler</code></td><td><code>void (void)</code></td><td>Zero-cross detection ISR — resets half-cycle counters in <code>sSSRcontroller</code> and <code>sBoilderSSRzc</code> at each AC zero-crossing</td></tr>
+      <tr><td><code>isr_BoilderSSR_EventHandler</code></td><td><code>void (void)</code></td><td>Boiler SSR timer ISR — fires TRIAC gate pulse at the phase-angle tick computed from power setpoint (angle-control mode)</td></tr>
+      <tr><td><code>isr_PumpSSR_EventHandler</code></td><td><code>void (void)</code></td><td>Pump SSR timer ISR — fires TRIAC gate pulse for pump at phase-angle tick derived from pump power setpoint</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A12</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initSSRController</code></td><td><code>void (struct_SSRcontroller*)</code></td><td>Zeroes all fields of the master SSR controller instance</td></tr>
+      <tr><td><code>fcn_createSSRinstance</code></td><td><code>void (struct_SSRinstance*, uint8_t)</code></td><td>Initialises a single phase-control SSR instance with its GPIO pin</td></tr>
+      <tr><td><code>fcn_createOnOffSSRinstance</code></td><td><code>void (struct_OnOffSSRinstance*, uint8_t)</code></td><td>Initialises a simple on/off SSR instance with its GPIO pin</td></tr>
+      <tr><td><code>fcn_boilerSSR_ctrlUpdate</code></td><td><code>void (void)</code></td><td>Recalculates boiler phase-angle from power percentage and updates <code>sBoilderSSRzc</code> tick target</td></tr>
+      <tr><td><code>fcn_SSR_pwrUpdate</code></td><td><code>void (struct_SSRinstance*, float)</code></td><td>Translates a 0–100 % power value to a phase-angle tick count for a given SSR instance</td></tr>
+      <tr><td><code>fcn_pumpSSR_ctrlUpdate</code></td><td><code>void (void)</code></td><td>Recalculates pump phase-angle from power percentage and updates <code>sPumpSSRdrv</code></td></tr>
+      <tr><td><code>fcn_SSR_ctrlUpdate</code></td><td><code>void (struct_SSRinstance*)</code></td><td>Generic SSR output update — compares half-cycle counter to phase-angle tick and fires gate pulse</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 10 — dc12Vouput_drv
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m10">10. dc12Vouput_drv</h2>
+  <div class="module-files">ble_espresso_app/components/Peripherals/dc12Vouput_drv.c &nbsp;|&nbsp; include/dc12Vouput_drv.h</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4><p class="none">None</p>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>m_pwm0</code></td><td><code>static nrf_drv_pwm_t</code></td><td>.c</td><td>nRF PWM peripheral instance used for lamp dimming</td></tr>
+      <tr><td><code>seq_ONvalues[25]</code></td><td><code>static uint16_t</code></td><td>.c</td><td>25-step ramp-up duty-cycle table (0 → 2487 counts at 250 kHz) for lamp turn-on animation</td></tr>
+      <tr><td><code>seq_DimmDown[8]</code></td><td><code>static uint16_t</code></td><td>.c</td><td>8-step dim-down duty-cycle table for partial lamp dimming</td></tr>
+      <tr><td><code>seq_DimmUp[8]</code></td><td><code>static uint16_t</code></td><td>.c</td><td>8-step dim-up duty-cycle table for partial lamp brightening</td></tr>
+      <tr><td><code>seq_OFFvalues[26]</code></td><td><code>static uint16_t</code></td><td>.c</td><td>26-step ramp-down duty-cycle table (2487 → 100 counts) for lamp turn-off animation</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A13</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>s12Vout</code></td><td><code>StateMachine12Vout_Struct</code></td><td>.c</td><td>State machine instance tracking current lamp animation state and output status</td></tr>
+      <tr><td><code>seqCounter</code></td><td><code>volatile uint32_t</code></td><td>.c</td><td>Step counter tracking progress through the active PWM sequence</td></tr>
+      <tr><td><code>startFlag</code></td><td><code>volatile uint32_t</code></td><td>.c</td><td>Command register: 1 = turn on, 2 = dim down, 3 = dim up, 4 = turn off</td></tr>
+      <tr><td><code>seqOn</code></td><td><code>nrf_pwm_sequence_t</code></td><td>.c</td><td>PWM sequence descriptor wrapping <code>seq_ONvalues</code></td></tr>
+      <tr><td><code>seqDimDown</code></td><td><code>nrf_pwm_sequence_t</code></td><td>.c</td><td>PWM sequence descriptor wrapping <code>seq_DimmDown</code></td></tr>
+      <tr><td><code>seqDimUp</code></td><td><code>nrf_pwm_sequence_t</code></td><td>.c</td><td>PWM sequence descriptor wrapping <code>seq_DimmUp</code></td></tr>
+      <tr><td><code>seqOff</code></td><td><code>nrf_pwm_sequence_t</code></td><td>.c</td><td>PWM sequence descriptor wrapping <code>seq_OFFvalues</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_initDC12Voutput_drv</code></td><td><code>dc12vout_status_t (void)</code></td><td>Initialises the nRF PWM peripheral (250 kHz, 2500-count top, step-triggered), starts the ramp-up sequence, returns <code>DRV_12VO_INIT_AS_LAMP</code></td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A14</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>sm_DC12Voutput_drv</code></td><td><code>void (StateMachine12Vout_Struct*)</code></td><td>PWM animation state machine driver: reads <code>startFlag</code> to load a new sequence, then calls <code>nrf_drv_pwm_step()</code> each call until the sequence completes</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 11 — i2c_sensors
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m11">11. i2c_sensors</h2>
+  <div class="module-files">ble_espresso_app/components/Peripherals/i2c_sensors.c &nbsp;|&nbsp; include/i2c_sensors.h</div>
+  <div class="note">Note: registers/address reference "TMP006" but match the LM75B family. This module appears to be a legacy/unused path — the active temperature sensor is the MAX31865 RTD on the SPI bus.</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>eTMP006_Temp</code></td><td><code>float</code></td><td>.c</td><td>Last decoded temperature reading from the I2C sensor, latched in <code>twi_handler</code> after a successful RX</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>File</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>m_xfer_done</code></td><td><code>static volatile bool</code></td><td>.c</td><td>Transfer-complete flag set by <code>twi_handler</code> TWI event callback</td></tr>
+      <tr><td><code>m_twi</code></td><td><code>static const nrf_drv_twi_t</code></td><td>.c</td><td>nRF I2C (TWI) peripheral instance</td></tr>
+      <tr><td><code>m_sample[2]</code></td><td><code>static uint8_t</code></td><td>.c</td><td>Raw 2-byte receive buffer for the I2C temperature register</td></tr>
+      <tr><td><code>pTemp</code></td><td><code>static float</code></td><td>.c</td><td>Intermediate temperature float computed from <code>m_sample</code>; written to <code>eTMP006_Temp</code> on successful transfer</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-extern">Extern</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>eTMP006_Temp</code></td><td><code>float</code></td><td>.h</td><td>Exposed so other modules can read the last I2C temperature value</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>LM75B_set_mode</code></td><td><code>void (void)</code></td><td>Writes the NORMAL_MODE byte to the TMP006/LM75B config register and sets the temperature register pointer</td></tr>
+      <tr><td><code>twi_init</code></td><td><code>void (void)</code></td><td>Initialises the nRF TWI peripheral at 100 kHz with <code>twi_handler</code> as the event callback</td></tr>
+      <tr><td><code>read_sensor_data</code></td><td><code>void (void)</code></td><td>Initiates a 2-byte I2C receive from the temperature register if the previous transfer is complete</td></tr>
+      <tr><td><code>twi_operation_done</code></td><td><code>bool (void)</code></td><td>Returns <code>m_xfer_done</code> — allows callers to poll for non-blocking transfer completion</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> <span class="badge badge-anom">missing static — A15</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>twi_handler</code></td><td><code>void (nrf_drv_twi_evt_t const*, void*)</code></td><td>TWI event callback — on RX completion computes temperature from raw bytes and latches into <code>eTMP006_Temp</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 12 — x04_Numbers
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m12">12. x04_Numbers</h2>
+  <div class="module-files">ble_espresso_app/components/Utilities/x04_Numbers.c &nbsp;|&nbsp; include/x04_Numbers.h</div>
+
+  <h3>Variables</h3>
+  <p class="none">No module-level variables.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symbol</th><th>Location</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fNumber</code></td><td><code>static float</code> (local to <code>fcn_ChrArrayToFloat</code>)</td><td>Scratch accumulator for ASCII-to-float conversion; static to avoid stack churn on embedded target</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_ValidateFloat_InRange</code></td><td><code>bool (float*, float, float, float)</code></td><td>Returns true if <code>*value</code> is finite and within [min, max]; otherwise replaces it with <code>safeDefault</code> and returns false — foundation of the M3 NVM clamp fix</td></tr>
+      <tr><td><code>fcn_Constrain_WithinFloats</code></td><td><code>int8_t inline (float*, float, float)</code></td><td>Clamps a float to [LowerLimit, UpperLimit]; returns <code>POSITIVE_SATURATION</code>, <code>NEGATIVE_SATURATION</code>, or <code>NO_SATURATION</code></td></tr>
+      <tr><td><code>fcn_AddHysteresis_WithinFloat</code></td><td><code>void inline (float*, float, float)</code></td><td>Applies a symmetric deadband: if value falls inside ±OffsetLimit it is replaced by NumberWithoutHyst</td></tr>
+      <tr><td><code>fcn_AddHysteresisMinusOffset</code></td><td><code>void inline (float*, float, float, float)</code></td><td>Asymmetric deadband with separate upper/lower offsets; handles negative values by sign-flip before evaluation</td></tr>
+      <tr><td><code>fcn_Constrain_WithinIntValues</code> <span class="badge badge-anom">A18</span></td><td><code>void inline (long*, long, long)</code></td><td>Clamps a <code>long</code> integer to [LowerLimit, UpperLimit] — declared <code>inline void inline</code> (duplicate keyword)</td></tr>
+      <tr><td><code>fcn_ChrArrayToFloat</code></td><td><code>float (char*, char, char)</code></td><td>Converts a packed ASCII digit array of known width and decimal count to a float</td></tr>
+      <tr><td><code>fcn_FloatToChrArray</code></td><td><code>void (float, uint8_t*, char, char)</code></td><td>Converts a float to a packed ASCII digit array of known width and decimal count</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 13 — x205_PID_Block
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m13">13. x205_PID_Block</h2>
+  <div class="module-files">ble_espresso_app/components/Utilities/x205_PID_Block.c &nbsp;|&nbsp; include/x205_PID_Block.h</div>
+
+  <h3>Variables</h3>
+  <p class="none">No module-level variables — all state lives in the caller-owned struct instances passed by pointer.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symbol</th><th>Location</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>Block</code> (typeA)</td><td><code>static PID_InternalModeControl_fStruct</code> (local to <code>fcn_update_PIDimc_typeA</code>)</td><td>Per-call working variables for IMC Type-A iteration (dt, error, P/I/D terms, output)</td></tr>
+      <tr><td><code>Block</code> (typeB)</td><td><code>static PID_InternalModeControl_fStruct</code> (local to <code>fcn_update_PIDimc_typeB</code>)</td><td>Per-call working variables for IMC Type-B iteration</td></tr>
+      <tr><td><code>Block</code> (classic)</td><td><code>static PID_BlockVariable_fStruct</code> (local to <code>fcn_PID_Block_Iteration</code>)</td><td>Per-call working variables for classic PID iteration</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_update_PID_Block</code></td><td><code>inline float (float, float, uint32_t, PID_Block_fStruct*)</code></td><td>Feeds input/setpoint/time into a classic PID instance and returns the clamped output</td></tr>
+      <tr><td><code>fcn_update_PIDimc_typeA</code></td><td><code>inline float (PID_IMC_Block_fStruct*)</code></td><td>IMC Type-A PID iteration (textbook P+I+D on error signal) with anti-windup clamping; only variant actively used by <code>tempController</code></td></tr>
+      <tr><td><code>fcn_update_PIDimc_typeB</code></td><td><code>inline float (PID_IMC_Block_fStruct*)</code></td><td>IMC Type-B PID iteration (D term computed on PV derivative, not error derivative) — available but not currently wired</td></tr>
+      <tr><td><code>fcn_PID_Block_ResetI</code></td><td><code>inline void (PID_Block_fStruct*, float)</code></td><td>Attenuates the integrator history by a scalar factor; used for M1/M5 integral-reset on mode transitions</td></tr>
+      <tr><td><code>fcn_PID_Block_Dterm_LPF_Init</code></td><td><code>void (PID_Block_fStruct*)</code></td><td>Initialises the optional first-order RC low-pass filter on the D-term if <code>D_TERM_LP_FILTER_CTRL</code> is set</td></tr>
+      <tr><td><code>fcn_PID_Block_Init_Dterm_LPfilter</code></td><td><code>void (PID_Block_fStruct*, float*, uint8_t, uint8_t)</code></td><td>Configures the D-term FIR filter coefficient buffer (multi-tap path, not the RC path)</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_PID_Block_Iteration</code></td><td><code>static inline void (PID_Block_fStruct*)</code></td><td>Classic PID computation core: calculates dt, error, P/I/D terms with optional RC filter on D, clamps output, saves state</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 14 — x201_DigitalFiltersAlgorithm
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m14">14. x201_DigitalFiltersAlgorithm</h2>
+  <div class="module-files">ble_espresso_app/components/Utilities/x201_DigitalFiltersAlgorithm.c &nbsp;|&nbsp; include/x201_DigitalFiltersAlgorithm.h</div>
+
+  <h3>Variables</h3>
+  <p class="none">No module-level variables — all state lives in the caller-owned <code>lpf_rc_param_t</code> instance.</p>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>pfcn_InitRCFilterAlgorithm</code></td><td><code>void (lpf_rc_param_t*, float, float)</code></td><td>Pre-computes the two RC filter coefficients for a fixed sampling time; zeroes output history</td></tr>
+      <tr><td><code>pfcn_RCFilterAlgorithm</code></td><td><code>void (lpf_rc_param_t*, float)</code></td><td>Runs one fixed-Ts first-order RC low-pass filter iteration: shifts n-1, computes new n output</td></tr>
+      <tr><td><code>lpf_rc_calculate_const</code></td><td><code>void (lpf_rc_param_t*, float)</code></td><td>Pre-computes and stores the RC time constant from cutoff frequency; used when sampling time varies</td></tr>
+      <tr><td><code>lpf_rc_update</code></td><td><code>float (lpf_rc_param_t*, float, float)</code></td><td>Runs one variable-Ts RC filter iteration: recomputes coefficients from current dt, returns filtered sample; used by PID D-term</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 15 — x01_StateMachineControls
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m15">15. x01_StateMachineControls <span style="font-size:13px;color:var(--text-dim);font-weight:400">(header-only)</span></h2>
+  <div class="module-files">ble_espresso_app/components/Utilities/x01_StateMachineControls.h</div>
+
+  <h3>Defines</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symbol</th><th>Value</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>STATE_MACHINE_RUNNING</code></td><td><code>0</code></td><td>State machine is actively processing</td></tr>
+      <tr><td><code>STATE_MACHINE_IDLE</code></td><td><code>1</code></td><td>State machine has completed its sequence and is waiting</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Types</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Type</th><th>Fields</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>StateMachineCtrl_Struct</code></td><td><code>uint8_t sPrevious, sRunning, sNext</code></td><td>Reusable three-field state machine control block used throughout the codebase</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 16 — x02_FlagValues
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m16">16. x02_FlagValues <span style="font-size:13px;color:var(--text-dim);font-weight:400">(defines-only)</span></h2>
+  <div class="module-files">ble_espresso_app/components/Utilities/x02_FlagValues.h</div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symbol</th><th>Value</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>IDLE</code></td><td><code>0</code></td><td>Generic idle/inactive flag value</td></tr>
+      <tr><td><code>RUNNING</code></td><td><code>1</code></td><td>Generic running/active flag value</td></tr>
+      <tr><td><code>BLOCKED</code></td><td><code>2</code></td><td>Task or resource is blocked</td></tr>
+      <tr><td><code>DATA_AVAILABLE</code></td><td><code>1</code></td><td>Data is ready to consume</td></tr>
+      <tr><td><code>DATA_NOT_AVAILABLE</code></td><td><code>0</code></td><td>No data ready</td></tr>
+      <tr><td><code>DATA_VALID</code></td><td><code>1</code></td><td>Payload passes validation</td></tr>
+      <tr><td><code>DATA_NOT_VALID</code></td><td><code>0</code></td><td>Payload failed validation</td></tr>
+      <tr><td><code>TEST_OK</code></td><td><code>1</code></td><td>Self-test passed</td></tr>
+      <tr><td><code>TEST_NOT_OK</code></td><td><code>0</code></td><td>Self-test failed</td></tr>
+      <tr><td><code>CALIBRATION_OK</code></td><td><code>1</code></td><td>Calibration accepted</td></tr>
+      <tr><td><code>CALIBRATION_NOT_OK</code></td><td><code>0</code></td><td>Calibration failed</td></tr>
+      <tr><td><code>TRANSMISSION_DONE</code></td><td><code>1</code></td><td>Transfer complete</td></tr>
+      <tr><td><code>TRANSMITING</code></td><td><code>0</code></td><td>Transfer in progress</td></tr>
+      <tr><td><code>ACTIVE</code></td><td><code>1</code></td><td>Feature or control path enabled</td></tr>
+      <tr><td><code>NOT_ACTIVE</code></td><td><code>0</code></td><td>Feature or control path disabled</td></tr>
+      <tr><td><code>ACTIVE_FLAG</code></td><td><code>1</code></td><td>Flag is set</td></tr>
+      <tr><td><code>CLEAR_FLAG</code></td><td><code>0</code></td><td>Flag is cleared</td></tr>
+      <tr><td><code>CONTINOUS</code></td><td><code>0</code></td><td>Continuous (non-one-shot) operation mode</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════
+       MODULE 17 — main
+  ═══════════════════════════════════════════ -->
+  <h2 class="module-title" id="m17">17. main</h2>
+  <div class="module-files">ble_espresso_app/main/main.c</div>
+
+  <h3>Variables</h3>
+  <h4><span class="badge badge-pub">Public</span> Global</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Declared In</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>ssrPower</code></td><td><code>volatile uint16_t</code></td><td>main.c</td><td>Boiler SSR power value (0–100 %) shared between temperature controller and SSR driver</td></tr>
+      <tr><td><code>ssrPump</code></td><td><code>volatile uint16_t</code></td><td>main.c</td><td>Pump SSR power value (0–100 %) shared between pump controller and SSR driver</td></tr>
+      <tr><td><code>swTmr_tick_x0ms</code></td><td><code>volatile uint32_t</code></td><td>main.c</td><td>20 ms software timer tick counter; incremented by <code>t_x0ms_swTmrHandler</code> ISR callback</td></tr>
+      <tr><td><code>sSchedulerFlags</code></td><td><code>volatile struct_TaskFlg</code></td><td>main.c</td><td>Bitmask struct of boolean ready-flags set by the 20 ms timer and consumed by the main cooperative scheduler loop</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-dead">Dead Code</span> <span class="badge badge-anom">A17</span> Unused volatile flags (no static)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Variable</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>PrintTask_flag</code></td><td><code>volatile bool</code></td><td>Appears unused — likely a remnant from early development</td></tr>
+      <tr><td><code>ReadSensors_flag</code></td><td><code>volatile bool</code></td><td>Appears unused — replaced by <code>sSchedulerFlags.tf_GetBoilerTemp</code></td></tr>
+      <tr><td><code>OneSecond_flag</code></td><td><code>volatile bool</code></td><td>Appears unused</td></tr>
+      <tr><td><code>LightSeq_flag</code></td><td><code>volatile bool</code></td><td>Appears unused</td></tr>
+      <tr><td><code>PumpCtrl_flag</code></td><td><code>volatile bool</code></td><td>Appears unused — replaced by <code>sSchedulerFlags.tf_svc_EspressoApp</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h4><span class="badge badge-priv">Private</span> static (local to functions)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symbol</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>userDataLoadedFlag</code></td><td><code>static uint32_t</code></td><td>One-shot guard inside <code>main()</code> — set after <code>stgCtrl_ReadUserData</code> succeeds to prevent repeated NVM reads</td></tr>
+      <tr><td><code>config0</code></td><td><code>static nrf_drv_pwm_config_t const</code></td><td>PWM config struct inside <code>fcn_initDC12Voutput_drv</code> (local static for zero-initialisation guarantee)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Functions</h3>
+  <h4><span class="badge badge-pub">Public</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>main</code></td><td><code>int (void)</code></td><td>Firmware entry point: initialises all peripherals and BLE stack, loads NVM config, then enters the cooperative scheduler loop dispatching tasks via <code>sSchedulerFlags</code></td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-priv">Private</span> static</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>t_x0ms_swTmrHandler</code></td><td><code>static void (void*)</code></td><td>20 ms app timer callback — increments <code>swTmr_tick_x0ms</code> and sets all <code>sSchedulerFlags</code> bits to trigger a scheduler cycle</td></tr>
+      <tr><td><code>timers_init</code></td><td><code>static void (void)</code></td><td>Creates the 20 ms repeating app timer backed by <code>t_x0ms_swTmrHandler</code></td></tr>
+      <tr><td><code>application_timers_start</code></td><td><code>static void (void)</code></td><td>Starts the 20 ms app timer</td></tr>
+      <tr><td><code>idle_state_handle</code></td><td><code>static void (void)</code></td><td>Called at the bottom of the scheduler loop — flushes the NRF_LOG buffer then calls <code>nrf_pwr_mgmt_run()</code> to sleep until the next event</td></tr>
+    </tbody>
+  </table></div>
+  <h4><span class="badge badge-dead">Dead Code</span> <span class="badge badge-anom">A16</span></h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>fcn_DO_NOTHING</code></td><td><code>void (void)</code></td><td>Empty function with external linkage — not declared in any header, never called; should be removed</td></tr>
+    </tbody>
+  </table></div>
+
+</div><!-- /content -->
+
+<!-- ══════════════════════════════════════════════
+     RENAME PROPOSAL ENGINE
+═══════════════════════════════════════════════ -->
+<div id="export-bar">
+  <span id="proposal-count">No proposals yet</span>
+  <button id="export-btn" onclick="exportProposals()" disabled>&#x2B07; Export JSON</button>
+  <button id="clear-btn"  onclick="clearAll()">&#x2715; Clear all</button>
+</div>
+
+<script>
+(function () {
+
+  // ── DOM helpers ────────────────────────────────────────────────────────────
+
+  /** Return the text of the last element matching `selector` that
+   *  appears before `refEl` in document order. */
+  function lastPreceding(selector, refEl) {
+    let last = '';
+    document.querySelectorAll(selector).forEach(function (el) {
+      if (refEl.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING)
+        last = el.textContent.replace(/\s+/g, ' ').trim();
+    });
+    return last;
+  }
+
+  /** Extract the primary symbol name from a table cell.
+   *  Prefers the first <code> element; falls back to the first word. */
+  function cellName(td) {
+    var code = td.querySelector('code');
+    if (code) return code.textContent.trim();
+    return td.textContent.trim().split(/\s+/)[0];
+  }
+
+  /** Strip leading "N. " from a module heading string. */
+  function cleanModule(s) {
+    return s.replace(/^\d+\.\s*/, '').replace(/\s*\(.*\)$/, '').trim();
+  }
+
+  /** Derive a human-readable kind label from the nearest h4 text. */
+  function cleanKind(s) {
+    // Strip badge text (ALL-CAPS words like PUBLIC, PRIVATE, ISR, etc.)
+    return s.replace(/[A-Z]{2,}[\w\s]*/g, '').replace(/[^a-zA-Z0-9 _\-]/g, '').trim() || s.trim();
+  }
+
+  // ── Inject "Proposed Name" column into every table ─────────────────────────
+
+  document.querySelectorAll('table').forEach(function (table) {
+    var module = cleanModule(lastPreceding('h2.module-title', table) || 'General');
+    var kind   = lastPreceding('h4', table) || '';
+
+    // Header cell
+    var thead = table.querySelector('thead tr');
+    if (thead) {
+      var th = document.createElement('th');
+      th.textContent = 'Proposed Name';
+      th.style.whiteSpace = 'nowrap';
+      th.style.color = 'var(--accent)';
+      th.style.minWidth = '180px';
+      thead.appendChild(th);
+    }
+
+    // Data cells — one contenteditable td per row
+    table.querySelectorAll('tbody tr').forEach(function (row) {
+      var firstTd = row.querySelector('td');
+      if (!firstTd) return;
+
+      var name = cellName(firstTd);
+      if (!name || name.startsWith('*(None)') || name.startsWith('*(No')) return;
+
+      var td = document.createElement('td');
+      td.className = 'rename-cell';
+      td.dataset.current = name;
+      td.dataset.module  = module;
+      td.dataset.kind    = kind;
+
+      var inp = document.createElement('input');
+      inp.type        = 'text';
+      inp.placeholder = '— type new name';
+      inp.addEventListener('input', updateCounter);
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter')  { e.preventDefault(); this.blur(); }
+        if (e.key === 'Escape') { this.value = ''; this.blur(); updateCounter(); }
+      });
+
+      td.appendChild(inp);
+      row.appendChild(td);
+    });
+  });
+
+  // ── Proposal counter ───────────────────────────────────────────────────────
+
+  function countProposals() {
+    return Array.from(document.querySelectorAll('.rename-cell input'))
+      .filter(function (i) { return i.value.trim() !== ''; }).length;
+  }
+
+  window.updateCounter = function () {
+    var n   = countProposals();
+    var lbl = document.getElementById('proposal-count');
+    var btn = document.getElementById('export-btn');
+    if (n === 0) {
+      lbl.textContent = 'No proposals yet';
+      lbl.classList.remove('has-proposals');
+    } else {
+      lbl.textContent = n + ' proposal' + (n !== 1 ? 's' : '');
+      lbl.classList.add('has-proposals');
+    }
+    btn.disabled = (n === 0);
+  };
+
+  // ── Export proposals as JSON ───────────────────────────────────────────────
+
+  window.exportProposals = function () {
+    var proposals = Array.from(document.querySelectorAll('.rename-cell'))
+      .filter(function (td) { return td.querySelector('input').value.trim() !== ''; })
+      .map(function (td) {
+        return {
+          module:   td.dataset.module,
+          kind:     td.dataset.kind,
+          current:  td.dataset.current,
+          proposed: td.querySelector('input').value.trim()
+        };
+      });
+
+    var payload = JSON.stringify({
+      generated: new Date().toISOString().slice(0, 10),
+      project:   'GaggiaController',
+      proposals: proposals
+    }, null, 2);
+
+    var a    = document.createElement('a');
+    a.href   = 'data:application/json;charset=utf-8,' + encodeURIComponent(payload);
+    a.download = 'rename_proposals.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // ── Clear all inputs ───────────────────────────────────────────────────────
+
+  window.clearAll = function () {
+    if (countProposals() === 0) return;
+    if (!confirm('Clear all ' + countProposals() + ' proposal(s)?')) return;
+    document.querySelectorAll('.rename-cell input').forEach(function (i) { i.value = ''; });
+    updateCounter();
+  };
+
+  // ── Initialise counter ─────────────────────────────────────────────────────
+  updateCounter();
+
+}());
+</script>
+</body>
+</html>

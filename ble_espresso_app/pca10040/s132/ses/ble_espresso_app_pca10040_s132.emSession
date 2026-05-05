@@ -2,10 +2,9 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="108" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="4" filename="../../../components/BLE/bluetooth_drv.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="546" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="../../../components/BLE/bluetooth_drv.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="436" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="../../../main/main.c" useHWbreakpoint="false"/>
-  <Exceptions/>
+  <Exceptions>
+   <Group group="V7M Exceptions" set="BusFault;ExceptionEntryReturnFault;HardFault;MemManage;UsageFault_CheckingError;UsageFault_Coprocessor;UsageFault_StateError"/>
+  </Exceptions>
  </Breakpoints>
  <ExecutionProfileWindow/>
  <FrameBuffer>
@@ -44,9 +43,10 @@
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;components;Utilities"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;config"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Application;main"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Log"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Segger_RTT"/>
-  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_SoftDevice"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;None"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_BLE"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_BLE_Services"/>
+  <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;nRF_Libraries"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;Segger Startup Files"/>
   <ProjectSessionItem path="ble_espresso_app_pca10040_s132;ble_espresso_pca10040_s132;UTF8/UTF16 converter"/>
  </Project>
@@ -85,9 +85,12 @@
    <Watchpoint expression="nvm_rx_buf" name="nvm_rx_buf" radix="-1" linenumber="401" filename="../../../components/Peripherals/spi_Devices.c"/>
    <Watchpoint expression="nvm_Key" name="nvm_Key" radix="-1" linenumber="183" filename="../../../components/Application/StorageController.c"/>
    <Watchpoint expression="blEspressoProfile" name="blEspressoProfile" radix="-1" linenumber="277" filename="../../../main/main.c"/>
-   <Watchpoint expression="sctrl_profile_main" name="sctrl_profile_main" radix="-1" linenumber="247" filename="../../../components/Application/tempController.c"/>
+   <Watchpoint expression="sctrl_profile_main" name="sctrl_profile_main" radix="-1" linenumber="245" filename="../../../components/Application/tempController.c"/>
    <Watchpoint expression="app_HeatPwr" name="app_HeatPwr" radix="10" linenumber="80" filename="../../../components/Application/BLEspressoServices.c"/>
    <Watchpoint expression="appModeToRun" name="appModeToRun" radix="-1" linenumber="415" filename="../../../main/main.c"/>
+   <Watchpoint expression="g_Espresso_user_config_s" name="g_Espresso_user_config_s" radix="-1" linenumber="0" filename=""/>
+   <Watchpoint expression="ptr_init_data" name="ptr_init_data" radix="-1" linenumber="360" filename="../../../components/BLE/bluetooth_drv.c"/>
+   <Watchpoint expression="ptr_initVal" name="ptr_initVal" radix="-1" linenumber="275" filename="../../../components/BLE_Services/ble_cus.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -100,23 +103,22 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditRight" x="49" y="69" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/BLEspressoServices.c" path="../../../components/Application/tempController.h" left="39" top="2" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="19" y="69" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/main/main.c" path="../../../components/Application/BLEspressoServices.h" left="0" top="52" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditRight" x="1" y="134" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/tempController.c" path="../../../components/Utilities/include/x205_PID_Block.h" left="0" top="85" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="435" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/BLEspresso.c" path="../../../main/main.c" left="0" top="398" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="127" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/main/main.c" path="../../../components/Application/BLEspressoServices.c" left="0" top="105" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="44" y="216" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/tempController.h" path="../../../components/Application/tempController.c" left="0" top="160" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="427" useTextEdit="1" path="../../../components/Application/StorageController.c" left="0" top="383" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="155" useTextEdit="1" path="../../../components/Peripherals/ac_inputs_drv.c" left="0" top="118" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="36" useTextEdit="1" path="../../../components/Peripherals/board_comp_drv.c" left="0" top="3" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="84" y="8" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/ses_startup_nrf52.s" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="36" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/util/app_error_weak.c" left="0" top="12" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="94" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/ble/peer_manager/peer_manager.h" left="0" top="94" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="371" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/ble/peer_manager/peer_manager.c" left="0" top="331" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="394" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/ble/peer_manager/peer_data_storage.c" left="0" top="340" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1806" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fds/fds.c" left="0" top="1769" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="90" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/fstorage/nrf_fstorage.c" left="0" top="46" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="78" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/atomic_fifo/nrf_atfifo.c" left="0" selected="1" top="28" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="47" y="70" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/BLEspressoServices.c" path="../../../components/Application/tempController.h" left="10" top="1" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="3" y="16" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/tempController.c" path="../../../components/Utilities/include/x205_PID_Block.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="54" y="25" useTextEdit="1" path="../../../components/BLE_Services/include/ble_cus.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="26" y="59" useTextEdit="1" path="../../../components/Application/espressoMachineServices.h" left="0" top="3" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditRight" x="0" y="91" useTextEdit="1" path="../../../components/BLE/include/bluetooth_drv.h" left="0" top="27" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="200" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/BLEspresso.c" path="../../../main/main.c" left="0" selected="1" top="162" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="3" y="266" useTextEdit="1" openedFrom="W:/02_WS/11_Nordic/WS_SES/GaggiaController/GaggiaControllerX/ble_espresso_app/components/Application/tempController.h" path="../../../components/Application/tempController.c" left="0" top="228" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="53" y="561" useTextEdit="1" path="../../../components/Application/storageController.c" left="0" top="510" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="129" useTextEdit="1" path="../../../components/Application/pumpController.c" left="0" top="92" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="359" useTextEdit="1" path="../../../components/BLE/bluetooth_drv.c" left="0" top="306" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="4" y="730" useTextEdit="1" path="../../../components/BLE_Services/ble_cus.c" left="0" top="692" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="17" y="206" useTextEdit="1" path="../../../components/Application/espressoMachineServices.c" left="0" top="408" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="529" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/ble/common/ble_conn_params.c" left="0" top="493" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="336" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/pwr_mgmt/nrf_pwr_mgmt.c" left="0" top="289" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="116" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/mutex/nrf_mtx.h" left="0" top="78" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="85" useTextEdit="1" path="../../../../../nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars/nrf_section_iter.c" left="0" top="44" codecName="Default"/>
  </Files>
- <EMStudioWindow activeProject="ble_espresso_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <EMStudioWindow activeProject="ble_espresso_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="C:/WS/NRF/GaggiaController/ble_espresso_app/components/Application" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

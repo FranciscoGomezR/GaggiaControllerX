@@ -6,6 +6,7 @@
 #include "boards.h"
 #include "nrf_log.h"
 #include "x04_Numbers.h"
+#include "espressoMachineServices.h"
 
 //https://www.youtube.com/watch?v=xQwX3yEcAEk&t=8961s&ab_channel=nrf5dev
 
@@ -56,158 +57,165 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
     ble_cus_evt_t                 evt;
   
-    // Check if the Custom value CCCD is written to 
-    if ( (p_evt_write->handle == p_cus->blespressoStatus_char_handles.cccd_handle)  )
+    // Writing to this Custom Value Characteristic: BLE_MACHINE_STATUS_CHAR_NOTIFY_
+    if ( (p_evt_write->handle == p_cus->machine_status_char_handles.cccd_handle)  )
     {
         // CCCD written, call application event handler
         if (p_cus->evt_handler != NULL)
         {
             if (ble_srv_is_notification_enabled(p_evt_write->data))
             {
-                evt.evt_type = BLESPRESSO_STATUS_CHAR_NOTIFICATION_ENABLED;
+                evt.evt_type = BLE_MACHINE_STATUS_CHAR_NOTIFY_ENABLED;
             }else{
-                evt.evt_type = BLESPRESSO_STATUS_CHAR_NOTIFICATION_DISABLED;
+                evt.evt_type = BLE_MACHINE_STATUS_CHAR_NOTIFY_DISABLED;
             }
             // Call the application event handler.
             p_cus->evt_handler(p_cus, &evt);
         }
     }
-    // Check if the Custom value CCCD is written to and that the value is the appropriate length, i.e 2 bytes.
-    //else if ( (p_evt_write->handle == p_cus->boilerTemp_char_handles.cccd_handle) && (p_evt_write->len == 2)  )
-    else if ( (p_evt_write->handle == p_cus->boilerTemp_char_handles.cccd_handle)  )
+    // Writing to this Custom Value Characteristic: BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_
+    else if ( (p_evt_write->handle == p_cus->boiler_water_temp_char_handles.cccd_handle)  )
     {
         // CCCD written, call application event handler
         if (p_cus->evt_handler != NULL)
         {
             if (ble_srv_is_notification_enabled(p_evt_write->data))
             {
-                evt.evt_type = BLE_BOILER_TEMP_CHAR_NOTIFICATION_ENABLED;
+                evt.evt_type = BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_ENABLED;
             }else{
-                evt.evt_type = BLE_BOILER_TEMP_CHAR_NOTIFICATION_DISABLED;
+                evt.evt_type = BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_DISABLED;
             }
             // Call the application event handler.
             p_cus->evt_handler(p_cus, &evt);
         }
     }
-    // Writing to this Custom Value Characteristic: BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE
-    else if (p_evt_write->handle == p_cus->boilerTargetTemp_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->boiler_temp_set_point_char_handles.value_handle)
     {
-        evt.param_command.sBoilerTempTarget.ptr_data  = p_evt_write->data;
-        evt.param_command.sBoilerTempTarget.length    = p_evt_write->len;
-        evt.evt_type = BLE_BOILER_CHAR_EVT_NEW_TEMPERATURE;
+        evt.param_command.Boiler_temp_set_point_s.ptr_data  = p_evt_write->data;
+        evt.param_command.Boiler_temp_set_point_s.length    = p_evt_write->len;
+        evt.evt_type = BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-  // Writing to this Custom Value Characteristic: boilerSteamTargetTemp
-    else if (p_evt_write->handle == p_cus->boilerSteamTargetTemp_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: BLE_CHAR_BREW_TEMP_UUID
+    else if (p_evt_write->handle == p_cus->brew_temp_char_handles.value_handle)
     {
-        evt.param_command.sBoilerSteamTemp.ptr_data  = p_evt_write->data;
-        evt.param_command.sBoilerSteamTemp.length    = p_evt_write->len;
-        evt.evt_type = BLE_BOILER_STEAM_TEMP_CHAR_RX_EVT;
+        evt.param_command.Brew_temp_s.ptr_data  = p_evt_write->data;
+        evt.param_command.Brew_temp_s.length    = p_evt_write->len;
+        evt.evt_type = BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT;
+        p_cus->evt_handler(p_cus, &evt);
+    }
+    // Writing to this Custom Value Characteristic: BLE_CHAR_STEAM_TEMP_UUID
+    else if (p_evt_write->handle == p_cus->brew_temp_char_handles.value_handle)
+    {
+        evt.param_command.Steam_temp_s.ptr_data  = p_evt_write->data;
+        evt.param_command.Steam_temp_s.length    = p_evt_write->len;
+        evt.evt_type = BLE_MACHINE_STEAM_TEMP_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
 
     // Writing to this Custom Value Characteristic: BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewPreInfussionPower_char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->preInfuse_power_char_handles.value_handle)
     {
-        evt.param_command.s_preInfusePwr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_preInfusePwr.length    = p_evt_write->len;
+        evt.param_command.PreInfusePwr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PreInfusePwr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewPreInfussiontime__char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->preInfuse_time_char_handles.value_handle)
     {
-        evt.param_command.s_preInfuseTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_preInfuseTmr.length    = p_evt_write->len;
+        evt.param_command.PreInfuseTmr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PreInfuseTmr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_INFUSION_POWER_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewInfussionPower_char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->infuse_power_char_handles.value_handle)
     {
-        evt.param_command.s_InfusePwr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_InfusePwr.length    = p_evt_write->len;
+        evt.param_command.InfusePwr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.InfusePwr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_INFUSION_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_INFUSION_TIME__CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewInfussiontime__char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->infuse_time_char_handles.value_handle)
     {
-        evt.param_command.s_InfuseTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_InfuseTmr.length    = p_evt_write->len;
+        evt.param_command.InfuseTmr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.InfuseTmr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_INFUSION_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewDecliningPower_char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->taper_power_char_handles.value_handle)
     {
-        evt.param_command.s_DeclinePwr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_DeclinePwr.length    = p_evt_write->len;
+        evt.param_command.TaperingPwr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.TaperingPwr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->brewDecliningtime__char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->taper_time_char_handles.value_handle)
     {
-        evt.param_command.s_DeclineTmr.ptr_data  = p_evt_write->data;
-        evt.param_command.s_DeclineTmr.length    = p_evt_write->len;
+        evt.param_command.TaperingTmr_s.ptr_data  = p_evt_write->data;
+        evt.param_command.TaperingTmr_s.length    = p_evt_write->len;
         evt.evt_type = BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Add PID parameters
-    // Writing to this Custom Value Characteristic: PID_P_TERM_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_Pterm_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: pidPTerm_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->pid_p_term_char_handles.value_handle)
     {
-        evt.param_command.sPid_P_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_P_term.length    = p_evt_write->len;
+        evt.param_command.PidPTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidPTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_P_TERM_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_I_TERM_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_Iterm_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: pidITerm_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->pid_i_term_char_handles.value_handle)
     {
-        evt.param_command.sPid_I_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_I_term.length    = p_evt_write->len;
+        evt.param_command.PidITerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidITerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_I_TERM_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_I_TERM_INT_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_ImaxTerm_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: pidITerm_INT_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->pid_i_max_term_char_handles.value_handle)
     {
-        evt.param_command.sPid_Imax_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_Imax_term.length    = p_evt_write->len;
+        evt.param_command.PidImaxTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidImaxTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_I_TERM_INT_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_I_TERM_WINDUP_CHAR_RX_EVT
+    // Writing to this Custom Value Characteristic: pidITerm_WINDUP_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->pid_Iwindup_char_handles.value_handle)
     {
-        evt.param_command.sPid_Iwindup_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_Iwindup_term.length    = p_evt_write->len;
+        evt.param_command.PidIwindupTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidIwindupTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_I_TERM_WINDUP_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_D_TERM_CHAR_RX_EVT
+    // Writing to this Custom Value Characteristic: pidDTerm_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->pid_Dterm_char_handles.value_handle)
     {
-        evt.param_command.sPid_D_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_D_term.length    = p_evt_write->len;
+        evt.param_command.PidDTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidDTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_D_TERM_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_D_TERM_LPF_CHAR_RX_EVT
+    // Writing to this Custom Value Characteristic: pidDTerm_LPF_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->pid_DlpfTerm_char_handles.value_handle)
     {
-        evt.param_command.sPid_Dlpf_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_Dlpf_term.length    = p_evt_write->len;
+        evt.param_command.PidDlpfTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidDlpfTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_D_TERM_LPF_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: PID_GAIN___CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->pid_GainTerm_char_handles.value_handle)
     {
-        evt.param_command.sPid_Gain_term.ptr_data  = p_evt_write->data;
-        evt.param_command.sPid_Gain_term.length    = p_evt_write->len;
+        evt.param_command.PidGainTerm_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidGainTerm_s.length    = p_evt_write->len;
         evt.evt_type = PID_GAIN___CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }else{}
@@ -257,23 +265,26 @@ void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context)
 
 
 /*****************************************************************************
-* Function: 	custom_value_char_add
+* Function: 	ble_cus_espresso_char_add
 * Description:  Function for adding the Custom Value characteristic.
 * Caveats:      Youtube-TimeStamp: 48:50
 * Parameters:	@param[in]   p_cus        Battery Service structure.
 *               @param[in]   p_cus_init   Information needed to initialize the service.
 * Return:       NRF_SUCCESS on success, otherwise an error code.
 *****************************************************************************/
-static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, bleSpressoUserdata_struct * ptr_initVal)
+static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espresso_user_config_t * ptr_initVal)
 {
     uint32_t              err_code;
     ble_add_char_params_t add_char_param;
     static uint8_t initValueChar[5] = {'0'}; 
-
-    // Add BLE_CHAR_BLESPRESSO_STATUS characteristic
+    
+    /*<NOTIFICATION + READ> 
+    Add BLE_CHAR_BLESPRESSO_STATUS characteristic
+    TODO
+    */
     uint8_t blespressoStatus[10] = {' '};
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_BLESPRESSO_STATUS__UUID;   //set UUID
+    add_char_param.uuid             = BLE_CHAR_MACHINE_STATUS__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
 
     add_char_param.init_len         = 10;                      //init 5 bytes        
@@ -288,16 +299,18 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->blespressoStatus_char_handles);
+                                  &p_cus->machine_status_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
 
-    //uint8_t boilerWaterTemp[4] = {'0','0','0','0'};
-    // Add Boilder Temperature Value characteristic
+    
+    /*<NOTIFICATION + READ> 
+    Add Boilder WATER Temperature Value characteristic
+    uint8_t boilerWaterTemp[4] = {'0','0','0','0'}; */
     fcn_FloatToChrArray(0.0f,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_BOILER_WATER__TEMP_UUID;   //set UUID
+    add_char_param.uuid             = BLE_CHAR_BOILER_WATER_TEMP_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
 
     add_char_param.init_len         = 4;                      //init 5 bytes        
@@ -312,16 +325,17 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->boilerTemp_char_handles);
+                                  &p_cus->boiler_water_temp_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add Boilder Target Temperature characteristic
-    //TimeStamp: 51:45
-    //uint8_t boilerTargetTemp[4] = {'0','9','8','5'};
-    fcn_FloatToChrArray(ptr_initVal->temp_Target,(uint8_t*)&initValueChar[0],3,1);
+    /*<READ + WRITE>
+    Add Boilder SET POINT Temperature characteristic
+    TimeStamp: 51:45
+    uint8_t boilerTargetTemp[4] = {'0','9','8','5'}; */
+    fcn_FloatToChrArray(ptr_initVal->boilerTempSetpointDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_BOILER_TARGET_TEMP_UUID;   //set UUID
+    add_char_param.uuid             = BLE_CHAR_BOILER_SET_POINT_TEMP_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
     add_char_param.init_len         = 4;                  //init 5 bytes        
     add_char_param.max_len          = 4;
@@ -335,15 +349,17 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->boilerTargetTemp_char_handles);
+                                  &p_cus->boiler_temp_set_point_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add Boiler Steam Target Temperature characteristic
-    // This separate char allows the app to configure steam setpoint independently
-    fcn_FloatToChrArray(ptr_initVal->sp_StemTemp,(uint8_t*)&initValueChar[0],3,1);
+    /*<READ + WRITE> 
+    BLE_CHAR_BREW_TEMP_UUID
+    Add BREW Temperature PRESET characteristic
+    This separate char allows the app to configure BREW setpoint independently */
+    fcn_FloatToChrArray(ptr_initVal->brewTempDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_BOILER_STEAM_TARGET_TEMP_UUID;
+    add_char_param.uuid             = BLE_CHAR_BREW_TEMP_UUID;
     add_char_param.uuid_type        = p_cus->uuid_type;
     add_char_param.init_len         = 4;
     add_char_param.max_len          = 4;
@@ -356,13 +372,37 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle,
                                   &add_char_param,
-                                  &p_cus->boilerSteamTargetTemp_char_handles);
+                                  &p_cus->brew_temp_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BREW_PRE_INFUSION_POWER characteristic
-    //uint8_t brewPreInfusionPwr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->prof_preInfusePwr,(uint8_t*)&initValueChar[0],2,1);
+    /*<READ + WRITE> 
+    BLE_CHAR_STEAM_TEMP_UUID
+    Add STEAM Temperature PRESET characteristic
+    This separate char allows the app to configure STEAM setpoint independently */
+    fcn_FloatToChrArray(ptr_initVal->steamTempDegC,(uint8_t*)&initValueChar[0],3,1);
+    memset(&add_char_param, 0, sizeof(add_char_param));
+    add_char_param.uuid             = BLE_CHAR_STEAM_TEMP_UUID;
+    add_char_param.uuid_type        = p_cus->uuid_type;
+    add_char_param.init_len         = 4;
+    add_char_param.max_len          = 4;
+    add_char_param.p_init_value     = (uint8_t*)initValueChar;
+    add_char_param.char_props.read  = 1;
+    add_char_param.char_props.write = 1;
+    add_char_param.char_props.notify= 0;
+    add_char_param.read_access      = SEC_OPEN;
+    add_char_param.write_access     = SEC_OPEN;
+
+    err_code = characteristic_add(p_cus->service_handle,
+                                  &add_char_param,
+                                  &p_cus->steam_temp_char_handles);
+    if (err_code != NRF_SUCCESS)
+    { return err_code;  }
+
+    /*<READ + WRITE>
+    Add BREW_PRE_INFUSION_POWER characteristic
+    uint8_t brewPreInfusionPwr[3] = {'0','0','0'};*/
+    fcn_FloatToChrArray(ptr_initVal->profPreInfusePwr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -376,13 +416,14 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
     add_char_param.write_access     = SEC_OPEN;
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewPreInfussionPower_char_handles);
+                                  &p_cus->preInfuse_power_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BREW_PRE_INFUSION_TIME characteristic
-    //uint8_t brewPreInfusiontmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->prof_preInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
+    /*<READ + WRITE>
+    Add BREW_PRE_INFUSION_TIME characteristic
+    uint8_t brewPreInfusiontmr[3] = {'0','0','0'};*/
+    fcn_FloatToChrArray(ptr_initVal->profPreInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -396,13 +437,14 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
     add_char_param.write_access     = SEC_OPEN;
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewPreInfussiontime__char_handles);
+                                  &p_cus->preInfuse_time_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BREW_INFUSION_POWER characteristic
-    //uint8_t brewInfusionPwr[4] = {'0','0','0', '0' };
-    fcn_FloatToChrArray(ptr_initVal->prof_InfusePwr,(uint8_t*)&initValueChar[0],3,1);
+    /*<READ + WRITE>
+    Add BREW_INFUSION_POWER characteristic
+    uint8_t brewInfusionPwr[4] = {'0','0','0', '0' };*/
+    fcn_FloatToChrArray(ptr_initVal->profInfusePwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -417,13 +459,14 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewInfussionPower_char_handles);
+                                  &p_cus->infuse_power_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
-
-    // Add BREW_INFUSION_TIME characteristic
-    //uint8_t brewInfusiontmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->prof_InfuseTmr,(uint8_t*)&initValueChar[0],2,1);
+  
+    /*<READ + WRITE>
+    Add BREW_INFUSION_TIME characteristic
+    uint8_t brewInfusiontmr[3] = {'0','0','0'};*/
+    fcn_FloatToChrArray(ptr_initVal->profInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -438,13 +481,14 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewInfussiontime__char_handles);
+                                  &p_cus->infuse_time_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_BREW_DECLINING_PR_POWER characteristic
-    //uint8_t brewDecliningPressurePwr[4] = {'0','0','0', '0' };
-    fcn_FloatToChrArray(ptr_initVal->Prof_DeclinePwr,(uint8_t*)&initValueChar[0],3,1);
+    /*<READ + WRITE>
+    Add BLE_CHAR_BREW_DECLINING_PR_POWER characteristic
+    uint8_t brewDecliningPressurePwr[4] = {'0','0','0', '0' };*/
+    fcn_FloatToChrArray(ptr_initVal->profTaperingPwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -459,13 +503,14 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewDecliningPower_char_handles);
+                                  &p_cus->taper_power_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_BREW_DECLINING_PR_TIME characteristic
-    //uint8_t brewDecliningPressureTmr[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->Prof_DeclineTmr,(uint8_t*)&initValueChar[0],2,1);
+    /*<READ + WRITE>
+    Add BLE_CHAR_BREW_DECLINING_PR_TIME characteristic
+    uint8_t brewDecliningPressureTmr[3] = {'0','0','0'};*/
+    fcn_FloatToChrArray(ptr_initVal->profTaperingTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -480,7 +525,7 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->brewDecliningtime__char_handles);
+                                  &p_cus->taper_time_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
    
@@ -488,22 +533,22 @@ static uint32_t custom_value_char_add(ble_cus_t * p_cus, const ble_cus_init_t * 
 }
 
 /*****************************************************************************
-* Function: 	custom_value_PIDchar_add
+* Function: 	ble_cus_controller_char_add
 * Description:  Function for adding the Custom Value characteristic.
 * Caveats:      Youtube-TimeStamp: 48:50
 * Parameters:	@param[in]   p_cus        Battery Service structure.
 *               @param[in]   p_cus_init   Information needed to initialize the service.
 * Return:       NRF_SUCCESS on success, otherwise an error code.
 *****************************************************************************/
-static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, bleSpressoUserdata_struct *ptr_initVal)
+static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espresso_user_config_t *ptr_initVal)
 {
     uint32_t              err_code;
     ble_add_char_params_t add_char_param;
     static uint8_t initValueChar[5] = {'0'}; 
 
-    // Add PID_P_TERM characteristic
+    // Add pidPTerm characteristic
     //uint8_t pidPterm[4] = {'0' ,'0','0','0'};  //0.0
-    fcn_FloatToChrArray(ptr_initVal->Pid_P_term,(uint8_t*)&initValueChar[0],3,1);
+    fcn_FloatToChrArray(ptr_initVal->pidPTerm,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_P_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -517,13 +562,13 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     add_char_param.write_access     = SEC_OPEN;
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->pid_Pterm_char_handles);
+                                  &p_cus->pid_p_term_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add PID_I_TERM characteristic
+    // Add pidITerm characteristic
     //uint8_t pidIterm[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->Pid_I_term,(uint8_t*)&initValueChar[0],2,1);
+    fcn_FloatToChrArray(ptr_initVal->pidITerm,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_I_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -537,13 +582,13 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     add_char_param.write_access     = SEC_OPEN;
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->pid_Iterm_char_handles);
+                                  &p_cus->pid_i_term_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
     // Add BLE_CHAR_PID_I_MAX characteristic
     //uint8_t pidImaxTerm[4] = {'0','0','0','0'};  //0.0
-    fcn_FloatToChrArray(ptr_initVal->Pid_Imax_term,(uint8_t*)&initValueChar[0],3,1);
+    fcn_FloatToChrArray(ptr_initVal->pidImaxTerm,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_I_MAX_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -557,7 +602,7 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     add_char_param.write_access     = SEC_OPEN;
     err_code = characteristic_add(p_cus->service_handle, 
                                   &add_char_param,
-                                  &p_cus->pid_ImaxTerm_char_handles);
+                                  &p_cus->pid_i_max_term_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
@@ -567,7 +612,7 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     add_char_param.uuid_type        = p_cus->uuid_type;
     add_char_param.init_len         = 1;                             
     add_char_param.max_len          = 1;
-    if(ptr_initVal->Pid_Iwindup_term == true)
+    if(ptr_initVal->pidIwindupTerm == true)
     {
       initValueChar[0] = '1';
       add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
@@ -586,9 +631,9 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_PID_D_TERM characteristic
+    // Add BLE_CHAR_pidDTerm characteristic
     //uint8_t pidDterm[3] = {'0','0','0'};  //0.0  
-    fcn_FloatToChrArray(ptr_initVal->Pid_D_term,(uint8_t*)&initValueChar[0],2,1);  
+    fcn_FloatToChrArray(ptr_initVal->pidDTerm,(uint8_t*)&initValueChar[0],2,1);  
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_D_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -606,9 +651,9 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_PID_D_TERM_LPF characteristic
+    // Add BLE_CHAR_pidDTerm_LPF characteristic
     //uint8_t pidDlpfTerm[4] = {'0','0','0','0'};  //0.0 
-    fcn_FloatToChrArray(ptr_initVal->Pid_Dlpf_term,(uint8_t*)&initValueChar[0],3,1);   
+    fcn_FloatToChrArray(ptr_initVal->pidDlpfTerm,(uint8_t*)&initValueChar[0],3,1);   
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_D_TERM_LPF_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -626,9 +671,9 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_PID_D_TERM_LPF characteristic
+    // Add BLE_CHAR_pidDTerm_LPF characteristic
     //uint8_t pidGainTerm[4] = {'0','0','0','0'};  //0.0  
-    fcn_FloatToChrArray(ptr_initVal->Pid_Gain_term,(uint8_t*)&initValueChar[0],3,1);  
+    fcn_FloatToChrArray(ptr_initVal->pidGainTerm,(uint8_t*)&initValueChar[0],3,1);  
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_GAIN___UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -657,7 +702,7 @@ static uint32_t custom_value_PIDchar_add(ble_cus_t * p_cus, const ble_cus_init_t
 * Parameters:	
 * Return:       NRF_SUCCESS on success otherwise an error code
 *****************************************************************************/
-uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
+uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espresso_user_config_t* ptr_init_data)
 {
     uint32_t              err_code;
     ble_uuid_t            ble_uuid;
@@ -674,36 +719,38 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init)
     {
         return err_code;
     }
-    // CREATE SERVICE FOR BREW CFG ///////////////////////////////////////////////////
+    /*  CREATE BLE CUSTOM SERVICE: ESPRESSO MACHINE AND PROFILE */
     ble_uuid.type = p_cus->uuid_type;
-    ble_uuid.uuid = BLE_SERVICE_BLEESPRESSO_UUID;
+    ble_uuid.uuid = BLE_SERVICE_ESPRESSO_MACHINE_UUID;
     // Add the Custom Service to the database
     err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &p_cus->service_handle);
     if (err_code != NRF_SUCCESS)
     {return err_code;}
     // Add Custom Value characteristic
-    custom_value_char_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&blEspressoProfile);
+    //ble_cus_espresso_char_add(p_cus, p_cus_init,(espresso_user_config_t *)&g_Espresso_user_config_s);
+    ble_cus_espresso_char_add(p_cus, p_cus_init,ptr_init_data);
 
-    // CREATE NEW SERVICE FOR PID ///////////////////////////////////////////////////
+    /*  CREATE BLE CUSTOM SERVICE: CONTROLLER */
     ble_uuid.type = p_cus->uuid_type;
-    ble_uuid.uuid = BLE_SERVICE_PIDESPRESSO_UUID;
+    ble_uuid.uuid = BLE_SERVICE_CONTROLLER_UUID;
     // Add the Custom Service to the database
     err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &p_cus->service_handle);
     if (err_code != NRF_SUCCESS)
     {return err_code;}
 
     // Add Custom Value characteristic
-    return custom_value_PIDchar_add(p_cus, p_cus_init,(bleSpressoUserdata_struct *)&blEspressoProfile);
+    //return ble_cus_controller_char_add(p_cus, p_cus_init,(espresso_user_config_t *)&g_Espresso_user_config_s);
+    return ble_cus_controller_char_add(p_cus, p_cus_init,ptr_init_data);
 }
 
 /****************************************************************************
-* Function: 	ble_cus_custom_value_update
-* Description:  This function update the temperature on the BLE: boilerTemp_char_handles Characteristic
+* Function: 	ble_cus_notify_boiler_water_temp
+* Description:  This function update the temperature on the BLE: boiler_water_temp_char_handles Characteristic
 * Caveats:      Youtube-TimeStamp: 53:00
 * Parameters:	
 * Return:       
 *****************************************************************************/
-uint32_t ble_cus_BoilerWaterTemperature_update(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle)
+uint32_t ble_cus_notify_boiler_water_temp(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle)
 {
     //NRF_LOG_INFO("BLE:  temp. update\r\n"); 
     if (p_cus == NULL)
@@ -717,7 +764,7 @@ uint32_t ble_cus_BoilerWaterTemperature_update(ble_cus_t * p_cus, uint8_t * ptr_
     // Initialize value struct.
     memset(&params, 0, sizeof(params));
     params.type   = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_cus->boilerTemp_char_handles.value_handle;
+    params.handle = p_cus->boiler_water_temp_char_handles.value_handle;
     params.p_data = ptr_waterTemp;
     params.p_len  = &len;
 

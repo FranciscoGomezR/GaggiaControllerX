@@ -17,7 +17,7 @@
 #include "app_error.h"
 #include "x02_FlagValues.h"
 #include "x205_PID_Block.h"
-#include "BLEspressoServices.h"
+#include "espressoMachineServices.h"
 
 //*****************************************************************************
 //
@@ -37,17 +37,17 @@
 //
 //*****************************************************************************
  typedef enum {
-  TEMPCTRL_INIT_OK = 0,
-  TEMPCTRL_INIT_ERROR,
-  TEMPCTRL_LOAD_OK,
-  TEMPCTRL_ERROR,
-  TEMPCTRL_I_LOAD_OK
+  TEMP_CTRL_INIT_OK = 0,
+  TEMP_CTRL_INIT_ERROR,
+  TEMP_CTRL_LOAD_OK,
+  TEMP_CTRL_ERROR,
+  TEMP_CTRL_I_LOAD_OK
 } tempCtrl_status_t;
 
 typedef enum{
-  SETPOINT_BREW=0,
-  SETPOINT_STEAM,
-  TEMPCTRL_SP_LOAD_OK
+  SET_POINT_BREW=0,
+  SET_POINT_STEAM,
+  SET_POINT_LOAD_OK
 } tempCtrl_LoadSP_t;
 
 //*****************************************************************************
@@ -63,22 +63,21 @@ typedef enum{
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-tempCtrl_status_t fcn_initCntrl_Temp(void);
+tempCtrl_status_t temp_ctrl_init(void);
 
 /* call this function before activating the pump for pulling out a shot of spresso*/
-tempCtrl_status_t fcn_loadIboost_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData);
+tempCtrl_status_t temp_ctrl_set_operational_integral_gain(espresso_user_config_t *ptr_prof_data);
 /* call this function after deactivation the pump for pulling out a shot of spresso*/
-tempCtrl_status_t fcn_multiplyI_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, float factor);
+tempCtrl_status_t temp_ctrl_scale_integral_gain(espresso_user_config_t *ptr_prof_data, float factor);
 /* call this function to load a new Set Point into the Temperature controller of the Boiler*/
-tempCtrl_LoadSP_t fcn_loaddSetPoint_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData, tempCtrl_LoadSP_t Setpoint);
+tempCtrl_LoadSP_t temp_ctrl_set_boiler_setpoint(espresso_user_config_t *ptr_prof_data, tempCtrl_LoadSP_t Setpoint);
 
-tempCtrl_status_t fcn_loadPID_ParamToCtrl_Temp(bleSpressoUserdata_struct *prt_profData);
-
-
-float fcn_updateTemperatureController(bleSpressoUserdata_struct *prt_profData);
+tempCtrl_status_t temp_ctrl_set_pid_config(espresso_user_config_t *ptr_prof_data);
 
 
-void fcn_startTempCtrlSamplingTmr(void);
-void fcn_stopTempCtrlSamplingTmr(void);
+float temp_ctrl_update(espresso_user_config_t *ptr_prof_data);
 
-void isr_HwTmr3_Period_EventHandler(nrf_timer_event_t event_type, void* p_context);
+void temp_ctrl_start_sampling_timer(void);
+void temp_ctrl_stop_sampling_timer(void);
+
+void temp_ctrl_sampling_timer_event_handler(nrf_timer_event_t event_type, void* p_context);

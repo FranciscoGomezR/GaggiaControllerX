@@ -89,7 +89,7 @@ extern  "C" {
 
 #include "ble_nus.h"
 #include "ble_cus.h"
-#include "BLEspressoServices.h"
+#include "espressoMachineServices.h"
 
 //*****************************************************************************
 //
@@ -156,13 +156,13 @@ extern volatile uint8_t flg_ReadCfg;
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void BLE_bluetooth_init(void);
+void bluetooth_low_energy_init(espresso_user_config_t* ptr_init_data);
 void advertising_start(bool erase_bonds);
 void sleep_mode_enter(void);
 void ble_disconnect(void);
 void ble_restart_without_whitelist(void);
 
-void ble_update_boilerWaterTemp(float waterTemp);
+void ble_notify_boiler_water_temp(float waterTemp);
 
 #ifdef __cplusplus
 }

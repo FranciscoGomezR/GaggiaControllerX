@@ -25,7 +25,7 @@
 #include "nordic_common.h"
 #include "nrf_fstorage.h"
 #include "nrf_fstorage_sd.h"
-#include "BLEspressoServices.h"
+#include "espressoMachineServices.h"
 #include "spi_Devices.h"
 
 #include "nrf_log.h"
@@ -52,13 +52,13 @@ typedef enum {
   STORAGE_PROFILEDATA_STORED,
   STORAGE_CONTROLLERDATA_STORED,
   STORAGE_USERDATA_ERROR
-} storageCtrl_status_t;
+} storage_controller_status_t;
 
 typedef enum {
     PROFILE_VALID    = 0,  /* all fields within range — no change */
     PROFILE_CLAMPED  = 1,  /* one or more fields were out of range and clamped to safe default */
     PROFILE_REJECTED = 2   /* NaN or Inf detected — all fields reset (not currently used) */
-} profileValidation_status_t;
+} profile_validation_status_t;
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
@@ -71,12 +71,12 @@ typedef enum {
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-uint32_t stgCtrl_Init(void);
-uint32_t stgCtrl_ChkForUserData(void);
-uint32_t stgCtrl_ReadUserData(bleSpressoUserdata_struct* ptr_rxData);
-uint32_t stgCtrl_StoreShotProfileData(bleSpressoUserdata_struct* ptr_sxData);
-uint32_t stgCtrl_StoreControllerData(bleSpressoUserdata_struct* ptr_sxData);
-uint32_t stgCtrl_PrintUserData(bleSpressoUserdata_struct* ptr_rxData);
+uint32_t storage_init(void);
+uint32_t storage_has_user_config(void);
+uint32_t storage_load_user_config(espresso_user_config_t *ptr_rxData);
+uint32_t storage_save_shot_profile(espresso_user_config_t *ptr_sxData);
+uint32_t storage_save_controller_config(espresso_user_config_t *ptr_sxData);
+uint32_t storage_print_user_config(espresso_user_config_t *ptr_rxData);
 
 #endif // BLESPRESSOSERVICES_H__
 
