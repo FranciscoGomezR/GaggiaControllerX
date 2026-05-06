@@ -308,7 +308,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<NOTIFICATION + READ> 
     Add Boilder WATER Temperature Value characteristic
     uint8_t boilerWaterTemp[4] = {'0','0','0','0'}; */
-    fcn_FloatToChrArray(0.0f,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(0.0f,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BOILER_WATER_TEMP_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -333,7 +333,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     Add Boilder SET POINT Temperature characteristic
     TimeStamp: 51:45
     uint8_t boilerTargetTemp[4] = {'0','9','8','5'}; */
-    fcn_FloatToChrArray(ptr_initVal->boilerTempSetpointDegC,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->boilerTempSetpointDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BOILER_SET_POINT_TEMP_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -357,7 +357,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     BLE_CHAR_BREW_TEMP_UUID
     Add BREW Temperature PRESET characteristic
     This separate char allows the app to configure BREW setpoint independently */
-    fcn_FloatToChrArray(ptr_initVal->brewTempDegC,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->brewTempDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_TEMP_UUID;
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -380,7 +380,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     BLE_CHAR_STEAM_TEMP_UUID
     Add STEAM Temperature PRESET characteristic
     This separate char allows the app to configure STEAM setpoint independently */
-    fcn_FloatToChrArray(ptr_initVal->steamTempDegC,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->steamTempDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_STEAM_TEMP_UUID;
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -402,7 +402,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BREW_PRE_INFUSION_POWER characteristic
     uint8_t brewPreInfusionPwr[3] = {'0','0','0'};*/
-    fcn_FloatToChrArray(ptr_initVal->profPreInfusePwr,(uint8_t*)&initValueChar[0],2,1);
+    float_to_chr_array(ptr_initVal->profPreInfusePwr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -423,7 +423,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BREW_PRE_INFUSION_TIME characteristic
     uint8_t brewPreInfusiontmr[3] = {'0','0','0'};*/
-    fcn_FloatToChrArray(ptr_initVal->profPreInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
+    float_to_chr_array(ptr_initVal->profPreInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -444,7 +444,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BREW_INFUSION_POWER characteristic
     uint8_t brewInfusionPwr[4] = {'0','0','0', '0' };*/
-    fcn_FloatToChrArray(ptr_initVal->profInfusePwr,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->profInfusePwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -466,7 +466,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BREW_INFUSION_TIME characteristic
     uint8_t brewInfusiontmr[3] = {'0','0','0'};*/
-    fcn_FloatToChrArray(ptr_initVal->profInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
+    float_to_chr_array(ptr_initVal->profInfuseTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_INFUSION_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -488,7 +488,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BLE_CHAR_BREW_DECLINING_PR_POWER characteristic
     uint8_t brewDecliningPressurePwr[4] = {'0','0','0', '0' };*/
-    fcn_FloatToChrArray(ptr_initVal->profTaperingPwr,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->profTaperingPwr,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_POWER_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -510,7 +510,7 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     /*<READ + WRITE>
     Add BLE_CHAR_BREW_DECLINING_PR_TIME characteristic
     uint8_t brewDecliningPressureTmr[3] = {'0','0','0'};*/
-    fcn_FloatToChrArray(ptr_initVal->profTaperingTmr,(uint8_t*)&initValueChar[0],2,1);
+    float_to_chr_array(ptr_initVal->profTaperingTmr,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_BREW_DECLINING_PR_TIME__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -548,7 +548,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add pidPTerm characteristic
     //uint8_t pidPterm[4] = {'0' ,'0','0','0'};  //0.0
-    fcn_FloatToChrArray(ptr_initVal->pidPTerm,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->pidPTerm,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_P_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -568,7 +568,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add pidITerm characteristic
     //uint8_t pidIterm[3] = {'0','0','0'};
-    fcn_FloatToChrArray(ptr_initVal->pidITerm,(uint8_t*)&initValueChar[0],2,1);
+    float_to_chr_array(ptr_initVal->pidITerm,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_I_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -588,7 +588,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add BLE_CHAR_PID_I_MAX characteristic
     //uint8_t pidImaxTerm[4] = {'0','0','0','0'};  //0.0
-    fcn_FloatToChrArray(ptr_initVal->pidImaxTerm,(uint8_t*)&initValueChar[0],3,1);
+    float_to_chr_array(ptr_initVal->pidImaxTerm,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_I_MAX_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -633,7 +633,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add BLE_CHAR_pidDTerm characteristic
     //uint8_t pidDterm[3] = {'0','0','0'};  //0.0  
-    fcn_FloatToChrArray(ptr_initVal->pidDTerm,(uint8_t*)&initValueChar[0],2,1);  
+    float_to_chr_array(ptr_initVal->pidDTerm,(uint8_t*)&initValueChar[0],2,1);  
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_D_TERM_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -653,7 +653,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add BLE_CHAR_pidDTerm_LPF characteristic
     //uint8_t pidDlpfTerm[4] = {'0','0','0','0'};  //0.0 
-    fcn_FloatToChrArray(ptr_initVal->pidDlpfTerm,(uint8_t*)&initValueChar[0],3,1);   
+    float_to_chr_array(ptr_initVal->pidDlpfTerm,(uint8_t*)&initValueChar[0],3,1);   
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_D_TERM_LPF_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
@@ -673,7 +673,7 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
 
     // Add BLE_CHAR_pidDTerm_LPF characteristic
     //uint8_t pidGainTerm[4] = {'0','0','0','0'};  //0.0  
-    fcn_FloatToChrArray(ptr_initVal->pidGainTerm,(uint8_t*)&initValueChar[0],3,1);  
+    float_to_chr_array(ptr_initVal->pidGainTerm,(uint8_t*)&initValueChar[0],3,1);  
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_PID_GAIN___UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;

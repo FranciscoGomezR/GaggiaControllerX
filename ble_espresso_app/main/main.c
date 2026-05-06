@@ -1,6 +1,7 @@
-// Useful Links
-// SES porject: https://www.youtube.com/watch?v=xQwX3yEcAEk&t=8961s&ab_channel=nrf5dev 
-// Possible solution to SEs getting frozen: https://forum.segger.com/index.php/Thread/5576-SOLVED-Segger-Studio-frozen-on-Building-after-failed-attempted-at-GIT/
+/* Useful Links
+ * SES project: https://www.youtube.com/watch?v=xQwX3yEcAEk&t=8961s&ab_channel=nrf5dev
+ * Possible solution to SES frozen: https://forum.segger.com/index.php/Thread/5576-SOLVED-Segger-Studio-frozen-on-Building-after-failed-attempted-at-GIT/
+ */
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -20,22 +21,22 @@
 #include "dc12Vouput_drv.h"
 #include "app_error.h"
 
-volatile uint16_t g_ssrPower=0;
-volatile uint16_t g_ssrPump=0;
+volatile uint16_t g_ssr_power = 0U;
+volatile uint16_t g_ssr_pump  = 0U;
 
 
-#define EXCLUDE_NVM_SECTION         true
-#define EXCLUDE_BLE_ADV_SECTION     false
+#define EXCLUDE_NVM_SECTION         1
+#define EXCLUDE_BLE_ADV_SECTION     0
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
 /*  Code Section:
     Ticks calculation for all sync functions
 */
-#define TICK_SVCS_STEPFCN       (100 / SWTMR_TICK_MS)
-#define TICK_SVCS_ESPRESSO      (100 / SWTMR_TICK_MS)
-#define TICK_TASK_READBTN       (60 / SWTMR_TICK_MS)
-#define TICK_TASK_BOILERTEMP    (101 / SWTMR_TICK_MS)
-#define TICK_TASK_BLEUPDATE     (1000 / SWTMR_TICK_MS)
+#define TICK_SVCS_STEPFCN       (100 / MAIN_BASE_TIME_MSECS)
+#define TICK_SVCS_ESPRESSO      (100 / MAIN_BASE_TIME_MSECS)
+#define TICK_TASK_READBTN       (60 / MAIN_BASE_TIME_MSECS)
+#define TICK_TASK_BOILERTEMP    (101 / MAIN_BASE_TIME_MSECS)
+#define TICK_TASK_BLEUPDATE     (1000 / MAIN_BASE_TIME_MSECS)
 
 /*  Code Section:
     Main & fastest Tick time in the system: ** 50 ms **
@@ -44,59 +45,59 @@ volatile uint16_t g_ssrPump=0;
 volatile uint32_t g_swTmr_tick_x0ms = 0;
 typedef struct
 {
-  bool tf_ReadButton;
-  bool tf_GetBoilerTemp;
-  bool tf_ble_update;
-  bool tf_svc_StepFunction;
-  bool tf_svc_EspressoApp;
-}struct_TaskFlg;
+  bool flag_read_button;
+  bool flag_get_boiler_temp;
+  bool flag_ble_update;
+  bool flag_svc_step_function;
+  bool flag_svc_espresso_app;
+}task_flags_t;
 
-volatile struct_TaskFlg g_Scheduler_flags_s;
+volatile task_flags_t g_scheduler_flags_s;
 
-//  Tick time in " mili-seconds " of the main software timer
-#define SWTMR_TICK_MS       20
-//  Convert milliseconds to timer ticks.
-#define SWTMR_X0MS_TICKS    APP_TIMER_TICKS(SWTMR_TICK_MS)
-//  Create a timer identifier and statically allocate memory for the timer
-APP_TIMER_DEF(SWTMR_OS_TMR_ID);               
-// Software t_50ms_swTmrHandleron -> set TIME-FLAG
-static void t_x0ms_swTmrHandler(void * p_context)
+/* Tick time in " mili-seconds " of the main software timer */
+#define MAIN_BASE_TIME_MSECS       20
+/* Convert milliseconds to timer ticks. */
+#define SWTMR_X0MS_TICKS    APP_TIMER_TICKS(MAIN_BASE_TIME_MSECS)
+/* Create a timer identifier and statically allocate memory for the timer */
+APP_TIMER_DEF(SWTMR_OS_TMR_ID);
+/* Software handle_scheduler_tick -> set TIME-FLAG */
+static void handle_scheduler_tick(void * p_context)
 {
   g_swTmr_tick_x0ms++;
   if( !(g_swTmr_tick_x0ms % TICK_TASK_BOILERTEMP))
   {
-    g_Scheduler_flags_s.tf_GetBoilerTemp = true;
+    g_scheduler_flags_s.flag_get_boiler_temp = true;
   }else{}
 
   if( !(g_swTmr_tick_x0ms % TICK_TASK_READBTN) )
   {
-    g_Scheduler_flags_s.tf_ReadButton = true;
+    g_scheduler_flags_s.flag_read_button = true;
   }else{}
 
   if( !(g_swTmr_tick_x0ms % TICK_TASK_BLEUPDATE) )
   {
-    g_Scheduler_flags_s.tf_ble_update = true;
+    g_scheduler_flags_s.flag_ble_update = true;
   }else{}
 
   if( !(g_swTmr_tick_x0ms % TICK_SVCS_ESPRESSO))
   {
-    g_Scheduler_flags_s.tf_svc_EspressoApp = true;
+    g_scheduler_flags_s.flag_svc_espresso_app = true;
   }else{}
 
   if( !(g_swTmr_tick_x0ms % TICK_SVCS_STEPFCN))
   {
-    g_Scheduler_flags_s.tf_svc_StepFunction = true;
+    g_scheduler_flags_s.flag_svc_step_function = true;
   }else{}
 
 
 
 }
 
-volatile bool g_PrintTask_flag    =false;
-volatile bool g_ReadSensors_flag  =false;
-volatile bool g_OneSecond_flag    =false;
-volatile bool g_LightSeq_flag     =false;
-volatile bool g_PumpCtrl_flag     =false;
+volatile bool g_flag_print_task   = false;
+volatile bool g_flag_read_sensors = false;
+volatile bool g_flag_one_second   = false;
+volatile bool g_flag_light_seq    = false;
+volatile bool g_flag_pump_ctrl    = false;
 
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
@@ -143,15 +144,15 @@ volatile bool g_PumpCtrl_flag     =false;
  */
 static void timers_init(void)
 {
-    // Initialize timer module.
+    /* Initialize timer module. */
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
-    // Create timers.
+    /* Create timers. */
     /* YOUR_JOB: Create any timers to be used by the application.
                  Below is an example of how to create a timer.
                  For every new timer needed, increase the value of the macro APP_TIMER_MAX_TIMERS by
                  one.*/
-   err_code = app_timer_create(&SWTMR_OS_TMR_ID, APP_TIMER_MODE_REPEATED, t_x0ms_swTmrHandler);
+   err_code = app_timer_create(&SWTMR_OS_TMR_ID, APP_TIMER_MODE_REPEATED, handle_scheduler_tick);
    APP_ERROR_CHECK(err_code);
 }
 
@@ -188,13 +189,13 @@ int main(void)
 {
   /*Scheduler init. */
 
-  g_Scheduler_flags_s.tf_ReadButton = false;
-  g_Scheduler_flags_s.tf_svc_StepFunction = false;
-  g_Scheduler_flags_s.tf_GetBoilerTemp = false;
-  g_Scheduler_flags_s.tf_ble_update = false;
-  g_Scheduler_flags_s.tf_svc_EspressoApp = false;
+  g_scheduler_flags_s.flag_read_button = false;
+  g_scheduler_flags_s.flag_svc_step_function = false;
+  g_scheduler_flags_s.flag_get_boiler_temp = false;
+  g_scheduler_flags_s.flag_ble_update = false;
+  g_scheduler_flags_s.flag_svc_espresso_app = false;
 
-  bool erase_bonds;
+  bool erase_bonds = false;
   ret_code_t err_code;
   uint32_t init_result_flag=0;
   static uint32_t user_data_loaded_flag=0;
@@ -203,8 +204,8 @@ int main(void)
     log_init();
   #endif
 
-  //  GPIO DRIVER init
-  //----------------------------------  -----------------------------------------
+  /* GPIO DRIVER init */
+  /*----------------------------------  -----------------------------------------*/
   if (!nrf_drv_gpiote_is_init())
   {
       err_code = nrf_drv_gpiote_init();
@@ -246,7 +247,7 @@ int main(void)
     NRF_LOG_FLUSH();
   #else
 
-  #if EXCLUDE_NVM_SECTION == false
+  #if EXCLUDE_NVM_SECTION == 0
     /*  INITIALIZATION: SPI - EXTERNAL STORAGE DEVICE DRIVER */
     init_result_flag = storage_init();
     #if(NRF_LOG_ENABLED == 1)
@@ -311,7 +312,7 @@ int main(void)
   NRF_LOG_FLUSH();
   #endif
   /*  INITIALIZATION: HIGH-SIDE SWITCH DRIVER TO PROVIDE 12VOUT */
-  init_result_flag = fcn_initDC12Voutput_drv();
+  init_result_flag = init_dc12v_output_drv();
   #if(NRF_LOG_ENABLED == 1)
   if( init_result_flag == DRV_12VO_INIT_AS_LAMP)
   { 
@@ -323,7 +324,7 @@ int main(void)
   #endif
   
   /*  INITIALIZATION: AC INPUTS DRIVER   */
-  init_result_flag = fcn_initACinput_drv();
+  init_result_flag = init_ac_input_drv();
   #if(NRF_LOG_ENABLED == 1)
   if( init_result_flag == DRV_AC_INPUT_INIT_OK)
   { 
@@ -334,7 +335,7 @@ int main(void)
   NRF_LOG_FLUSH();
   #endif
   /*  INITIALIZATION: SOLID STATE RELAY CONTROLLER/DRIVER */
-  init_result_flag = fcn_initSSRController_BLEspresso();
+  init_result_flag = init_ssr_controller_ble_espresso();
   #if(NRF_LOG_ENABLED == 1)
     if( init_result_flag == SSR_DRV_INIT_OK)
     { 
@@ -346,7 +347,7 @@ int main(void)
   #endif
 
   /*  INITIALIZATION: PUMP CONTROLLER/DRIVER */
-  init_result_flag = fcn_initPumpController();
+  init_result_flag = init_pump_controller();
   #if(NRF_LOG_ENABLED == 1)
     if( init_result_flag == PUMPCTRL_INIT_OK)
     { 
@@ -418,9 +419,9 @@ int main(void)
   err_code_gpio = nrf_drv_gpiote_out_init(29, &out_config);
   APP_ERROR_CHECK(err_code_gpio);
 
-  // Get status of main switches to determine operation mode
-  fcn_SenseACinputs_Sixty_ms();
-  if( fcn_GetInputStatus_Brew() == AC_SWITCH_ASSERTED && fcn_GetInputStatus_Steam() == AC_SWITCH_ASSERTED )
+  /* Get status of main switches to determine operation mode */
+  sense_ac_inputs_sixty_ms();
+  if( get_input_status_brew() == AC_SWITCH_ASSERTED && get_input_status_steam() == AC_SWITCH_ASSERTED )
   {
     #if(NRF_LOG_ENABLED == 1)
       NRF_LOG_RAW_INFO("\r\n \r\nMACHINE ::Step Function Mode::");
@@ -435,61 +436,61 @@ int main(void)
     g_operation_mode=ESPRESSO_MODE__MANUAL;
   }
  
-  // Start Bluetooth Driver
-  // --------------------------------------------------------------------------
+  /* Start Bluetooth Driver */
+  /* -------------------------------------------------------------------------- */
   application_timers_start();
   bluetooth_low_energy_init((espresso_user_config_t *)&g_Espresso_user_config_s);
-  // Start Bluetooth execution 
-  #if EXCLUDE_BLE_ADV_SECTION != true
+  /* Start Bluetooth execution */
+  #if EXCLUDE_BLE_ADV_SECTION == 0
     advertising_start(erase_bonds);
   #endif
 
-  // Start Boiler Temperature controller
-  // --------------------------------------------------------------------------
+  /* Start Boiler Temperature controller */
+  /* -------------------------------------------------------------------------- */
   temp_ctrl_start_sampling_timer();
   for (;;)
   {
-      
-    if( g_Scheduler_flags_s.tf_ReadButton == true)
+
+    if( g_scheduler_flags_s.flag_read_button == true)
     {
-      g_Scheduler_flags_s.tf_ReadButton = false;
-      fcn_SenseACinputs_Sixty_ms();
+      g_scheduler_flags_s.flag_read_button = false;
+      sense_ac_inputs_sixty_ms();
     }else{}
 
-    if(g_Scheduler_flags_s.tf_GetBoilerTemp == true)
+    if(g_scheduler_flags_s.flag_get_boiler_temp == true)
     {
       /* Get water temperature from the boiler  */
-      g_Scheduler_flags_s.tf_GetBoilerTemp=false;
+      g_scheduler_flags_s.flag_get_boiler_temp=false;
       spim_ReadRTDconverter();
       g_Espresso_user_config_s.boilerTempDegC=(float)f_getBoilerTemperature();
-      //nrf_drv_gpiote_out_toggle(29);
+      /*nrf_drv_gpiote_out_toggle(29);*/
     }else{}
 
     if(g_operation_mode == ESPRESSO_MODE__MANUAL)
     {
-      if( g_Scheduler_flags_s.tf_svc_EspressoApp == true)
+      if( g_scheduler_flags_s.flag_svc_espresso_app == true)
       {
-        g_Scheduler_flags_s.tf_svc_EspressoApp = false;
-        //fcn_service_ClassicMode(fcn_GetInputStatus_Brew(),fcn_GetInputStatus_Steam());
-        fcn_service_ProfileMode(fcn_GetInputStatus_Brew(),fcn_GetInputStatus_Steam());
+        g_scheduler_flags_s.flag_svc_espresso_app = false;
+        /*service_classic_mode(get_input_status_brew(),get_input_status_steam());*/
+        service_profile_mode(get_input_status_brew(),get_input_status_steam());
         nrf_drv_gpiote_out_toggle(29);
       }else{}
     }else{}
 
     if(g_operation_mode == ESPRESSO_MODE__TUNE)
     {
-      if( g_Scheduler_flags_s.tf_svc_StepFunction == true )
+      if( g_scheduler_flags_s.flag_svc_step_function == true )
       {
-        g_Scheduler_flags_s.tf_svc_StepFunction = false;
-        fcn_service_StepFunction(fcn_GetInputStatus_Brew(),fcn_GetInputStatus_Steam());
-        //nrf_drv_gpiote_out_toggle(29);
-      }else{} 
-    }else{} 
+        g_scheduler_flags_s.flag_svc_step_function = false;
+        service_step_function(get_input_status_brew(),get_input_status_steam());
+        /*nrf_drv_gpiote_out_toggle(29);*/
+      }else{}
+    }else{}
 
-    if( g_Scheduler_flags_s.tf_ble_update == true)
+    if( g_scheduler_flags_s.flag_ble_update == true)
     {
       /* NOTIFY to BLE the new read of the water temperature from the boiler  */
-      g_Scheduler_flags_s.tf_ble_update = false;
+      g_scheduler_flags_s.flag_ble_update = false;
       ble_notify_boiler_water_temp(g_Espresso_user_config_s.boilerTempDegC);
     }else{}  
 

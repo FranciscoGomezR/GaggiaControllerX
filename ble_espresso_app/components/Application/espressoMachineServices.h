@@ -119,7 +119,7 @@ Goal:
 Description:
   - 
 */
-void fcn_service_ClassicMode(acInput_status_t swBrew, acInput_status_t swSteam);
+void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam);
 
 /*
 Default:
@@ -146,7 +146,7 @@ Mode3:
 Goal: Same behaviour as classic mode
   - 
 */
-void fcn_service_ProfileMode(acInput_status_t swBrew, acInput_status_t swSteam);
+void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam);
 
 /*
     Brew switch   = Mode 1
@@ -175,6 +175,6 @@ Description:
     machine can be switch off by the safety thermostat at ~167 C
   - https://www.drtradingshop.nl/a-42819926/onderdelen-gaggia-classic/veiligheidsthermostaat-1670c/#description
 */
-void fcn_service_StepFunction(acInput_status_t swBrew, acInput_status_t swSteam);
+void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam);
 
 #endif // ESPRESSOMACHINESERVICES_H__

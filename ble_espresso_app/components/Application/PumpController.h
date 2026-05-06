@@ -1,13 +1,9 @@
-
 //*****************************************************************************
 //
 //			INCLUDE FILE SECTION FOR THIS MODULE
 //
 //*****************************************************************************
 #include <stdbool.h>
-#include <stdint.h>
-#include "nrf.h"
-#include "x01_StateMachineControls.h"
 #include "espressoMachineServices.h"
 
 //*****************************************************************************
@@ -15,25 +11,25 @@
 //			PUBLIC DEFINES SECTION
 //
 //*****************************************************************************
-#define PUMP_RAMPUP_T_MS_DEFAULT          2500
-#define PUMP_RAMPDOWN_T_MS_DEFAULT        2500
+#define RAMP_UP_TIME_MSECS_DEFAULT    2500
+#define RAMP_DOWN_TIME_MSECS_DEFAULT  2500
 
 /*  STEP  1 */
 /*  Power is fixed point one decimal; from 0000 to 1000 (0.0 to 100.0)  */
-#define PUMP_PREINFUSSIONPWR_DEFAULT      350
-#define PUMP_PREINFUSSION_T_MS_DEFAULT    6000
+#define PRE_INFUSE_PWR_DEFAULT        500
+#define PRE_INFUSE_TIME_MSECS_DEFAULT 5000
 /*  STEP  2 */
 /*  Power is fixed point one decimal; from 0000 to 1000 (0.0 to 100.0)  */
-#define PUMP_BREWPWR_DEFAULT              1000
-#define PUMP_PEAKPRESSURE_T_MS_DEFAULT    5000
+#define BREW_PWR_DEFAULT              1000
+#define BREW_TIME_MSECS_DEFAULT       5000
 /*  STEP  3 */
 /*  Power is fixed point one decimal; from 0000 to 1000 (0.0 to 100.0)  */
-#define PUMP_DECLINING_PWR_DEFAULT        800
-#define PUMP_DECLINING_T_MS_DEFAULT       6000
+#define TAPER_PWR_DEFAULT             900
+#define TAPER_TIME_MSECS_DEFAULT      5000
 /*  STEP  4 */
 /* Shutting the pump down Adn open the valve  */
 
-#define PUMP_BASETIME_T_MS                250
+#define PUMP_BASE_TIME_MSECS          250
 
 /*
 1000 ++-------+--------+-------PWR------PWR-------+--------+--------+-------++
@@ -90,7 +86,7 @@
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-pumpCtrl_status_t fcn_initPumpController(void);
+pumpCtrl_status_t init_pump_controller(void);
 pumpCtrl_status_t pump_state_driver(void);
 pumpCtrl_status_t load_new_pump_parameters(espresso_user_config_t *ptr_prof_data);
 

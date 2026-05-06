@@ -78,7 +78,7 @@ void acinBrew_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t actio
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-static void fcn_acInputLogic(struct_AcInputPin* ptr_input);
+static void process_ac_input_logic(struct_AcInputPin* ptr_input);
 
 //*****************************************************************************
 //
@@ -91,7 +91,7 @@ static void fcn_acInputLogic(struct_AcInputPin* ptr_input);
                 and configure two GPIO as inputs (toggle) &  external interrupts
  * Caveats:     THIS FCN INIT THE GPIO DRIVER
  *****************************************************************************/
-acInput_status_t fcn_initACinput_drv(void)
+acInput_status_t init_ac_input_drv(void)
 {
   //inSwitchBrew
   sIO_ACinput.Brew.pinID          = BREW_CFG_PIN_ID;
@@ -139,10 +139,10 @@ acInput_status_t fcn_initACinput_drv(void)
  * Description: Drivers the logic behind the detection of both AC inputs.
  *              It shall be called every 60ms to detect proper status change.
  *****************************************************************************/
-void fcn_SenseACinputs_Sixty_ms(void)
+void sense_ac_inputs_sixty_ms(void)
 {
-  fcn_acInputLogic(&sIO_ACinput.Brew);
-  fcn_acInputLogic(&sIO_ACinput.Steam);
+  process_ac_input_logic(&sIO_ACinput.Brew);
+  process_ac_input_logic(&sIO_ACinput.Steam);
 }
 
 /*****************************************************************************
@@ -151,11 +151,11 @@ void fcn_SenseACinputs_Sixty_ms(void)
  * Return:      TRUE if drv detecte a higher no. of cycle than the threshold lvl
                 FALSE if there is no cycle detected or no. is below threshold
  *****************************************************************************/
-acInput_status_t fcn_GetInputStatus_Brew(void)
+acInput_status_t get_input_status_brew(void)
 {
   if(sIO_ACinput.Brew.logicEvaluation == true)
   {
-    fcn_acInputLogic(&sIO_ACinput.Brew);
+    process_ac_input_logic(&sIO_ACinput.Brew);
   }else{}
   return sIO_ACinput.Brew.Status;
 }
@@ -166,11 +166,11 @@ acInput_status_t fcn_GetInputStatus_Brew(void)
  * Return:      TRUE if drv detecte a higher no. of cycle than the threshold lvl
                 FALSE if there is no cycle detected or no. is below threshold
  *****************************************************************************/
-acInput_status_t fcn_GetInputStatus_Steam(void)
+acInput_status_t get_input_status_steam(void)
 {
   if(sIO_ACinput.Steam.logicEvaluation == true)
   {
-    fcn_acInputLogic(&sIO_ACinput.Steam);
+    process_ac_input_logic(&sIO_ACinput.Steam);
   }else{}
   return sIO_ACinput.Steam.Status;
 }
@@ -180,7 +180,7 @@ acInput_status_t fcn_GetInputStatus_Steam(void)
 //			PRIVATE FUNCTIONS SECTION
 //
 //*****************************************************************************
-static void fcn_acInputLogic(struct_AcInputPin* ptr_input)
+static void process_ac_input_logic(struct_AcInputPin* ptr_input)
 {
   if(ptr_input->isr_Counter > ptr_input->counterTop)
   {

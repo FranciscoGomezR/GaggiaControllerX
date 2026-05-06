@@ -100,7 +100,7 @@ float pid_imc_compute( pid_imc_block_t * ptr_pid_param_s )
         //Integral gain block
         Pid_ctrl_s.I_Term = ptr_pid_param_s->HistoryError * ptr_pid_param_s->Ki;
         //Integral saturation checkt
-        fcn_Constrain_WithinFloats(&ptr_pid_param_s->HistoryError, 
+        constrain_within_floats(&ptr_pid_param_s->HistoryError, 
                                 ptr_pid_param_s->IntegralLimit,
                                -ptr_pid_param_s->IntegralLimit);
     }else{}  
@@ -133,7 +133,7 @@ float pid_imc_compute( pid_imc_block_t * ptr_pid_param_s )
     //                          NEGATIVE_SATURATION
     //  Saturation limited by:: ptr_pid_param_s->OutputLimit
     //-----------------------------------------------------------------------------------------
-    ptr_pid_param_s->OutputSaturationOut = fcn_Constrain_WithinFloats((float*)&Pid_ctrl_s.PIDout, ptr_pid_param_s->OutputLimit, -(ptr_pid_param_s->OutputLimit));
+    ptr_pid_param_s->OutputSaturationOut = constrain_within_floats((float*)&Pid_ctrl_s.PIDout, ptr_pid_param_s->OutputLimit, -(ptr_pid_param_s->OutputLimit));
 
     if(ptr_pid_param_s->I_ANTIWINDUP_CTRL && ptr_pid_param_s->OutputSaturationOut)
     {

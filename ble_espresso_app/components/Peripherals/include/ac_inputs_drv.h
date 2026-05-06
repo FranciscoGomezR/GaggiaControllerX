@@ -90,11 +90,11 @@ typedef enum {
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-acInput_status_t fcn_initACinput_drv(void);
-acInput_status_t fcn_GetInputStatus_Brew(void);
-acInput_status_t fcn_GetInputStatus_Steam(void);
-//This function shall be called every 60ms.
-void fcn_SenseACinputs_Sixty_ms(void);
+acInput_status_t init_ac_input_drv(void);
+acInput_status_t get_input_status_brew(void);
+acInput_status_t get_input_status_steam(void);
+/* This function shall be called every 60ms. */
+void sense_ac_inputs_sixty_ms(void);
 
 //GPIO' ISRs are created in this module and used inside of it.
 extern void acinSteam_eventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);

@@ -92,17 +92,17 @@ typedef enum {
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-/* fcn_initSSRController_BLEspresso initiate the driver to control the following SSR  */
+/* init_ssr_controller_ble_espresso initiates the driver to control the following SSR */
 /* 1- SSR for Boiler Heater (0000 to 1000)     */
 /* 2- SSR for the Pump      (0000 to 1000)     */
-/* 3- SSR for the solenoid  (ON/OFF fashion)   */ 
-ssr_status_t fcn_initSSRController_BLEspresso(void);
-void fcn_boilerSSR_pwrUpdate( uint16_t outputPower);
-void fcn_pumpSSR_pwrUpdate( uint16_t outputPower);
+/* 3- SSR for the solenoid  (ON/OFF fashion)   */
+ssr_status_t init_ssr_controller_ble_espresso(void);
+void boiler_ssr_pwr_update( uint16_t outputPower);
+void pump_ssr_pwr_update( uint16_t outputPower);
 
-void fcn_SolenoidSSR_On(void);
+void solenoid_ssr_on(void);
 ssr_status_t get_SolenoidSSR_State(void);
-void fcn_SolenoidSSR_Off(void);
+void solenoid_ssr_off(void);
 
 //External interrupt ISR has to be created in the main thread 
 extern void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);

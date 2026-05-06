@@ -19,12 +19,12 @@
 //
 //*****************************************************************************
 /* ---------------------------------------------------------------------------
- * fcn_ValidateFloat_InRange
+ * validate_float_in_range
  *
  * Returns true  if *value was already in [min, max] (and not NaN/Inf).
  * Returns false if *value was corrected to safeDefault.
  * --------------------------------------------------------------------------- */
-bool fcn_ValidateFloat_InRange(
+bool validate_float_in_range(
     float *value, float min, float max, float safeDefault)
 {
     if (isnan(*value) || isinf(*value) || *value < min || *value > max) {
@@ -43,7 +43,7 @@ bool fcn_ValidateFloat_InRange(
                 -1  -> Constrainted to negative
                 +1  -> Constrained to positive
  *****************************************************************************/
-int8_t inline fcn_Constrain_WithinFloats( float* Number, float UpperLimit, float LowerLimit)
+int8_t constrain_within_floats( float* Number, float UpperLimit, float LowerLimit)
 {
   if( *Number > UpperLimit )
   {
@@ -66,7 +66,7 @@ int8_t inline fcn_Constrain_WithinFloats( float* Number, float UpperLimit, float
  * Parameters:
  * Return:
  *****************************************************************************/
-void inline fcn_AddHysteresis_WithinFloat( float* Number, float NumberWihtoutHyst, float OffsetLimit)
+void add_hysteresis_within_float( float* Number, float NumberWihtoutHyst, float OffsetLimit)
 {
         if( *Number <= OffsetLimit && *Number >= (-OffsetLimit))
         {
@@ -81,7 +81,7 @@ void inline fcn_AddHysteresis_WithinFloat( float* Number, float NumberWihtoutHys
  * Parameters:
  * Return:
  *****************************************************************************/
-void inline fcn_AddHysteresisMinusOffset( float* Number, float NumberWihtoutHyst, float OffsetUpperLimit, float OffsetLowerLimit)
+void add_hysteresis_minus_offset( float* Number, float NumberWihtoutHyst, float OffsetUpperLimit, float OffsetLowerLimit)
 {
     uint32_t flag=0;
     if(*Number >= 0.0f)
@@ -115,7 +115,7 @@ void inline fcn_AddHysteresisMinusOffset( float* Number, float NumberWihtoutHyst
  * Parameters:
  * Return:
  *****************************************************************************/
-inline void inline fcn_Constrain_WithinIntValues( long* Number,  long UpperLimit,  long LowerLimit)
+void constrain_within_int_values( long* Number,  long UpperLimit,  long LowerLimit)
 {
     if( *Number > UpperLimit )
     {
@@ -135,7 +135,7 @@ inline void inline fcn_Constrain_WithinIntValues( long* Number,  long UpperLimit
  * Parameters:
  * Return:
  *****************************************************************************/
-float fcn_ChrArrayToFloat( char * ptrArray, char noDigits, char noDecimals)
+float chr_array_to_float( char * ptrArray, char noDigits, char noDecimals)
 {
   static float fNumber;
   fNumber = 0.0f;
@@ -195,7 +195,7 @@ float fcn_ChrArrayToFloat( char * ptrArray, char noDigits, char noDecimals)
 * Parameters:
 * Return:
 *****************************************************************************/
-void  fcn_FloatToChrArray( float fNum, uint8_t * ptrArray, char noDigits, char noDecimals)
+void  float_to_chr_array( float fNum, uint8_t * ptrArray, char noDigits, char noDecimals)
 {
   volatile int32_t fNumber;
   fNumber = (int32_t)(fNum);

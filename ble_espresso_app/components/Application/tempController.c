@@ -1,47 +1,47 @@
-//*****************************************************************************
-//
-//			INCLUDE FILE SECTION FOR THIS MODULE
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		INCLUDE FILE SECTION FOR THIS MODULE
+ *
+ ******************************************************************************/
 #include "tempController.h"
-//#include "spi_Devices.h"
-//#include "solidStateRelay_Controller.h"
+/*#include "spi_Devices.h"*/
+/*#include "solidStateRelay_Controller.h"*/
 
-//*****************************************************************************
-//
-//			PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
-//
-//*****************************************************************************
-//#define TEMP_CTRL_SAMPLING_T    0.01f                         //Sampling Time in seconds
-#define HWTMR_PERIOD_MS           1.0f                          //Period of the TMR is in miliseconds
-#define HWTMR_PERIOD_US           (HWTMR_PERIOD_MS * 1009.0f)
+/*******************************************************************************
+ *
+ *		PRIVATE DEFINES SECTION - OWN BY THIS MODULE ONLY
+ *
+ ******************************************************************************/
+/*#define TEMP_CTRL_SAMPLING_T    0.01f*/                       /* Sampling Time in seconds */
+#define HWTMR_PERIOD_MSECS           1.0f                          /* Period of the TMR is in miliseconds */
+#define HWTMR_PERIOD_USECS           (HWTMR_PERIOD_MSECS * 1009.0f)
 
-//*****************************************************************************
-//
-//			PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		PRIVATE STRUCTs, UNIONs ADN ENUMs SECTION
+ *
+ ******************************************************************************/
 typedef struct
 {
-    nrf_drv_timer_t             hwTmr;              ///HW-Timer that will control Relay trigger
+    nrf_drv_timer_t             hwTmr;              /* HW-Timer that will control Relay trigger */
     nrfx_timer_event_handler_t  hwTmr_isr_handler;
     uint32_t                    tmrPeriod_us;
     uint32_t                    tmrPeriod_ticks;
     bool                        is_active;
 } hw_timer_t;
 
-//*****************************************************************************
-//
-//			PUBLIC VARIABLES
-//
-//****************************************************************************
+/*******************************************************************************
+ *
+ *		PUBLIC VARIABLES
+ *
+ ******************************************************************************/
 
 
-//*****************************************************************************
-//
-//			PRIVATE VARIABLES
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		PRIVATE VARIABLES
+ *
+ ******************************************************************************/
 static pid_imc_block_t Profile_ctrl_main_s;
 static pid_imc_block_t Profile_ctrl_phi1_s;
 static pid_imc_block_t Profile_ctrl_phi2_s;
@@ -58,34 +58,34 @@ uint32_t test_get_elapsed_msecs(void)        { return (uint32_t)elapsed_msecs; }
 float    test_get_integral_error(void)    { return Profile_ctrl_main_s.HistoryError; }
 #endif /* TEST */
 
-//*****************************************************************************
-//
-//			PRIVATE FUNCTIONS
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		PRIVATE FUNCTIONS
+ *
+ ******************************************************************************/
 static void hw_timer_init_msecs_tick(void);
 
-//*****************************************************************************
-//
-//			ISR HANDLERS FUNCTIONS
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		ISR HANDLERS FUNCTIONS
+ *
+ ******************************************************************************/
 /*****************************************************************************
  * Function: 	temp_ctrl_sampling_timer_event_handler
  * Description: increment counter tick every 1ms
  *****************************************************************************/
 void temp_ctrl_sampling_timer_event_handler(nrf_timer_event_t event_type, void* p_context)
 {
-    //GPIO29 controls the LED_HeartBeat - for measurieng purposes.
-    //nrf_drv_gpiote_out_toggle(29);
+    /* GPIO29 controls the LED_HeartBeat - for measurieng purposes. */
+    /*nrf_drv_gpiote_out_toggle(29);*/
     elapsed_msecs++;
 }
 
-//*****************************************************************************
-//
-//			PUBLIC FUNCTIONS SECTION
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		PUBLIC FUNCTIONS SECTION
+ *
+ ******************************************************************************/
 /*****************************************************************************
  * Function: 	temp_ctrl_init
  * Description: 
@@ -93,8 +93,8 @@ void temp_ctrl_sampling_timer_event_handler(nrf_timer_event_t event_type, void* 
  *****************************************************************************/
 tempCtrl_status_t temp_ctrl_init(void)
 {
-  //PID PARAMETERS VALUE SETUP
-  //------------------------------------------------------------------------------
+  /* PID PARAMETERS VALUE SETUP */
+  /* ----------------------------------------------------------------------------- */
   Profile_ctrl_main_s.P_TERM_CTRL       = ACTIVE;
   Profile_ctrl_main_s.Kp                = TEMP_CTRL_KP;
   Profile_ctrl_main_s.I_TERM_CTRL       = ACTIVE;
@@ -108,8 +108,8 @@ tempCtrl_status_t temp_ctrl_init(void)
  
   Profile_ctrl_main_s.OutputLimit       = TEMP_CTRL_MAX;
 
-  //PID PARAMETERS PHASE 1
-  //------------------------------------------------------------------------------
+  /* PID PARAMETERS PHASE 1 */
+  /* ----------------------------------------------------------------------------- */
   Profile_ctrl_phi1_s.P_TERM_CTRL       = NOT_ACTIVE;
   Profile_ctrl_phi1_s.Kp                = 0.0f;
 
@@ -123,8 +123,8 @@ tempCtrl_status_t temp_ctrl_init(void)
   Profile_ctrl_phi1_s.Kd                = 0.0f;
   Profile_ctrl_phi1_s.OutputLimit       = 0.0f;
 
-  //PID PARAMETERS PHASE 1
-  //------------------------------------------------------------------------------
+  /* PID PARAMETERS PHASE 2 */
+  /* ----------------------------------------------------------------------------- */
   Profile_ctrl_phi2_s.P_TERM_CTRL       = NOT_ACTIVE;
   Profile_ctrl_phi2_s.Kp                = 0.0f;
 
@@ -139,8 +139,8 @@ tempCtrl_status_t temp_ctrl_init(void)
   Profile_ctrl_phi2_s.OutputLimit       = 0.0f;
 
 
-  //TIMER SECTION TO TRACK TIME IN MILISECONDS
-  //------------------------------------------------------------------------------
+  /* TIMER SECTION TO TRACK TIME IN MILISECONDS */
+  /* ----------------------------------------------------------------------------- */
   hw_timer_init_msecs_tick();
   return TEMP_CTRL_INIT_OK;
 }
@@ -152,8 +152,8 @@ tempCtrl_status_t temp_ctrl_init(void)
  *****************************************************************************/
 tempCtrl_status_t temp_ctrl_set_pid_config(espresso_user_config_t *ptr_prof_data)
 {
-  //PID PARAMETERS VALUE COPY
-  //------------------------------------------------------------------------------
+  /* PID PARAMETERS VALUE COPY */
+  /* ----------------------------------------------------------------------------- */
   if( ptr_prof_data->pidPTerm == 0.0f )
   {
     Profile_ctrl_main_s.P_TERM_CTRL            = NOT_ACTIVE;
@@ -273,20 +273,20 @@ float temp_ctrl_update(espresso_user_config_t *ptr_prof_data)
   Profile_ctrl_main_s.feedPIDblock.TimeMilis        = (uint32_t)elapsed_msecs;
   return (float)pid_imc_compute((pid_imc_block_t *)&Profile_ctrl_main_s);
 
-  //fcn_boilerSSR_pwrUpdate((uint16_t)Profile_ctrl_main_s.Output);
+  /*boiler_ssr_pwr_update((uint16_t)Profile_ctrl_main_s.Output);*/
 }
 
-//*****************************************************************************
-//
-//			PRIVATE FUNCTIONS SECTION
-//
-//*****************************************************************************
+/*******************************************************************************
+ *
+ *		PRIVATE FUNCTIONS SECTION
+ *
+ ******************************************************************************/
 
 /*****************************************************************************
  * Function: 	hw_timer_init_msecs_tick
  * Description: This function init the HW-timer no.3
                 to track units or tens of miliseconds.
-                WARNING: counter is defined by: HWTMR_PERIOD_US
+                WARNING: counter is defined by: HWTMR_PERIOD_USECS
  *****************************************************************************/
  static void hw_timer_init_msecs_tick(void)
  {
@@ -294,27 +294,27 @@ float temp_ctrl_update(espresso_user_config_t *ptr_prof_data)
     Hw_Tmr_msecs_s.hwTmr_isr_handler   = temp_ctrl_sampling_timer_event_handler;
     Hw_Tmr_msecs_s.is_active              = false;
 
-    //TIMER SECTION TO SETUP SAMPLING TIME FOR PID CONTROLLER
-    //------------------------------------------------------------------------------
+    /* TIMER SECTION TO SETUP SAMPLING TIME FOR PID CONTROLLER */
+    /* ----------------------------------------------------------------------------- */
     uint32_t err_code = NRF_SUCCESS;
-    //Configure TIMER_HW intance
+    /* Configure TIMER_HW intance */
     nrf_drv_timer_config_t pid_timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
     pid_timer_cfg.bit_width = NRF_TIMER_BIT_WIDTH_32;
     pid_timer_cfg.frequency = NRF_TIMER_FREQ_1MHz;
-    //Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f) ; //time per second
-    Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)(HWTMR_PERIOD_US) ; 
+    /*Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)((TEMP_CTRL_ITERATION_T+0.007797f) *1000.0f*1000.0f);*/ /* time per second */
+    Hw_Tmr_msecs_s.tmrPeriod_us = (uint32_t)(HWTMR_PERIOD_USECS);
 
     err_code = nrf_drv_timer_init((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, &pid_timer_cfg, Hw_Tmr_msecs_s.hwTmr_isr_handler);
     APP_ERROR_CHECK(err_code);
 
-    Hw_Tmr_msecs_s.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, Hw_Tmr_msecs_s.tmrPeriod_us );
+    Hw_Tmr_msecs_s.tmrPeriod_ticks = nrf_drv_timer_us_to_ticks((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, Hw_Tmr_msecs_s.tmrPeriod_us);
 
-    nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr, 
+    nrf_drv_timer_extended_compare((nrfx_timer_t const * const)&Hw_Tmr_msecs_s.hwTmr,
                                    NRF_TIMER_CC_CHANNEL0,
-                                   Hw_Tmr_msecs_s.tmrPeriod_ticks, 
+                                   Hw_Tmr_msecs_s.tmrPeriod_ticks,
                                    NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK,
                                    true);
-    /* Timer will be enabled via this function: fcn_startTemperatureController  */
-    //nrf_drv_timer_enable(&Hw_Tmr_msecs_s.hwTmr);
-    //nrf_drv_timer_enable(&TIMER_HW2); 
+    /* Timer will be enabled via this function: temp_ctrl_start_sampling_timer */
+    /*nrf_drv_timer_enable(&Hw_Tmr_msecs_s.hwTmr);*/
+    /*nrf_drv_timer_enable(&TIMER_HW2);*/ 
  }

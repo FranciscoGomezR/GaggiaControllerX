@@ -71,13 +71,11 @@ tempCtrl_status_t temp_ctrl_set_operational_integral_gain(espresso_user_config_t
 tempCtrl_status_t temp_ctrl_scale_integral_gain(espresso_user_config_t *ptr_prof_data, float factor);
 /* call this function to load a new Set Point into the Temperature controller of the Boiler*/
 tempCtrl_LoadSP_t temp_ctrl_set_boiler_setpoint(espresso_user_config_t *ptr_prof_data, tempCtrl_LoadSP_t Setpoint);
-
+/* call this function to load a new controller data into the Temperature controller of the Boiler*/
 tempCtrl_status_t temp_ctrl_set_pid_config(espresso_user_config_t *ptr_prof_data);
-
-
+/* Periodic-call of function to update the Temperature controller of the Boiler*/
 float temp_ctrl_update(espresso_user_config_t *ptr_prof_data);
 
 void temp_ctrl_start_sampling_timer(void);
 void temp_ctrl_stop_sampling_timer(void);
-
 void temp_ctrl_sampling_timer_event_handler(nrf_timer_event_t event_type, void* p_context);

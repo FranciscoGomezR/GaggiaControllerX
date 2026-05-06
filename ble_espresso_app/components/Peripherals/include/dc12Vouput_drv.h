@@ -68,4 +68,4 @@ typedef enum {
 //			PUBLIC FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-dc12vout_status_t fcn_initDC12Voutput_drv(void);
+dc12vout_status_t init_dc12v_output_drv(void);

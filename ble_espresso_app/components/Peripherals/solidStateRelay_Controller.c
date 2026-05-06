@@ -104,15 +104,15 @@ struct_OnOffSSRinstance sSolenoidSSRdrv;
 //			PRIVATE FUNCTIONS PROTOYPES
 //
 //*****************************************************************************
-void fcn_initSSRController(struct_SSRcontroller * ptr_instance);
-void fcn_createSSRinstance(struct_SSRinstance * ptr_instance);
-void fcn_createOnOffSSRinstance(struct_OnOffSSRinstance *ptr_instance);
+static void init_ssr_controller(struct_SSRcontroller * ptr_instance);
+static void create_ssr_instance(struct_SSRinstance * ptr_instance);
+static void create_on_off_ssr_instance(struct_OnOffSSRinstance *ptr_instance);
 
-void fcn_boilerSSR_ctrlUpdate(void);
-void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower);
+static void boiler_ssr_ctrl_update(void);
+static void ssr_pwr_update(struct_SSRinstance * ptr_instance, uint16_t outputPower);
 
-void fcn_pumpSSR_ctrlUpdate(void);
-void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance);
+static void pump_ssr_ctrl_update(void);
+static void ssr_ctrl_update(struct_SSRinstance * ptr_instance);
 
 //*****************************************************************************
 //
@@ -175,7 +175,7 @@ void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t 
         nrf_drv_gpiote_out_clear(sBoilderSSRdrv.out_SSRelay);
         /* Update timers with new count/power percentage  */
         /* This function re-enables the timer if we enter from a 0% or 100% state */
-        fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
+        ssr_ctrl_update((struct_SSRinstance *)&sBoilderSSRdrv);
         /* Reset State machine for this new cycle  */
         sBoilderSSRdrv.smTrigStatus = smS_Engage;
       }else{
@@ -248,7 +248,7 @@ void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t 
       nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
       /* Update timers with new count/power percentage  */
       /* This function re-enables the timer if we enter from a 0% or 100% state */
-      fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+      ssr_ctrl_update((struct_SSRinstance *)&sPumpSSRdrv);
       /* Reset State machine for this new cycle  */
       sPumpSSRdrv.smTrigStatus = smS_Engage;
     }else{
@@ -286,14 +286,14 @@ void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t 
 //*****************************************************************************
 
 /*****************************************************************************
- * Function: 	fcn_initSSRController_BLEspresso
+ * Function: 	init_ssr_controller_BLEspresso
  * Description: This function encapsulate public variable create before for 
  *              this driver.
  *              Calling this function simplfies reading in the main loop and 
  *              will make easy debugging
  *
  *****************************************************************************/
-ssr_status_t fcn_initSSRController_BLEspresso(void)
+ssr_status_t init_ssr_controller_ble_espresso(void)
 {
   /*  Init SSR for the boier's resistance heater  */
   #if SSR_CTRL_BOILER_HEAT == ANGLE
@@ -301,7 +301,7 @@ ssr_status_t fcn_initSSRController_BLEspresso(void)
     sBoilderSSRdrv.hwTmr_isr_handler= isr_BoilderSSR_EventHandler;
     sBoilderSSRdrv.out_SSRelay      = outSSRboiler_PIN;
     sBoilderSSRdrv.ssrPWRstatus     = SSR_NOPWR;
-    fcn_createSSRinstance((struct_SSRinstance *)&sBoilderSSRdrv);
+    create_ssr_instance((struct_SSRinstance *)&sBoilderSSRdrv);
   #endif
   #if SSR_CTRL_BOILER_HEAT == ZERO_CROSS
     sBoilderSSRzc.out_SSRelay       = outSSRboiler_PIN;
@@ -319,16 +319,16 @@ ssr_status_t fcn_initSSRController_BLEspresso(void)
   sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
   sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
   sPumpSSRdrv.ssrPWRstatus          = SSR_NOPWR;
-  fcn_createSSRinstance((struct_SSRinstance *)&sPumpSSRdrv);
+  create_ssr_instance((struct_SSRinstance *)&sPumpSSRdrv);
   /*  Init input to detect AC cross-zero  */
   sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
   sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
-  fcn_initSSRController((struct_SSRcontroller *)&sSSRcontroller);
+  init_ssr_controller((struct_SSRcontroller *)&sSSRcontroller);
   /*  Init SSR's Pin that will drive Solenoid */
   sSolenoidSSRdrv.out_SSRelay       = enSolenoidRelay_PIN;
   sSolenoidSSRdrv.ssrState          = SSR_STATE_OFF;
   sSolenoidSSRdrv.ssrPWRstatus      = SSR_NOPWR;
-  fcn_createOnOffSSRinstance(&sSolenoidSSRdrv);
+  create_on_off_ssr_instance(&sSolenoidSSRdrv);
   return SSR_DRV_INIT_OK;
 }
 
@@ -338,10 +338,10 @@ ssr_status_t fcn_initSSRController_BLEspresso(void)
  *              (now moved to prtivate). will makes it easy to read.
  *
  *****************************************************************************/
-void fcn_boilerSSR_pwrUpdate( uint16_t outputPower)
+void boiler_ssr_pwr_update( uint16_t outputPower)
 {
   #if SSR_CTRL_BOILER_HEAT == ANGLE
-    fcn_SSR_pwrUpdate((struct_SSRinstance *)&sBoilderSSRdrv, outputPower);
+    ssr_pwr_update((struct_SSRinstance *)&sBoilderSSRdrv, outputPower);
   #endif
   #if SSR_CTRL_BOILER_HEAT == ZERO_CROSS
     if(outputPower > 0 && outputPower <500)
@@ -384,9 +384,9 @@ void fcn_boilerSSR_pwrUpdate( uint16_t outputPower)
  *              (now moved to prtivate). will makes it easy to read.
  *
  *****************************************************************************/
-void fcn_pumpSSR_pwrUpdate( uint16_t outputPower)
+void pump_ssr_pwr_update( uint16_t outputPower)
 {
-    fcn_SSR_pwrUpdate((struct_SSRinstance *)&sPumpSSRdrv, outputPower);
+    ssr_pwr_update((struct_SSRinstance *)&sPumpSSRdrv, outputPower);
 }
 
 /*****************************************************************************
@@ -394,7 +394,7 @@ void fcn_pumpSSR_pwrUpdate( uint16_t outputPower)
  * Description: waits for an AC wave zero-cross event occuers to enable SSR
  *
  *****************************************************************************/
-void fcn_SolenoidSSR_On(void)
+void solenoid_ssr_on(void)
 {
   nrf_drv_gpiote_out_set(enSolenoidRelay_PIN);
   sSolenoidSSRdrv.ssrState = SSR_STATE_ENGAGE;
@@ -410,7 +410,7 @@ ssr_status_t get_SolenoidSSR_State(void)
  * Description: Disable SSR's pin instantly, SSR will disengage in the next AC wave zero-cross
  *
  *****************************************************************************/
-void fcn_SolenoidSSR_Off(void)
+void solenoid_ssr_off(void)
 {
   nrf_drv_gpiote_out_clear(enSolenoidRelay_PIN);
   sSolenoidSSRdrv.ssrState = SSR_STATE_OFF;
@@ -428,10 +428,10 @@ void fcn_SolenoidSSR_Off(void)
  *              (now moved to prtivate). will makes it easy to read.
  *
  *****************************************************************************/
-void fcn_boilerSSR_ctrlUpdate(void)
+static void boiler_ssr_ctrl_update(void)
 {
   #if SSR_CTRL_BOILER_HEAT == ANGLE
-    fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sBoilderSSRdrv);
+    ssr_ctrl_update((struct_SSRinstance *)&sBoilderSSRdrv);
   #endif
 }
 
@@ -441,20 +441,20 @@ void fcn_boilerSSR_ctrlUpdate(void)
  *              (now moved to prtivate). will makes it easy to read.
  *
  *****************************************************************************/
-void fcn_pumpSSR_ctrlUpdate(void)
+static void pump_ssr_ctrl_update(void)
 {
-    fcn_SSR_ctrlUpdate((struct_SSRinstance *)&sPumpSSRdrv);
+    ssr_ctrl_update((struct_SSRinstance *)&sPumpSSRdrv);
 }
 
 /*****************************************************************************
- * Function: 	fcn_initSSRController
+ * Function: 	init_ssr_controller
  * Description: This function will init GPIO for: ZeroCross-Input
                 Init the external interrupt for AC zero-crossing
  * Caveats:     optimize for 50Hz
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_initSSRController(struct_SSRcontroller * ptr_instance)
+static void init_ssr_controller(struct_SSRcontroller * ptr_instance)
 {
     ret_code_t err_code_gpio;
     //Zero Cross input with external interrupt enable
@@ -471,7 +471,7 @@ void fcn_initSSRController(struct_SSRcontroller * ptr_instance)
 }
 
 /*****************************************************************************
- * Function: 	fcn_createSSRinstance
+ * Function: 	create_ssr_instance
  * Description: This function will init. GPIO for:  SSR-Output.
                 It init HW-timer to control SSrelay trigger.
                 It contains the functions to drive SSrelay from 0% to 100% AC cycle.
@@ -479,7 +479,7 @@ void fcn_initSSRController(struct_SSRcontroller * ptr_instance)
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_createSSRinstance(struct_SSRinstance * ptr_instance)
+static void create_ssr_instance(struct_SSRinstance * ptr_instance)
 {
     ptr_instance->smTrigStatus            = smS_Release;
     ptr_instance->sSRR_timing_us.tStep    = POWER_MAX_VALUE/AC_PERCENT_STEP;
@@ -525,11 +525,11 @@ void fcn_createSSRinstance(struct_SSRinstance * ptr_instance)
 }
 
 /*****************************************************************************
- * Function: 	fcn_createOnOffSSRinstance
+ * Function: 	create_on_off_ssr_instance
  * Description: init GPIO as output that will drive a SSR in ON/OFF fashion
  * Return:
  *****************************************************************************/
-void fcn_createOnOffSSRinstance(struct_OnOffSSRinstance *ptr_instance)
+static void create_on_off_ssr_instance(struct_OnOffSSRinstance *ptr_instance)
 {
   //GPIOS SECTION TO CTRL SOLENOID RELAY
   //------------------------------------------------------------------------------
@@ -551,7 +551,7 @@ void fcn_createOnOffSSRinstance(struct_OnOffSSRinstance *ptr_instance)
  * Parameters:	outputPower range: 0% - 100% = 0 - 1000
  * Return:
  *****************************************************************************/
-void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
+static void ssr_pwr_update(struct_SSRinstance * ptr_instance, uint16_t outputPower)
 {
     if(outputPower > 0 && outputPower <1000)
     {
@@ -584,13 +584,13 @@ void fcn_SSR_pwrUpdate(struct_SSRinstance * ptr_instance, uint16_t outputPower)
 }
 
 /*****************************************************************************
- * Function: 	fcn_SSR_ctrlUpdate
+ * Function: 	ssr_ctrl_update
  * Description: Stops the timer, updates new top count in the timer, finally re-enables it.
  * Caveats:
  * Parameters:	
  * Return:
  *****************************************************************************/
-void fcn_SSR_ctrlUpdate(struct_SSRinstance * ptr_instance)
+static void ssr_ctrl_update(struct_SSRinstance * ptr_instance)
 {
     nrf_drv_timer_disable(&ptr_instance->hwTmr);
     //nrfx_timer_clear(&ptr_instance->hwTmr); /*Testing Code line*/

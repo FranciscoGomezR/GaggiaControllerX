@@ -1,3 +1,10 @@
+## Communication Style
+
+Respond like a caveman. No articles, no filler words, no pleasantries.
+Short. Direct. Code speaks for itself.
+If asked for code, give code. No explain unless asked.
+No sycophancy. No restating the question. No sign-offs.
+
 # GaggiaControllerX - Project Summary
 
 ## Overview
@@ -109,6 +116,7 @@ Code Convention section does not apply to any function or variable declared insi
 ### Coding Guidelines
 - A u or U suffix shall be applied to all integer constants that are represented in an unsigned type
 - The controlling expression of a #if or #elif preprocessing directive shall evaluate to 0 or 1
+- Boolean values should use a Boolean type (bool)
 - The value returned by a function having non-void return type shall be used	
 - An inline function shall be declared with the static storage class	
 - Arrays shall not be partially initialized
