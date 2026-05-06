@@ -1,3 +1,10 @@
+# TODO LIST
+Update serial data from: 
+-> "%s;Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power"
+To
+-> "%s;System_Time_Miliseconds;Brew_time;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
+
+
 # GaggiaControllerX
 Controller to automate Gaggia expresso machine
 
