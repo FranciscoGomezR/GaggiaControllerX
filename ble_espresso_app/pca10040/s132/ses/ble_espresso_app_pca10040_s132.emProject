@@ -79,18 +79,13 @@
         </folder>
         <folder Name="Peripherals">
           <file file_name="../../../components/Peripherals/ac_inputs_drv.c" />
-          <file file_name="../../../components/Peripherals/board_comp_drv.c" />
           <file file_name="../../../components/Peripherals/dc12Vouput_drv.c" />
-          <file file_name="../../../components/Peripherals/i2c_sensors.c" />
           <file file_name="../../../components/Peripherals/solidStateRelay_Controller.c" />
           <file file_name="../../../components/Peripherals/spi_Devices.c" />
         </folder>
         <folder Name="Utilities">
           <file file_name="../../../components/Utilities/x01_StateMachineControls.h" />
           <file file_name="../../../components/Utilities/x04_Numbers.c" />
-          <file file_name="../../../components/Utilities/x201_DigitalFiltersAlgorithm.c">
-            <configuration Name="Debug" build_exclude_from_build="Yes" />
-          </file>
           <file file_name="../../../components/Utilities/x205_PID_Block.c" />
         </folder>
       </folder>

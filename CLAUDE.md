@@ -83,14 +83,23 @@ User-configured parameters (brew profile + PID gains) persist to internal flash 
 | Path | Role |
 |------|------|
 | `main/main.c` | Init sequence + scheduler loop |
-| `components/Application/BLEspressoServices.c` | Mode state machines |
+| `components/Application/espressoMachineServices.c` | Mode state machines |
 | `components/Application/tempController.c` | PID temperature control |
-| `components/Application/PumpController.c` | Pump ramp profiles |
+| `components/Application/pumpController.c` | Pump ramp profiles |
+| `components/Application/storageController.c` | external FLASH memory map controller |
+| `components/BLE/bluetooth_drv.c` | Bluethooth low energy stack setup |
+| `components/BLE_Services/ble_cus.c` | Custom BLE GATT services |
+| `components/Utilities/x205_PID_Block.c` | PID algorithm |
 | `components/Peripherals/solidStateRelay_Controller.c` | SSR phase/zero-cross control |
 | `components/Peripherals/spi_Devices.c` | RTD + NVM SPI drivers |
 | `components/Peripherals/ac_inputs_drv.c` | Brew/Steam switch sensing |
-| `components/BLE_Services/ble_cus.c` | Custom BLE GATT services |
-| `components/Utilities/x205_PID_Block.c` | PID algorithm |
+
+### Support Files
+| `components/Peripherals/dc12Vouput_drv.c` | pwr 12V output controller |
+| `components/Utilities/x01_StateMachineControls.h` | state machine common struct |
+| `components/Utilities/x02_FlagValues.h` | Flag common names |
+| `components/Utilities/x03_MathConstants.h` | math common numbers |
+| `components/Utilities/x04_Numbers.c` | numbers contrainers fuctions |
 
 All paths relative to `ble_espresso_app/`.
 
@@ -104,6 +113,12 @@ Code Convention section does not apply to any function or variable declared insi
 - An inline function shall be declared with the static storage class	
 - Arrays shall not be partially initialized
 - An element of an object shall not be initialized more than once
+- The line length is 100 columns or fewer.
+- Use spaces instead of tabs to align comments after declarations, as needed.
+- Tabs are 8 characters.
+- Use C89-style single line comments, /*  */. The C99-style single line comment, //, is not allowed.
+- Use /**  */ for doxygen comments that need to appear in the documentation.
+- Identify dead code or code of no use
 
 ### Naming Convention
 - variables and functions shall use: snake_case
@@ -133,11 +148,12 @@ If a variable represents time, weight, or some other unit then include the unit 
 - For temperature in Farenheit: degF
 
 ### Function Names
-Usually every function performs an action, so the name should make clear what it does: check_for_errors() instead of error_check(), dump_data_to_file() instead of data_file(). This will also make functions and data objects more distinguishable. By making function names verbs and following other naming conventions programs can be read more naturally.
+Usually every function performs an action, so the name should make clear what it does By making function names verbs : "check_for_errors()" instead of "error_check()", "dump_data_to_file()" instead of "data_file()". 
 
 - Function names shall NOT use the prefix `fcn_`.
 - Private functions shall be declared `static`.
 
+```
     Suffixes are sometimes useful:
     max - to mean the maximum value something can have.
     cnt - the current count of a running count variable.
@@ -149,6 +165,7 @@ Usually every function performs an action, so the name should make clear what it
     get - get a value.
     set - set a value.
     For example: is_hit_retry_limit.
+```
 
 ### Structure Names
 - Structs names shall be nouns.
@@ -202,19 +219,5 @@ Use **enum** names end with: _t
 ### Constants variables
 Constants should be all caps with '_' separators.
 
-### A Line Should Not Exceed 79 Characters
-Lines should not exceed 79 characters.
 
-### Add Comments to Closing Braces
-Adding a comment to closing braces can help when you are reading code because you don't have to find the begin brace to know what is going on.
-```
-    For example:
-    while(1) {
-    if (valid) {
-    
-    } /* if valid */
-    else {
-    } /* not valid */
 
-    } /* end forever */
-```

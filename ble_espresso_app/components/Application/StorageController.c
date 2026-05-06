@@ -15,26 +15,26 @@
 //
 //*****************************************************************************
 /*  DATA STRUCTURE fOR BLE_SPRESSO USER_DATA  */
-#define PARAM_NVM_START_ADDR              0x3E000
-#define PARAM_NVM_END_ADDR                0x3FFFF
-#define PARAM_NVM_MEM_KEY                 0x00AA00AA
-#define PARAM_NVM_EMPTY_DATA              0xFFFFFFFF
-#define PARAM_NVM_PAGE_ADD                0
-#define PARAM_NVM_PAGE_OFFSET             0
+#define NVM_PARAM_START_ADDR              0x3E000
+#define NVM_PARAM_END_ADDR                0x3FFFF
+#define NVM_PARAM_MEM_KEY                 0x00AA00AA
+#define NVM_PARAM_EMPTY_DATA              0xFFFFFFFF
+#define NVM_PARAM_PAGE_ADD                0
+#define NVM_PARAM_PAGE_OFFSET             0
 
-#define PARAM_NVM_USERDATA_ADD            0
-#define PARAM_NVM_USERDATA_SIZE           65
+#define NVM_PARAM_USERDATA_ADD            0
+#define NVM_PARAM_USERDATA_SIZE           65
 
-#define PARAM_NVM_WCYCLESECTION_ADD       0
-#define PARAM_NVM_WCYCLESECTION_SIZE      4
-#define PARAM_NVM_KEYSECTION_ADD          4
-#define PARAM_NVM_KEYSECTION_SIZE         4
+#define NVM_PARAM_WCYCLESECTION_ADD       0
+#define NVM_PARAM_WCYCLESECTION_SIZE      4
+#define NVM_PARAM_KEYSECTION_ADD          4
+#define NVM_PARAM_KEYSECTION_SIZE         4
 
-#define PARAM_NVM_SHOTPROFILE_ADD         8
-#define PARAM_NVM_SHOTPROFILE_SIZE        32
+#define NVM_PARAM_SHOTPROFILE_ADD         8
+#define NVM_PARAM_SHOTPROFILE_SIZE        32
 
-#define PARAM_NVM_CONTROLLER_ADD          40
-#define PARAM_NVM_CONTROLLER_SIZE         25
+#define NVM_PARAM_CONTROLLER_ADD          40
+#define NVM_PARAM_CONTROLLER_SIZE         25
 
 /*
   ADDRESS MAP of: espresso_user_config_t 
@@ -60,23 +60,23 @@
   0x40          bool  pidIwindupTerm
   ----------------------------------------
  */
-#define BE_USERDATA_NVM_WCYCLE            0x00
-#define BE_USERDATA_NVM_FTKEY             0x04
-#define BE_USERDATA_TARGETBOILER_TMP      0x08
-#define BE_USERDATA_RSVD                  0x0C
-#define BE_USERDATA_BREWPREINFUSSION_PWR  0x10
-#define BE_USERDATA_BREWPREINFUSSION_TMR  0x14
-#define BE_USERDATA_BREWINFUSSION_PWR     0x18
-#define BE_USERDATA_BREWINFUSSION_TMR     0x1C
-#define BE_USERDATA_BREWDECLINING_PWR     0x20
-#define BE_USERDATA_BREWDECLINING_TMR     0x24
-#define BE_USERDATA_PID_PTERM             0x28
-#define BE_USERDATA_PID_ITERM             0x2C
-#define BE_USERDATA_PID_IMAXTERM          0x30
-#define BE_USERDATA_PID_DTERM             0x34
-#define BE_USERDATA_PID_DLPFTERM          0x38
-#define BE_USERDATA_PID_GAINTERM          0x3C
-#define BE_USERDATA_PID_IWINDUPTERM       0x40
+#define USERDATA_NVM_WCYCLE            0x00
+#define USERDATA_NVM_FTKEY             0x04
+#define USERDATA_TARGETBOILER_TMP      0x08
+#define USERDATA_RSVD                  0x0C
+#define USERDATA_BREWPREINFUSSION_PWR  0x10
+#define USERDATA_BREWPREINFUSSION_TMR  0x14
+#define USERDATA_BREWINFUSSION_PWR     0x18
+#define USERDATA_BREWINFUSSION_TMR     0x1C
+#define USERDATA_BREWDECLINING_PWR     0x20
+#define USERDATA_BREWDECLINING_TMR     0x24
+#define USERDATA_PID_PTERM             0x28
+#define USERDATA_PID_ITERM             0x2C
+#define USERDATA_PID_IMAXTERM          0x30
+#define USERDATA_PID_DTERM             0x34
+#define USERDATA_PID_DLPFTERM          0x38
+#define USERDATA_PID_GAINTERM          0x3C
+#define USERDATA_PID_IWINDUPTERM       0x40
 
 //*****************************************************************************
 //
@@ -132,30 +132,30 @@ uint32_t storage_init(void)
 /*****************************************************************************
 * Function: 	storage_has_user_config
 * Description:  Reads data from the external memory and look for USER data already
-*               stored in it by checking = PARAM_NVM_MEM_KEY
+*               stored in it by checking = NVM_PARAM_MEM_KEY
 * Return:       
 *****************************************************************************/
 uint32_t storage_has_user_config(void)
 {
-  uint8_t rxKeyData[PARAM_NVM_KEYSECTION_SIZE];
+  uint8_t rxKeyData[NVM_PARAM_KEYSECTION_SIZE];
   uint32_t nvm_Key;
   uint32_t dataStatus=0; 
   
   //Clear rxUserData buffer
-  memset(rxKeyData, 0x00, PARAM_NVM_KEYSECTION_SIZE);
+  memset(rxKeyData, 0x00, NVM_PARAM_KEYSECTION_SIZE);
   //Let's read g_Espresso_user_config_s (65bytes) from the NVM
-  spi_NVMemoryRead(PARAM_NVM_PAGE_ADD, 
-                  PARAM_NVM_KEYSECTION_ADD, 
-                  PARAM_NVM_KEYSECTION_SIZE, 
+  spi_NVMemoryRead(NVM_PARAM_PAGE_ADD, 
+                  NVM_PARAM_KEYSECTION_ADD, 
+                  NVM_PARAM_KEYSECTION_SIZE, 
                   &rxKeyData[0]);
 
   //extract NVM KEY to determine if memory has already data or not 
   unpack_u32_from_strg_bytes((uint8_t *)&rxKeyData[0],&nvm_Key);
   
-  if(nvm_Key == PARAM_NVM_MEM_KEY)
+  if(nvm_Key == NVM_PARAM_MEM_KEY)
   {
     dataStatus = STORAGE_USERDATA_LOADED;
-  }else if(nvm_Key == PARAM_NVM_EMPTY_DATA) 
+  }else if(nvm_Key == NVM_PARAM_EMPTY_DATA) 
   {
     dataStatus = STORAGE_USERDATA_EMPTY;
   }
@@ -170,7 +170,7 @@ uint32_t storage_has_user_config(void)
 *****************************************************************************/
 uint32_t storage_load_user_config(espresso_user_config_t* ptr_rxData)
 {
-  uint8_t rxUserData[PARAM_NVM_USERDATA_SIZE];
+  uint8_t rxUserData[NVM_PARAM_USERDATA_SIZE];
   uint32_t nvm_Key, nvm_wCycle;
   volatile uint16_t wCycleShotprofile=0;
   volatile uint16_t wCycleCtrlProfile=0;
@@ -178,62 +178,62 @@ uint32_t storage_load_user_config(espresso_user_config_t* ptr_rxData)
   float tempfvar;
 
   //Clear rxUserData buffer
-  memset(rxUserData, 0x00, PARAM_NVM_USERDATA_SIZE);
+  memset(rxUserData, 0x00, NVM_PARAM_USERDATA_SIZE);
   //Read entire user data section
-  spi_NVMemoryRead( PARAM_NVM_PAGE_ADD, 
-                    PARAM_NVM_PAGE_OFFSET, 
-                    PARAM_NVM_USERDATA_SIZE, 
-                    &rxUserData[PARAM_NVM_USERDATA_ADD]);
+  spi_NVMemoryRead( NVM_PARAM_PAGE_ADD, 
+                    NVM_PARAM_PAGE_OFFSET, 
+                    NVM_PARAM_USERDATA_SIZE, 
+                    &rxUserData[NVM_PARAM_USERDATA_ADD]);
   //extract NVM KEY to determine if memory has already data or not 
-  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_FTKEY],&nvm_Key);
+  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_FTKEY],&nvm_Key);
   ptr_rxData->nvmKey = nvm_Key;
   
-  if(nvm_Key == PARAM_NVM_MEM_KEY)
+  if(nvm_Key == NVM_PARAM_MEM_KEY)
   {
     //Key is already stored in nvm, proceed to store new data
-    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_WCYCLE],&nvm_wCycle);
+    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_WCYCLE],&nvm_wCycle);
     ptr_rxData->nvmWcycles = nvm_wCycle;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_TARGETBOILER_TMP],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_TARGETBOILER_TMP],(float*)&tempfvar);
     ptr_rxData->boilerTempSetpointDegC = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWPREINFUSSION_PWR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWPREINFUSSION_PWR],(float*)&tempfvar);
     ptr_rxData->profPreInfusePwr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWPREINFUSSION_TMR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWPREINFUSSION_TMR],(float*)&tempfvar);
     ptr_rxData->profPreInfuseTmr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWINFUSSION_PWR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWINFUSSION_PWR],(float*)&tempfvar);
     ptr_rxData->profInfusePwr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWINFUSSION_TMR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWINFUSSION_TMR],(float*)&tempfvar);
     ptr_rxData->profInfuseTmr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWDECLINING_PWR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWDECLINING_PWR],(float*)&tempfvar);
     ptr_rxData->profTaperingPwr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_BREWDECLINING_TMR],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_BREWDECLINING_TMR],(float*)&tempfvar);
     ptr_rxData->profTaperingTmr = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_PTERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_PTERM],(float*)&tempfvar);
     ptr_rxData->pidPTerm = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_ITERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_ITERM],(float*)&tempfvar);
     ptr_rxData->pidITerm = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_IMAXTERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_IMAXTERM],(float*)&tempfvar);
     ptr_rxData->pidImaxTerm = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_DTERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_DTERM],(float*)&tempfvar);
     ptr_rxData->pidDTerm = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_DLPFTERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_DLPFTERM],(float*)&tempfvar);
     ptr_rxData->pidDlpfTerm = tempfvar;
 
-    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_PID_GAINTERM],(float*)&tempfvar);
+    unpack_float_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_PID_GAINTERM],(float*)&tempfvar);
     ptr_rxData->pidGainTerm = tempfvar;
 
-    ptr_rxData->pidIwindupTerm = rxUserData[BE_USERDATA_PID_IWINDUPTERM];
+    ptr_rxData->pidIwindupTerm = rxUserData[USERDATA_PID_IWINDUPTERM];
     dataStatus=STORAGE_USERDATA_LOADED;
     /* M3 fix: validate all deserialized float fields and clamp out-of-range
      * values to safe defaults.  Protects against corrupted flash data. */
@@ -251,8 +251,8 @@ uint32_t storage_load_user_config(espresso_user_config_t* ptr_rxData)
 *****************************************************************************/
 uint32_t storage_save_shot_profile(espresso_user_config_t* ptr_sxData)
 {
-  uint8_t txUserData[PARAM_NVM_USERDATA_SIZE];
-  uint8_t rxUserData[PARAM_NVM_USERDATA_SIZE];
+  uint8_t txUserData[NVM_PARAM_USERDATA_SIZE];
+  uint8_t rxUserData[NVM_PARAM_USERDATA_SIZE];
   uint32_t nvm_Key, nvm_wCycle;
   volatile uint16_t wCycleShotprofile=0;
   volatile uint16_t wCycleCtrlProfile=0;
@@ -260,31 +260,31 @@ uint32_t storage_save_shot_profile(espresso_user_config_t* ptr_sxData)
   float tempfvar;
   
   //Clear txUserData buffer
-  memset(txUserData, 0x00, PARAM_NVM_USERDATA_SIZE);
+  memset(txUserData, 0x00, NVM_PARAM_USERDATA_SIZE);
   //Clear rxUserData buffer
-  memset(rxUserData, 0x00, PARAM_NVM_USERDATA_SIZE);
+  memset(rxUserData, 0x00, NVM_PARAM_USERDATA_SIZE);
   //Read entire user data section
-  spi_NVMemoryRead( PARAM_NVM_PAGE_ADD, 
-                    PARAM_NVM_PAGE_OFFSET, 
-                    PARAM_NVM_USERDATA_SIZE, 
-                    &rxUserData[PARAM_NVM_USERDATA_ADD]);
+  spi_NVMemoryRead( NVM_PARAM_PAGE_ADD, 
+                    NVM_PARAM_PAGE_OFFSET, 
+                    NVM_PARAM_USERDATA_SIZE, 
+                    &rxUserData[NVM_PARAM_USERDATA_ADD]);
   //extract NVM KEY to determine if memory has already data or not 
-  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_FTKEY],&nvm_Key);
-  if(nvm_Key == PARAM_NVM_MEM_KEY)
+  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_FTKEY],&nvm_Key);
+  if(nvm_Key == NVM_PARAM_MEM_KEY)
   {
     //Key is already stored in nvm, proceed to store new data
     dataStatus=STORAGE_USERDATA_STORED;
     //Copy the read-keyd into the TX string
-    mempcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
-            &rxUserData[PARAM_NVM_KEYSECTION_ADD],
-            PARAM_NVM_KEYSECTION_SIZE);
-  }else if(nvm_Key == PARAM_NVM_EMPTY_DATA){
+    mempcpy(&txUserData[NVM_PARAM_KEYSECTION_ADD],
+            &rxUserData[NVM_PARAM_KEYSECTION_ADD],
+            NVM_PARAM_KEYSECTION_SIZE);
+  }else if(nvm_Key == NVM_PARAM_EMPTY_DATA){
     //Firt data to be stored in the nvm, let's write the key into it as well
     dataStatus=STORAGE_USERDATA_FIRSTW;
-    txUserData[PARAM_NVM_KEYSECTION_ADD+0] = 0xAA; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+1] = 0x00; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+2] = 0xAA; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+3] = 0x00;
+    txUserData[NVM_PARAM_KEYSECTION_ADD+0] = 0xAA; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+1] = 0x00; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+2] = 0xAA; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+3] = 0x00;
   }else{
     //something went wrong
     dataStatus=STORAGE_USERDATA_ERROR;
@@ -293,38 +293,38 @@ uint32_t storage_save_shot_profile(espresso_user_config_t* ptr_sxData)
   if(dataStatus!=STORAGE_USERDATA_ERROR)
   {
     //read writen values from 32bit variable
-    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_WCYCLE],&nvm_wCycle);
+    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_WCYCLE],&nvm_wCycle);
     //extract writen cycles from 32bit register into two 16bits variables
     wCycleShotprofile = (uint16_t)((nvm_wCycle)>>16);
     wCycleCtrlProfile = (uint16_t)((nvm_wCycle) & 0x00FF);
     //increase the Write Cycles var for the profile shot by 1
     wCycleShotprofile++;
     //add new value into TX string
-    txUserData[BE_USERDATA_NVM_WCYCLE+3] = (uint8_t)(wCycleShotprofile>>8); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+2] = (uint8_t)(wCycleShotprofile & 0x00FF); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
+    txUserData[USERDATA_NVM_WCYCLE+3] = (uint8_t)(wCycleShotprofile>>8); 
+    txUserData[USERDATA_NVM_WCYCLE+2] = (uint8_t)(wCycleShotprofile & 0x00FF); 
+    txUserData[USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
+    txUserData[USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
     //Copy the block section that will not be updated into the TX string (Controller profile)
-    mempcpy(&txUserData[PARAM_NVM_CONTROLLER_ADD],
-            &rxUserData[PARAM_NVM_CONTROLLER_ADD],
-            PARAM_NVM_CONTROLLER_SIZE);
+    mempcpy(&txUserData[NVM_PARAM_CONTROLLER_ADD],
+            &rxUserData[NVM_PARAM_CONTROLLER_ADD],
+            NVM_PARAM_CONTROLLER_SIZE);
     //converting and pasting the new shot profule into TX string
-    pack_float_to_strg_bytes(ptr_sxData->boilerTempSetpointDegC,    (uint8_t *)&txUserData[BE_USERDATA_TARGETBOILER_TMP]);
-    txUserData[BE_USERDATA_RSVD+0] = 0x00; 
-    txUserData[BE_USERDATA_RSVD+1] = 0x00; 
-    txUserData[BE_USERDATA_RSVD+2] = 0x00; 
-    txUserData[BE_USERDATA_RSVD+3] = 0x00; 
-    pack_float_to_strg_bytes((float)ptr_sxData->profPreInfusePwr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_PWR]);
-    pack_float_to_strg_bytes((float)ptr_sxData->profPreInfuseTmr, (uint8_t *)&txUserData[BE_USERDATA_BREWPREINFUSSION_TMR]);
-    pack_float_to_strg_bytes((float)ptr_sxData->profInfusePwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_PWR]);
-    pack_float_to_strg_bytes((float)ptr_sxData->profInfuseTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWINFUSSION_TMR]);
-    pack_float_to_strg_bytes((float)ptr_sxData->profTaperingPwr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_PWR]);
-    pack_float_to_strg_bytes((float)ptr_sxData->profTaperingTmr,    (uint8_t *)&txUserData[BE_USERDATA_BREWDECLINING_TMR]);
+    pack_float_to_strg_bytes(ptr_sxData->boilerTempSetpointDegC,    (uint8_t *)&txUserData[USERDATA_TARGETBOILER_TMP]);
+    txUserData[USERDATA_RSVD+0] = 0x00; 
+    txUserData[USERDATA_RSVD+1] = 0x00; 
+    txUserData[USERDATA_RSVD+2] = 0x00; 
+    txUserData[USERDATA_RSVD+3] = 0x00; 
+    pack_float_to_strg_bytes((float)ptr_sxData->profPreInfusePwr, (uint8_t *)&txUserData[USERDATA_BREWPREINFUSSION_PWR]);
+    pack_float_to_strg_bytes((float)ptr_sxData->profPreInfuseTmr, (uint8_t *)&txUserData[USERDATA_BREWPREINFUSSION_TMR]);
+    pack_float_to_strg_bytes((float)ptr_sxData->profInfusePwr,    (uint8_t *)&txUserData[USERDATA_BREWINFUSSION_PWR]);
+    pack_float_to_strg_bytes((float)ptr_sxData->profInfuseTmr,    (uint8_t *)&txUserData[USERDATA_BREWINFUSSION_TMR]);
+    pack_float_to_strg_bytes((float)ptr_sxData->profTaperingPwr,    (uint8_t *)&txUserData[USERDATA_BREWDECLINING_PWR]);
+    pack_float_to_strg_bytes((float)ptr_sxData->profTaperingTmr,    (uint8_t *)&txUserData[USERDATA_BREWDECLINING_TMR]);
     //Write entire user data block into nvm
-    spi_NVMemoryWritePage(PARAM_NVM_PAGE_ADD, 
-                          PARAM_NVM_PAGE_OFFSET, 
-                          PARAM_NVM_USERDATA_SIZE, 
-                          &txUserData[PARAM_NVM_USERDATA_ADD]);
+    spi_NVMemoryWritePage(NVM_PARAM_PAGE_ADD, 
+                          NVM_PARAM_PAGE_OFFSET, 
+                          NVM_PARAM_USERDATA_SIZE, 
+                          &txUserData[NVM_PARAM_USERDATA_ADD]);
     dataStatus=STORAGE_PROFILEDATA_STORED;
   }
   return dataStatus;
@@ -337,8 +337,8 @@ uint32_t storage_save_shot_profile(espresso_user_config_t* ptr_sxData)
 *****************************************************************************/
 uint32_t storage_save_controller_config(espresso_user_config_t* ptr_sxData)
 {
-  uint8_t txUserData[PARAM_NVM_USERDATA_SIZE];
-  uint8_t rxUserData[PARAM_NVM_USERDATA_SIZE];
+  uint8_t txUserData[NVM_PARAM_USERDATA_SIZE];
+  uint8_t rxUserData[NVM_PARAM_USERDATA_SIZE];
   uint32_t nvm_Key, nvm_wCycle;
   volatile uint16_t wCycleShotprofile=0;
   volatile uint16_t wCycleCtrlProfile=0;
@@ -346,31 +346,31 @@ uint32_t storage_save_controller_config(espresso_user_config_t* ptr_sxData)
   float tempfvar;
   
   //Clear txUserData buffer
-  memset(txUserData, 0x00, PARAM_NVM_USERDATA_SIZE);
+  memset(txUserData, 0x00, NVM_PARAM_USERDATA_SIZE);
   //Clear rxUserData buffer
-  memset(rxUserData, 0x00, PARAM_NVM_USERDATA_SIZE);
+  memset(rxUserData, 0x00, NVM_PARAM_USERDATA_SIZE);
   //Read entire user data section
-  spi_NVMemoryRead( PARAM_NVM_PAGE_ADD, 
-                    PARAM_NVM_PAGE_OFFSET, 
-                    PARAM_NVM_USERDATA_SIZE, 
-                    &rxUserData[PARAM_NVM_USERDATA_ADD]);
+  spi_NVMemoryRead( NVM_PARAM_PAGE_ADD, 
+                    NVM_PARAM_PAGE_OFFSET, 
+                    NVM_PARAM_USERDATA_SIZE, 
+                    &rxUserData[NVM_PARAM_USERDATA_ADD]);
   //extract NVM KEY to determine if memory has already data or not 
-  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_FTKEY],&nvm_Key);
-  if(nvm_Key == PARAM_NVM_MEM_KEY)
+  unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_FTKEY],&nvm_Key);
+  if(nvm_Key == NVM_PARAM_MEM_KEY)
   {
     //Key is already stored in nvm, proceed to store new data
     dataStatus=STORAGE_USERDATA_STORED;
     //Copy the read-keyd into the TX string
-    mempcpy(&txUserData[PARAM_NVM_KEYSECTION_ADD],
-            &rxUserData[PARAM_NVM_KEYSECTION_ADD],
-            PARAM_NVM_KEYSECTION_SIZE);
-  }else if(nvm_Key == PARAM_NVM_EMPTY_DATA){
+    mempcpy(&txUserData[NVM_PARAM_KEYSECTION_ADD],
+            &rxUserData[NVM_PARAM_KEYSECTION_ADD],
+            NVM_PARAM_KEYSECTION_SIZE);
+  }else if(nvm_Key == NVM_PARAM_EMPTY_DATA){
     //Firt data to be stored in the nvm, let's write the key into it as well
     dataStatus=STORAGE_USERDATA_FIRSTW;
-    txUserData[PARAM_NVM_KEYSECTION_ADD+0] = 0xAA; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+1] = 0x00; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+2] = 0xAA; 
-    txUserData[PARAM_NVM_KEYSECTION_ADD+3] = 0x00;
+    txUserData[NVM_PARAM_KEYSECTION_ADD+0] = 0xAA; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+1] = 0x00; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+2] = 0xAA; 
+    txUserData[NVM_PARAM_KEYSECTION_ADD+3] = 0x00;
   }else{
     //something went wrong
     dataStatus=STORAGE_USERDATA_ERROR;
@@ -379,34 +379,34 @@ uint32_t storage_save_controller_config(espresso_user_config_t* ptr_sxData)
   if(dataStatus!=STORAGE_USERDATA_ERROR)
   {
     //read writen values from 32bit variable
-    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[BE_USERDATA_NVM_WCYCLE],&nvm_wCycle);
+    unpack_u32_from_strg_bytes((uint8_t *)&rxUserData[USERDATA_NVM_WCYCLE],&nvm_wCycle);
     //extract writen cycles from 32bit register into two 16bits variables
     wCycleShotprofile = (uint16_t)((nvm_wCycle)>>16);
     wCycleCtrlProfile = (uint16_t)((nvm_wCycle) & 0x00FF);
     //increase the Write Cycles var for the controller profile by 1
     wCycleCtrlProfile++;
     //add new value into TX string
-    txUserData[BE_USERDATA_NVM_WCYCLE+3] = (uint8_t)(wCycleShotprofile>>8); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+2] = (uint8_t)(wCycleShotprofile & 0x00FF); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
-    txUserData[BE_USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
+    txUserData[USERDATA_NVM_WCYCLE+3] = (uint8_t)(wCycleShotprofile>>8); 
+    txUserData[USERDATA_NVM_WCYCLE+2] = (uint8_t)(wCycleShotprofile & 0x00FF); 
+    txUserData[USERDATA_NVM_WCYCLE+1] = (uint8_t)(wCycleCtrlProfile>>8); 
+    txUserData[USERDATA_NVM_WCYCLE+0] = (uint8_t)(wCycleCtrlProfile & 0x00FF);
     //Copy the block section that will not be updated into the TX string (shot profile)
-    mempcpy(&txUserData[PARAM_NVM_SHOTPROFILE_ADD],
-            &rxUserData[PARAM_NVM_SHOTPROFILE_ADD],
-            PARAM_NVM_SHOTPROFILE_SIZE);
+    mempcpy(&txUserData[NVM_PARAM_SHOTPROFILE_ADD],
+            &rxUserData[NVM_PARAM_SHOTPROFILE_ADD],
+            NVM_PARAM_SHOTPROFILE_SIZE);
     //converting and pasting the new controller profule into TX string
-    pack_float_to_strg_bytes(ptr_sxData->pidPTerm,          (uint8_t *)&txUserData[BE_USERDATA_PID_PTERM]);
-    pack_float_to_strg_bytes(ptr_sxData->pidITerm,          (uint8_t *)&txUserData[BE_USERDATA_PID_ITERM]);
-    pack_float_to_strg_bytes(ptr_sxData->pidImaxTerm,       (uint8_t *)&txUserData[BE_USERDATA_PID_IMAXTERM]);
-    pack_float_to_strg_bytes(ptr_sxData->pidDTerm,          (uint8_t *)&txUserData[BE_USERDATA_PID_DTERM]);
-    pack_float_to_strg_bytes(ptr_sxData->pidDlpfTerm,       (uint8_t *)&txUserData[BE_USERDATA_PID_DLPFTERM]);
-    pack_float_to_strg_bytes(ptr_sxData->pidGainTerm,       (uint8_t *)&txUserData[BE_USERDATA_PID_GAINTERM]);
-    txUserData[BE_USERDATA_PID_IWINDUPTERM] = (ptr_sxData->pidIwindupTerm);
+    pack_float_to_strg_bytes(ptr_sxData->pidPTerm,          (uint8_t *)&txUserData[USERDATA_PID_PTERM]);
+    pack_float_to_strg_bytes(ptr_sxData->pidITerm,          (uint8_t *)&txUserData[USERDATA_PID_ITERM]);
+    pack_float_to_strg_bytes(ptr_sxData->pidImaxTerm,       (uint8_t *)&txUserData[USERDATA_PID_IMAXTERM]);
+    pack_float_to_strg_bytes(ptr_sxData->pidDTerm,          (uint8_t *)&txUserData[USERDATA_PID_DTERM]);
+    pack_float_to_strg_bytes(ptr_sxData->pidDlpfTerm,       (uint8_t *)&txUserData[USERDATA_PID_DLPFTERM]);
+    pack_float_to_strg_bytes(ptr_sxData->pidGainTerm,       (uint8_t *)&txUserData[USERDATA_PID_GAINTERM]);
+    txUserData[USERDATA_PID_IWINDUPTERM] = (ptr_sxData->pidIwindupTerm);
     //Write entire user data block into nvm
-    spi_NVMemoryWritePage(PARAM_NVM_PAGE_ADD, 
-                          PARAM_NVM_PAGE_OFFSET, 
-                          PARAM_NVM_USERDATA_SIZE, 
-                          &txUserData[PARAM_NVM_USERDATA_ADD]);
+    spi_NVMemoryWritePage(NVM_PARAM_PAGE_ADD, 
+                          NVM_PARAM_PAGE_OFFSET, 
+                          NVM_PARAM_USERDATA_SIZE, 
+                          &txUserData[NVM_PARAM_USERDATA_ADD]);
     dataStatus=STORAGE_CONTROLLERDATA_STORED;
   }
   return dataStatus;

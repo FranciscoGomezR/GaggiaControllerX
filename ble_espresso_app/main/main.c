@@ -6,28 +6,18 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "boards.h"
-#include "nrf.h"
 #include "nrf_drv_gpiote.h"
-#include "nrf_gpio.h"
 #include "bluetooth_drv.h"
 #include "espressoMachineServices.h"
 #include "StorageController.h"
-
 #include "log_drv.h"
-#include "board_comp_drv.h"
-#include "nrf_drv_timer.h"
-
 #include "app_timer.h"
-#include "i2c_sensors.h"
 #include "spi_Devices.h"
-
 #include "tempController.h"
 #include "PumpController.h"
 #include "ac_inputs_drv.h"
 #include "solidStateRelay_Controller.h"
 #include "dc12Vouput_drv.h"
-#include "nrf_delay.h"
 #include "app_error.h"
 
 volatile uint16_t g_ssrPower=0;
