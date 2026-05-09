@@ -142,17 +142,22 @@ void isr_BoilderSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
 
 /*****************************************************************************
  * Function: 	isr_PumpSSR_EventHandler
- * Description: Controls the SSR timing to trigger SSR 
+ * Description: Controls the SSR timing to trigger SSR
  *****************************************************************************/
 void isr_PumpSSR_EventHandler(nrf_timer_event_t event_type, void* p_context)
 {
       switch (event_type)
       {
           case NRF_TIMER_EVENT_COMPARE0:
-              nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+              /* Trigger angle reached: set output to active logic */
+              #if SSR_PUMP_ELEMENT_OUT_LOGIC == ACTIVE_HIGH
+                  nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+              #else
+                  nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+              #endif
               break;
           default:
-              //Do nothing.
+              /*Do nothing.*/
               break;
       }
 }
@@ -242,32 +247,31 @@ void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t 
   /* LOGIC BLOCK FOR PUMP SSR */
   if(sPumpSSRdrv.ssrPWRstatus == SSR_MIDPWR)
   {
-    if( sPumpSSRdrv.smTrigStatus == smS_Release )
-    {
-      /* Disengage TRIAC/SSR  */
-      nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-      /* Update timers with new count/power percentage  */
-      /* This function re-enables the timer if we enter from a 0% or 100% state */
-      ssr_ctrl_update((struct_SSRinstance *)&sPumpSSRdrv);
-      /* Reset State machine for this new cycle  */
-      sPumpSSRdrv.smTrigStatus = smS_Engage;
-    }else{
-      /* A semi-cycle or 180deg phase as passed; driver continues engaging the SSR  */
-      /* but prepare the state machine to update in the next semi-cyle  */
-      sPumpSSRdrv.smTrigStatus = smS_Release;
-    }
+    /* At zero crossing: clear output to not active and start phase-angle timer */
+    #if SSR_PUMP_ELEMENT_OUT_LOGIC == ACTIVE_HIGH
+        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+    #else
+        nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+    #endif
+    ssr_ctrl_update((struct_SSRinstance *)&sPumpSSRdrv);
   }else if(sPumpSSRdrv.ssrPWRstatus == SSR_FULLPWR)
   {
-    /* When SSR has to deliver 100% of power:  */ 
-    /* driver will disable the timer and set 1 the output */
-    nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
-    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr );  
+    /* When SSR has to deliver 100% of power: set output to active */
+    #if SSR_PUMP_ELEMENT_OUT_LOGIC == ACTIVE_HIGH
+        nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+    #else
+        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+    #endif
+    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr);
   }else if(sPumpSSRdrv.ssrPWRstatus == SSR_NOPWR)
   {
-    /* When SSR has to deliver 0% of power:  */ 
-    /* driver will disable the timer and set 0 the output */
-    nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
-    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr );  
+    /* When SSR has to deliver 0% of power: clear output to not active */
+    #if SSR_PUMP_ELEMENT_OUT_LOGIC == ACTIVE_HIGH
+        nrf_drv_gpiote_out_clear(sPumpSSRdrv.out_SSRelay);
+    #else
+        nrf_drv_gpiote_out_set(sPumpSSRdrv.out_SSRelay);
+    #endif
+    nrf_drv_timer_disable(&sPumpSSRdrv.hwTmr);
   }
 
   /* LOGIC BLOCK FOR SOLENOID SSR */
@@ -286,24 +290,41 @@ void isr_ZeroCross_EventHandler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t 
 //*****************************************************************************
 
 /*****************************************************************************
- * Function: 	init_ssr_controller_BLEspresso
+ * Function: 	ssr_instance_init
+ * Description: This function init the main GPIO to drive SSR in the machine
+ *****************************************************************************/
+ssr_status_t ssr_instance_init(uint8_t zero_cross_input, uint8_t solenoid_ouput)
+{
+  /*  Init input to detect AC cross-zero  */
+  sSSRcontroller.in_zCross          = zero_cross_input;//inZEROCROSS_PIN;
+  sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
+  init_ssr_controller((struct_SSRcontroller *)&sSSRcontroller);
+  /*  Init SSR's Pin that will drive Solenoid */
+  sSolenoidSSRdrv.out_SSRelay       = solenoid_ouput;//enSolenoidRelay_PIN;
+  sSolenoidSSRdrv.ssrState          = SSR_STATE_OFF;
+  sSolenoidSSRdrv.ssrPWRstatus      = SSR_NOPWR;
+  create_on_off_ssr_instance(&sSolenoidSSRdrv);
+  return SSR_DRV_INIT_OK;
+}
+
+/*****************************************************************************
+ * Function: 	init_ssr_heating_element
  * Description: This function encapsulate public variable create before for 
  *              this driver.
- *              Calling this function simplfies reading in the main loop and 
- *              will make easy debugging
- *
+ *              Init the SSR instance to drive Heating element and offers
+ *              two ctrl options: Angle or Zero Crossing
  *****************************************************************************/
-ssr_status_t init_ssr_controller_ble_espresso(void)
+ssr_status_t init_ssr_heating_element(void)
 {
   /*  Init SSR for the boier's resistance heater  */
-  #if SSR_CTRL_BOILER_HEAT == ANGLE
+  #if SSR_HEAT_ELEMENT_TYPE == ANGLE
     sBoilderSSRdrv.hwTmr            = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(1);
     sBoilderSSRdrv.hwTmr_isr_handler= isr_BoilderSSR_EventHandler;
     sBoilderSSRdrv.out_SSRelay      = outSSRboiler_PIN;
     sBoilderSSRdrv.ssrPWRstatus     = SSR_NOPWR;
     create_ssr_instance((struct_SSRinstance *)&sBoilderSSRdrv);
-  #endif
-  #if SSR_CTRL_BOILER_HEAT == ZERO_CROSS
+  #endif 
+  #if SSR_HEAT_ELEMENT_TYPE == ZERO_CROSS
     sBoilderSSRzc.out_SSRelay       = outSSRboiler_PIN;
     sBoilderSSRzc.srrPowerCnt       = 0;
     sBoilderSSRzc.ssrPWRstatus      = SSR_NOPWR;
@@ -314,21 +335,25 @@ ssr_status_t init_ssr_controller_ble_espresso(void)
     err_code_gpio = nrf_drv_gpiote_out_init(sBoilderSSRzc.out_SSRelay, &out_config);
     APP_ERROR_CHECK(err_code_gpio);
   #endif
-  /*  Init SSR for the pump's motor */
-  sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
-  sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
-  sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
-  sPumpSSRdrv.ssrPWRstatus          = SSR_NOPWR;
-  create_ssr_instance((struct_SSRinstance *)&sPumpSSRdrv);
-  /*  Init input to detect AC cross-zero  */
-  sSSRcontroller.in_zCross          = inZEROCROSS_PIN;
-  sSSRcontroller.zcross_isr_handler = isr_ZeroCross_EventHandler;
-  init_ssr_controller((struct_SSRcontroller *)&sSSRcontroller);
-  /*  Init SSR's Pin that will drive Solenoid */
-  sSolenoidSSRdrv.out_SSRelay       = enSolenoidRelay_PIN;
-  sSolenoidSSRdrv.ssrState          = SSR_STATE_OFF;
-  sSolenoidSSRdrv.ssrPWRstatus      = SSR_NOPWR;
-  create_on_off_ssr_instance(&sSolenoidSSRdrv);
+  return SSR_DRV_INIT_OK;
+}
+
+/*****************************************************************************
+ * Function: 	init_ssr_pump_element
+ * Description: This function encapsulate public variable create before for 
+ *              this driver.
+ *              Init the SSR instance to drive Pump element
+ *****************************************************************************/
+ssr_status_t init_ssr_pump_element(void)
+{
+  /*  Init SSR for the pump element*/
+  #if SSR_PUMP_ELEMENT_TYPE == ANGLE
+    sPumpSSRdrv.hwTmr                 = (nrf_drv_timer_t)NRF_DRV_TIMER_INSTANCE(2);
+    sPumpSSRdrv.hwTmr_isr_handler     = isr_PumpSSR_EventHandler;
+    sPumpSSRdrv.out_SSRelay           = outSSRpump_PIN;
+    sPumpSSRdrv.ssrPWRstatus          = SSR_NOPWR;
+    create_ssr_instance((struct_SSRinstance *)&sPumpSSRdrv);
+  #endif
   return SSR_DRV_INIT_OK;
 }
 

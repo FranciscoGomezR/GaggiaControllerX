@@ -335,7 +335,27 @@ int main(void)
   NRF_LOG_FLUSH();
   #endif
   /*  INITIALIZATION: SOLID STATE RELAY CONTROLLER/DRIVER */
-  init_result_flag = init_ssr_controller_ble_espresso();
+  init_result_flag = init_ssr_heating_element();
+  #if(NRF_LOG_ENABLED == 1)
+    if( init_result_flag == SSR_DRV_INIT_OK)
+    { 
+      NRF_LOG_DEBUG("DRV INIT Heat Element Relay ::READY::");
+    }else{
+      NRF_LOG_DEBUG("DRV INIT Heat Element Relay ::FAILED::");
+    }
+    NRF_LOG_FLUSH();
+  #endif
+    init_result_flag = init_ssr_pump_element();
+  #if(NRF_LOG_ENABLED == 1)
+    if( init_result_flag == SSR_DRV_INIT_OK)
+    { 
+      NRF_LOG_DEBUG("DRV INIT Pump Element Relay ::READY::");
+    }else{
+      NRF_LOG_DEBUG("DRV INIT Pump Element Relay ::FAILED::");
+    }
+    NRF_LOG_FLUSH();
+  #endif
+    init_result_flag = ssr_instance_init(inZEROCROSS_PIN, enSolenoidRelay_PIN);
   #if(NRF_LOG_ENABLED == 1)
     if( init_result_flag == SSR_DRV_INIT_OK)
     { 

@@ -45,7 +45,7 @@
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x40000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x10000;FLASH_START=0x26000;FLASH_SIZE=0x17000;RAM_START=0x20002270;RAM_SIZE=0x5d90"
       linker_section_placements_segments="FLASH1 RX 0x00000000 0x00040000;FLASH2 RX 0x10001000 0x00001000;RAM1 RWX 0x20000000 0x00008000;"
-      macros="SDK_ROOT=C:/WS/NRF/nRF5_SDK_17.1.0_ddde560;CMSIS_CONFIG_TOOL=$(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar"
+      macros="SDK_ROOT=W:\\02_WS\\11_Nordic\\nRF5_SDK_17.1.0_ddde560;CMSIS_CONFIG_TOOL=$(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar"
       project_directory=""
       project_type="Executable" />
     <configuration

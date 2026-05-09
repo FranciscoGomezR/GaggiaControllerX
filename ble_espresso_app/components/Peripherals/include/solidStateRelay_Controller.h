@@ -68,12 +68,18 @@ extern  "C" {
 #define AC_PERCENT_STEP       50      //Number of cycle on the main
 #define POWER_MAX_VALUE       1000
 
-#define ZERO_CROSS            0
-#define ANGLE                 1     
-#define SSR_CTRL_BOILER_HEAT  ZERO_CROSS
-#define FREQ_2HZ_2PER         0
-#define FREQ_1HZ_1PER         1
-#define SSR_CTRL_BOILER_RATE  FREQ_2HZ_2PER
+#define ZERO_CROSS                  0
+#define ANGLE                       1     
+#define SSR_HEAT_ELEMENT_TYPE       ZERO_CROSS
+#define SSR_PUMP_ELEMENT_TYPE       ANGLE
+#define FREQ_2HZ_2PER               0
+#define FREQ_1HZ_1PER               1
+#define SSR_HEAT_ELEMENT_RATE       FREQ_2HZ_2PER
+#define SSR_PUMP_ELEMENT_RATE       FREQ_1HZ_1PER
+#define ACTIVE_HIGH                 1
+#define ACTIVE_LOW                  0
+#define SSR_HEAT_ELEMENT_OUT_LOGIC  ACTIVE_LOW
+#define SSR_PUMP_ELEMENT_OUT_LOGIC  ACTIVE_HIGH
 //*****************************************************************************
 //
 //			PUBLIC STRUCTs, UNIONs ADN ENUMs SECTION
@@ -96,9 +102,10 @@ typedef enum {
 /* 1- SSR for Boiler Heater (0000 to 1000)     */
 /* 2- SSR for the Pump      (0000 to 1000)     */
 /* 3- SSR for the solenoid  (ON/OFF fashion)   */
-ssr_status_t init_ssr_controller_ble_espresso(void);
-void boiler_ssr_pwr_update( uint16_t outputPower);
-void pump_ssr_pwr_update( uint16_t outputPower);
+ssr_status_t init_ssr_heating_element(void);
+ssr_status_t init_ssr_pump_element(void);
+
+ssr_status_t ssr_instance_init(uint8_t zero_cross_input, uint8_t solenoid_ouput);
 
 void solenoid_ssr_on(void);
 ssr_status_t get_SolenoidSSR_State(void);
