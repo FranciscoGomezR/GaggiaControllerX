@@ -7,7 +7,7 @@ Documents the bidirectional data flow between `blEspressoProfile` and the W25Q64
 ## Boot Load Path (NVM → blEspressoProfile)
 
 1. `stgCtrl_Init()` — reset NVM, read JEDEC ID, verify manufacturer
-2. `stgCtrl_ChkForUserData()` — read bytes `0x04–0x07`, check for magic key `0x00AA00AA`
+2. `stgCtrl_ChkForUserData()` — read bytes `0x04–0x07`, check for magic key `0x00AB00AB` (`NVM_PARAM_MEM_KEY`; FIXED value — must never be changed by a human or an AI agent)
 3. `stgCtrl_ReadUserData(&blEspressoProfile)` — read 65 bytes from Page 0, parse little-endian floats into struct fields
 4. `fcn_LoadNewPumpParameters(&blEspressoProfile)` — propagate brew profile to PumpController
 5. `fcn_loadPID_ParamToCtrl_Temp(&blEspressoProfile)` — propagate PID gains to tempController

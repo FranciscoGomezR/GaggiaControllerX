@@ -78,39 +78,39 @@ float pid_imc_compute( pid_imc_block_t * ptr_pid_param_s )
     static pid_imc_ctrl_terms_t Pid_ctrl_s = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
     //	Calculate Delta time for this Iteration in SECONDS
     //	-----------------------------------------------
-    Pid_ctrl_s.dt =  ((float)(ptr_pid_param_s->feedPIDblock.TimeMilis - ptr_pid_param_s->prevT_Milis)) / 1000.0f;
+    Pid_ctrl_s.dt =  ((float)(ptr_pid_param_s->feedPidBlock.timeMsecs - ptr_pid_param_s->prevTimeMsecs)) / 1000.0f;
 
     //	Error = SetPoint - Process Variable
     //	-----------------------------------------------
-    Pid_ctrl_s.Error = ptr_pid_param_s->feedPIDblock.SetPoint - ptr_pid_param_s->feedPIDblock.ProcessVariable;
+    Pid_ctrl_s.Error = ptr_pid_param_s->feedPidBlock.setPoint - ptr_pid_param_s->feedPidBlock.processVariable;
     //  (PROPORTIONAL) -> Kc * e(t)
     //-------------------------------------------------
-    if(ptr_pid_param_s->P_TERM_CTRL)
+    if(ptr_pid_param_s->isPTermEnabled)
     {
       //   P --> Kp * Error
-      Pid_ctrl_s.P_Term =  Pid_ctrl_s.Error * ptr_pid_param_s->Kp;
+      Pid_ctrl_s.P_Term =  Pid_ctrl_s.Error * ptr_pid_param_s->kp;
     }else{}
     //  (INTEGRAL) -> Kc * tI *?e(t)dt
     //-------------------------------------------------
-    if(ptr_pid_param_s->I_TERM_CTRL)
+    if(ptr_pid_param_s->isITermEnabled)
     {
         //  Ki * [Previois Error + (Error  * dt) ]
         //-----------------------------------------------------------------------------------------
-        ptr_pid_param_s->HistoryError = ptr_pid_param_s->HistoryError + (Pid_ctrl_s.Error * Pid_ctrl_s.dt);
+        ptr_pid_param_s->historyError = ptr_pid_param_s->historyError + (Pid_ctrl_s.Error * Pid_ctrl_s.dt);
         //Integral gain block
-        Pid_ctrl_s.I_Term = ptr_pid_param_s->HistoryError * ptr_pid_param_s->Ki;
+        Pid_ctrl_s.I_Term = ptr_pid_param_s->historyError * ptr_pid_param_s->ki;
         //Integral saturation checkt
-        constrain_within_floats(&ptr_pid_param_s->HistoryError, 
-                                ptr_pid_param_s->IntegralLimit,
-                               -ptr_pid_param_s->IntegralLimit);
-    }else{}  
+        (void)constrain_within_floats(&ptr_pid_param_s->historyError,
+                                      ptr_pid_param_s->integralLimit,
+                                     -ptr_pid_param_s->integralLimit);
+    }else{}
     //  (DIFFERENTIAL) -> Kc * tD * (e_k - 2*e_k-1 + e_k-2)/dt
     //-------------------------------------------------
-    if(ptr_pid_param_s->D_TERM_CTRL)
+    if(ptr_pid_param_s->isDTermEnabled)
     {
         //  Delta PV = PV - Previous PV
         //-----------------------------------------------------------------------------------------
-        Pid_ctrl_s.D_Term = (Pid_ctrl_s.Error - (2.0f*ptr_pid_param_s->errorK_1) + ptr_pid_param_s->errorK_2);
+        Pid_ctrl_s.D_Term = (Pid_ctrl_s.Error - (2.0f*ptr_pid_param_s->errorK1) + ptr_pid_param_s->errorK2);
         /* Protect against division by zero  */
         if ( fabs((double)Pid_ctrl_s.D_Term) > FLOAT_EPSILON )
         {
@@ -120,7 +120,7 @@ float pid_imc_compute( pid_imc_block_t * ptr_pid_param_s )
         }
         //  Kd * Delta PV 
         //-----------------------------------------------------------------------------------------
-        Pid_ctrl_s.D_Term = Pid_ctrl_s.D_Term * ptr_pid_param_s->Kd;
+        Pid_ctrl_s.D_Term = Pid_ctrl_s.D_Term * ptr_pid_param_s->kd;
     }else{}
 
     //	PID OUTPUT --> P + I + D
@@ -131,31 +131,31 @@ float pid_imc_compute( pid_imc_block_t * ptr_pid_param_s )
     //  Flag values::           NO_SATURATION
     //                          POSITIVE_SATURATION
     //                          NEGATIVE_SATURATION
-    //  Saturation limited by:: ptr_pid_param_s->OutputLimit
+    //  Saturation limited by:: ptr_pid_param_s->outputLimit
     //-----------------------------------------------------------------------------------------
-    ptr_pid_param_s->OutputSaturationOut = constrain_within_floats((float*)&Pid_ctrl_s.PIDout, ptr_pid_param_s->OutputLimit, -(ptr_pid_param_s->OutputLimit));
+    ptr_pid_param_s->outputSaturation = constrain_within_floats((float*)&Pid_ctrl_s.PIDout, ptr_pid_param_s->outputLimit, -(ptr_pid_param_s->outputLimit));
 
-    if(ptr_pid_param_s->I_ANTIWINDUP_CTRL && ptr_pid_param_s->OutputSaturationOut)
+    if(ptr_pid_param_s->isIAntiwindupEnabled && ptr_pid_param_s->outputSaturation)
     {
       //ANTI-WINDUP Scheme: anti-reset
       //Check if integrator is becoming POSITIVE
-      if( ptr_pid_param_s->OutputSaturationOut == POSITIVE_SATURATION || ptr_pid_param_s->OutputSaturationOut == NEGATIVE_SATURATION)
+      if( ptr_pid_param_s->outputSaturation == POSITIVE_SATURATION || ptr_pid_param_s->outputSaturation == NEGATIVE_SATURATION)
       {
-          ptr_pid_param_s->WindupClampStatus = ACTIVE;
-          ptr_pid_param_s->IntegralError = ptr_pid_param_s->IntegralError - ptr_pid_param_s->IntegralError * Pid_ctrl_s.dt;
+          ptr_pid_param_s->flagWindupClamped = true;
+          ptr_pid_param_s->integralError = ptr_pid_param_s->integralError - ptr_pid_param_s->integralError * Pid_ctrl_s.dt;
       }else{
           //Decision is to not to clamp
-          ptr_pid_param_s->WindupClampStatus = NOT_ACTIVE;
-      } 
+          ptr_pid_param_s->flagWindupClamped = false;
+      }
     }else{
-      //Windup controller is not activated. Therefore, Clamping Status is NOT_ACTIVE by DEFAULT
-      ptr_pid_param_s->WindupClampStatus = NOT_ACTIVE;
+      //Windup controller is not activated. Therefore, Clamping Status is false by DEFAULT
+      ptr_pid_param_s->flagWindupClamped = false;
     }
 
     //SAVED ERROR DATA, T DATA and PID OUTPUT
     //-----------------------------------------------------------------------------------------
-    ptr_pid_param_s->prevT_Milis  = ptr_pid_param_s->feedPIDblock.TimeMilis;
-    ptr_pid_param_s->Output       = Pid_ctrl_s.PIDout;
+    ptr_pid_param_s->prevTimeMsecs = ptr_pid_param_s->feedPidBlock.timeMsecs;
+    ptr_pid_param_s->output        = Pid_ctrl_s.PIDout;
 
     return Pid_ctrl_s.PIDout;
 }

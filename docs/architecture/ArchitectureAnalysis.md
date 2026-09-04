@@ -186,7 +186,7 @@ PID-IMC Type A controller (`fcn_update_PIDimc_typeA`) with adaptive integral gai
 
 Two custom GATT services under 128-bit UUID base `f364adc9-b000-4042-ba50-05ca45bf8abc`:
 - **Brew Service (0x1400)**: 10 characteristics — machine status (notify), boiler temp (notify), target temps (R/W), 6× brew profile params (R/W)
-- **PID Service (0x1500)**: 7 characteristics — P, I, I-max, I-windup, D, D-LPF, Gain (all R/W)
+- **PID Service (0x1500)**: 6 characteristics — P, I, I-max, D, P-boost, I-boost (all R/W)
 
 Connection lifecycle: Advertising (fast) → Connected → Characteristic R/W + Notifications (1 s temp) → Disconnect → re-Advertise.
 

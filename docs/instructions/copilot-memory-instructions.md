@@ -52,7 +52,7 @@ L0  HW & SDK          nRF5 SDK drivers, S132           Treated as black boxes
 | `components/Peripherals/spi_Devices.c` | Shared SPI bus: MAX31865 RTD temp sensor + W25Q64 NVM |
 | `components/Peripherals/solidStateRelay_Controller.c` | 3× SSR: boiler (zero-cross), pump (phase-angle), solenoid (on/off) |
 | `components/Peripherals/ac_inputs_drv.c` | Debounced AC switch sensing via zero-crossing ISR counting |
-| `components/BLE_Services/ble_cus.c` | Custom GATT services (Brew `0x1400`, PID `0x1500`) — 17 characteristics |
+| `components/BLE_Services/ble_cus.c` | Custom GATT services (Brew `0x1400`, PID `0x1500`) — 16 characteristics |
 | `components/BLE/bluetooth_drv.c` | BLE stack init, `cus_evt_handler` (BLE writes → `blEspressoProfile`), `ble_update_boilerWaterTemp` (notify) |
 | `components/Utilities/x205_PID_Block.c` | Generic PID library: `fcn_update_PIDimc_typeA` (used), `typeB` (available) |
 | `components/Utilities/x04_Numbers.c` | `fcn_ChrArrayToFloat`, `fcn_FloatToChrArray`, `fcn_Constrain_WithinFloats` |
@@ -72,8 +72,7 @@ This struct is the shared data bus connecting BLE, storage, sensors, and all con
 | NVM metadata | `nvmWcycles`, `nvmKey` | 2 × uint32 |
 | Temperature | `temp_Target`, `temp_Boiler`, `sp_BrewTemp`, `sp_StemTemp` | 4 × float |
 | Brew profile | `prof_preInfusePwr/Tmr`, `prof_InfusePwr/Tmr`, `Prof_DeclinePwr/Tmr` | 6 × float |
-| PID params | `Pid_P_term`, `Pid_I_term`, `Pid_Iboost_term`, `Pid_Imax_term`, `Pid_D_term`, `Pid_Dlpf_term`, `Pid_Gain_term` | 7 × float |
-| PID flags | `Pid_Iwindup_term` | 1 × bool |
+| PID params | `pidPTerm`, `pidITerm`, `pidImaxTerm`, `pidDTerm`, `pidPboostTerm`, `pidIboostTerm` | 6 × float |
 
 ### Writers
 
@@ -156,8 +155,8 @@ At boot: both Brew+Steam switches asserted → Tune mode. Otherwise → App mode
 | Integral limit | 100.0 | `TEMP_CTRL_HIST_LIMIT` or BLE write |
 | Anti-windup | Clamp scheme | Reduce integral error when output saturates |
 
-**PID function:** `fcn_update_PIDimc_typeA()` in `x205_PID_Block.c`
-- Input: `ProcessVariable` (temp_Boiler), `SetPoint` (temp_Target), `TimeMilis` (1 ms ticks)
+**PID function:** `pid_imc_compute()` in `x205_PID_Block.c`
+- Input (`pid_input_t feedPidBlock`): `processVariable` (boiler temp), `setPoint` (target), `timeMsecs` (1 ms ticks)
 - Output: heater power 0–1000
 - Delta-time: computed from millisecond tick difference (1 ms HW timer 3)
 
@@ -182,17 +181,16 @@ At boot: both Brew+Steam switches asserted → Tune mode. Otherwise → App mode
 | 0x1408 | Decline Power | R + W | 3-char ASCII |
 | 0x1409 | Decline Time | R + W | 3-char ASCII |
 
-### PID Service (0x1500) — 7 characteristics
+### PID Service (0x1500) — 6 characteristics
 
 | UUID | Name | Access |
 |---|---|---|
 | 0x1501 | P Term | R + W |
 | 0x1502 | I Term | R + W |
 | 0x1503 | I Max | R + W |
-| 0x1504 | I Windup | R + W |
-| 0x1505 | D Term | R + W |
-| 0x1506 | D LPF | R + W |
-| 0x1507 | Gain | R + W |
+| 0x1504 | D Term | R + W |
+| 0x1505 | P Boost | R + W |
+| 0x1506 | I Boost | R + W |
 
 **Data format:** All characteristics use ASCII char arrays, converted via `fcn_ChrArrayToFloat` / `fcn_FloatToChrArray`.
 
@@ -216,9 +214,10 @@ At boot: both Brew+Steam switches asserted → Tune mode. Otherwise → App mode
 | Address | Field | Size |
 |---|---|---|
 | 0x00–0x03 | `nvmWcycles` (MSW=shot writes, LSW=ctrl writes) | 4 B |
-| 0x04–0x07 | `nvmKey` = `0x00AA00AA` (magic, `0xFFFFFFFF`=empty) | 4 B |
+| 0x04–0x07 | `nvmKey` = `0x00AB00AB` (magic, `0xFFFFFFFF`=empty) — **FIXED value, never modify** | 4 B |
 | 0x08–0x27 | Shot Profile (temp_Target, brew params) | 32 B |
-| 0x28–0x40 | Controller (PID params + Iwindup) | 25 B |
+| 0x28–0x3F | Controller (PID params) | 24 B |
+| 0x40      | Unused (was `pidIwindupTerm`, removed 2026-08-30) | 1 B |
 | 0x41–0xFF | Unused | 191 B |
 
 **Write strategy:** Read-modify-write. Shot profile and controller sections are independent — writing one preserves the other.
@@ -403,7 +402,7 @@ When working on this codebase:
 3. **No RTOS** — single-threaded cooperative loop; all code must be non-blocking
 4. **Power values** are 0–1000 (fixed-point ×10 for 0.0–100.0 %)
 5. **BLE data** is ASCII char arrays, not raw binary — use `fcn_ChrArrayToFloat` / `fcn_FloatToChrArray`
-6. **Two BLE services:** Brew (0x1400, 10 chars) and PID (0x1500, 7 chars)
+6. **Two BLE services:** Brew (0x1400, 10 chars) and PID (0x1500, 6 chars)
 7. **PID type:** IMC Type A (`fcn_update_PIDimc_typeA`) with adaptive I-gain (6.5×/2×/1×)
 8. **External flash** uses only 65 bytes of an 8 MB chip — Page 0, addresses 0x00–0x40
 9. **Safety:** No watchdog, no input validation, no sensor failure detection — see Known Issues
@@ -411,7 +410,7 @@ When working on this codebase:
 11. **DK pin conflicts:** P0.13-14 (buttons vs SPI), P0.19-20 (LEDs vs SSR), P0.25 (SWDCLK vs solenoid)
 12. **Profile mode** exists but is commented out in `main.c` — Classic mode is active
 13. **Step function mode** = both switches held at power-on (diagnostic/PID tuning)
-14. **NVM key** `0x00AA00AA` at address 0x04 indicates valid stored data
+14. **NVM key** `0x00AB00AB` at address 0x04 indicates valid stored data — this is a FIXED magic value; it must never be changed by a human or an AI agent
 15. **Diagrams:** 15 `.mermaid` files (14 architecture + 1 BLE GATT), each with matching `.svg` — see Section 15 for naming rules
 16. **Do not edit `.svg` files directly** — regenerate from `.mermaid` source using `mmdc`
 17. **GATT table** — full ATT detail in `docs/ble/gatt_table.md`; diagram in `gatt_table.mermaid/.svg`

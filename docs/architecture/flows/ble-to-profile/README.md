@@ -15,7 +15,7 @@ A connected BLE client writes a value to a writable GATT characteristic.
 3. **bluetooth_drv.c → `cus_evt_handler()`** — switch on event type:
    - Parses ASCII char array → float via `fcn_ChrArrayToFloat()`
    - Writes directly to the appropriate `blEspressoProfile.*` field
-4. **Flag Set** — after the last brew param (`Prof_DeclineTmr`), `flg_BrewCfg = 1`; after last PID param (`Pid_Gain_term`), `flg_PidCfg = 1`
+4. **Flag Set** — after the last brew param (`profTaperingTmr`), `flag_brew_cfg = 1`; after last PID param (`pidIboostTerm`), `flag_pid_cfg = 1`
 
 ## Characteristic → Field Mapping
 
@@ -29,13 +29,12 @@ A connected BLE client writes a value to a writable GATT characteristic.
 | Infusion Time (`0x1407`) | `BLE_BREW_INFUSION_TIME__CHAR_RX_EVT` | `blEspressoProfile.prof_InfuseTmr` |
 | Decline Power (`0x1408`) | `BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT` | `blEspressoProfile.Prof_DeclinePwr` |
 | Decline Time (`0x1409`) | `BLE_BREW_DECLINING_PR_TIME__CHAR_RX_EVT` | `blEspressoProfile.Prof_DeclineTmr` |
-| P Term (`0x1501`) | `PID_P_TERM_CHAR_RX_EVT` | `blEspressoProfile.Pid_P_term` |
-| I Term (`0x1502`) | `PID_I_TERM_CHAR_RX_EVT` | `blEspressoProfile.Pid_I_term` |
-| I Max (`0x1503`) | `PID_I_TERM_INT_CHAR_RX_EVT` | `blEspressoProfile.Pid_Imax_term` |
-| I Windup (`0x1504`) | `PID_I_TERM_WINDUP_CHAR_RX_EVT` | `blEspressoProfile.Pid_Iwindup_term` |
-| D Term (`0x1505`) | `PID_D_TERM_CHAR_RX_EVT` | `blEspressoProfile.Pid_D_term` |
-| D LPF (`0x1506`) | `PID_D_TERM_LPF_CHAR_RX_EVT` | `blEspressoProfile.Pid_Dlpf_term` |
-| Gain (`0x1507`) | `PID_GAIN___CHAR_RX_EVT` | `blEspressoProfile.Pid_Gain_term` |
+| P Term (`0x1501`) | `PID_P_TERM_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidPTerm` |
+| I Term (`0x1502`) | `PID_I_TERM_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidITerm` |
+| I Max (`0x1503`) | `PID_I_TERM_INT_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidImaxTerm` |
+| D Term (`0x1504`) | `PID_D_TERM_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidDTerm` |
+| P Boost (`0x1505`) | `PID_P_BOOST_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidPboostTerm` |
+| I Boost (`0x1506`) | `PID_I_BOOST_CHAR_RX_EVT` | `g_Espresso_user_config_s.pidIboostTerm` |
 
 ## Diagram
 

@@ -239,10 +239,9 @@ int main(void)
     g_Espresso_user_config_s.pidPTerm        = 9.52156f;
     g_Espresso_user_config_s.pidITerm        = 0.3f;
     g_Espresso_user_config_s.pidImaxTerm     = 100.0f;
-    g_Espresso_user_config_s.pidIwindupTerm  = false;
     g_Espresso_user_config_s.pidDTerm        = 0.0f;
-    g_Espresso_user_config_s.pidDlpfTerm     = 0.0f;
-    g_Espresso_user_config_s.pidGainTerm     = 0.0f;
+    g_Espresso_user_config_s.pidPboostTerm   = 1.0f;
+    g_Espresso_user_config_s.pidIboostTerm   = 6.5f;
     NRF_LOG_DEBUG("SET DATA ::TEST DATA::");
     NRF_LOG_FLUSH();
   #else
@@ -391,7 +390,7 @@ int main(void)
     {
       init_result_flag = load_new_pump_parameters((espresso_user_config_t*)&g_Espresso_user_config_s);
     }else{}
-    NRF_LOG_DEBUG("Pump Controller ::TEST READY::");
+    NRF_LOG_DEBUG("Pump Controller ::TEST Configuration::");
     NRF_LOG_FLUSH();
   #endif
 
@@ -415,7 +414,7 @@ int main(void)
   #if(LOAD_USERDATA_FROM_NVM_EN ==  0 && SET_TEST_USERDATA_EN==1)
     /*  LOADING [TEST] BOILER TEMP PID CONTROLLER's PARAMETERS */
     temp_ctrl_set_pid_config((espresso_user_config_t*)&g_Espresso_user_config_s);
-    NRF_LOG_DEBUG("Boiler Temperature Controller ::TEST DATA READY::");
+    NRF_LOG_DEBUG("Boiler Temperature Controller ::TEST Configuration::");
     NRF_LOG_FLUSH();
   #endif
   init_result_flag = temp_ctrl_set_boiler_setpoint(

@@ -41,13 +41,13 @@ flowchart LR
 
                 subgraph keyblk["🔑 Key Section  0x04–0x07  4 B"]
                     direction LR
-                    KEY["nvmKey\n0x00AA00AA = valid\n0xFFFFFFFF = empty"]
+                    KEY["nvmKey\n0x00AB00AB = valid\n0xFFFFFFFF = empty\nFIXED - never modify"]
                 end
 
                 subgraph shotblk["☕ Shot Profile Section  0x08–0x27  32 B\nWritten by stgCtrl_StoreShotProfileData()"]
                     direction LR
-                    SP1["0x08-0x0B\ntemp_Target\nfloat"]
-                    SP2["0x0C-0x0F\n(reserved)\n0x00000000"]
+                    SP1["0x08-0x0B\nbrewTempDegC\nfloat"]
+                    SP2["0x0C-0x0F\nsteamTempDegC\nfloat"]
                     SP3["0x10-0x13\nprof_preInfusePwr\nfloat"]
                     SP4["0x14-0x17\nprof_preInfuseTmr\nfloat"]
                     SP5["0x18-0x1B\nprof_InfusePwr\nfloat"]
@@ -56,15 +56,14 @@ flowchart LR
                     SP8["0x24-0x27\nProf_DeclineTmr\nfloat"]
                 end
 
-                subgraph ctrlblk["🎛️ Controller Section  0x28–0x40  25 B\nWritten by stgCtrl_StoreControllerData()"]
+                subgraph ctrlblk["🎛️ Controller Section  0x28–0x3F  24 B\nWritten by stgCtrl_StoreControllerData()"]
                     direction LR
                     CP1["0x28-0x2B\nPid_P_term\nfloat Kp"]
                     CP2["0x2C-0x2F\nPid_I_term\nfloat Ki"]
                     CP3["0x30-0x33\nPid_Imax_term\nfloat"]
                     CP4["0x34-0x37\nPid_D_term\nfloat Kd"]
-                    CP5["0x38-0x3B\nPid_Dlpf_term\nfloat"]
-                    CP6["0x3C-0x3F\nPid_Gain_term\nfloat"]
-                    CP7["0x40\nPid_Iwindup_term\nbool"]
+                    CP5["0x38-0x3B\npid_Pboost\nfloat"]
+                    CP6["0x3C-0x3F\npid_Iboost\nfloat"]
                 end
 
                 subgraph unused0["⬜ Unused  0x41–0xFF  191 B"]

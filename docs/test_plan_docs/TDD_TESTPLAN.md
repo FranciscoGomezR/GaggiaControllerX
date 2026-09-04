@@ -664,7 +664,7 @@ New targets: `test_temp_controller`, `test_pump_controller`, `test_blespresso_se
 
 **What the module does internally:**
 - Three private helpers handle all serialization/deserialization — `parsingBytesToFloat`, `parsingBytesTo32bitVar`, `encodeFloatToBytes` — these are pure logic, not static, so they can be forward-declared and tested directly.
-- `stgCtrl_ReadUserData` validates the 4-byte key (`0x00AA00AA`) before deserializing. If key is wrong, returns `STORAGE_USERDATA_EMPTY` and leaves the struct untouched.
+- `stgCtrl_ReadUserData` validates the 4-byte key (`0x00AB00AB`) before deserializing. If key is wrong, returns `STORAGE_USERDATA_EMPTY` and leaves the struct untouched.
 - `stgCtrl_StoreShotProfileData` and `stgCtrl_StoreControllerData` perform an atomic **read-modify-write**: read full 65 bytes, update only their section (profile = 32 B at offset 8; PID = 25 B at offset 40), write back the full page — preserving the other section.
 - Write-cycle counters are stored as two packed 16-bit values in the first `uint32_t`: bits [31:16] = shot profile cycles, bits [15:0] = controller cycles.
 
@@ -686,7 +686,7 @@ void fake_Write(uint32_t pg, uint8_t off, uint32_t n, uint8_t* buf) {
 | Test Name | Stimulus | Expected | Issue Validated |
 |-----------|----------|----------|------------------|
 | `test_Init_ForwardsNVMStatus` | `spim_initNVmemory` fake returns `NVM_INIT_OK` | `stgCtrl_Init()` returns same value | Basic wiring |
-| `test_ChkUserData_ValidKey_ReturnsLoaded` | NVM page contains key `0x00AA00AA` at offset 4 | Returns `STORAGE_USERDATA_LOADED` | Key detection |
+| `test_ChkUserData_ValidKey_ReturnsLoaded` | NVM page contains key `0x00AB00AB` at offset 4 | Returns `STORAGE_USERDATA_LOADED` | Key detection |
 | `test_ChkUserData_EmptyFlash_ReturnsEmpty` | NVM page contains `0xFFFFFFFF` at offset 4 | Returns `STORAGE_USERDATA_EMPTY` | Fresh flash detection |
 | `test_ReadUserData_ValidKey_ParsesAllFloats` | Full 65-byte page with known IEEE 754 values (e.g. `temp_Target=93.0f`, `Pid_P_term=5.5f`) | All struct fields match original values ±0.001 | Deserialization correctness |
 | `test_ReadUserData_InvalidKey_LeavesStructUnchanged` | Key bytes are `0xDEADBEEF` | Returns `STORAGE_USERDATA_EMPTY`; struct fields not modified | Guard against corrupt flash |
@@ -894,13 +894,12 @@ profileValidation_status_t fcn_ValidateAndClampProfile(
     all_valid &= fcn_ValidateFloat_InRange(&profile->prof_InfuseTmr,    0.0f,  60.0f,  25.0f);
     all_valid &= fcn_ValidateFloat_InRange(&profile->Prof_DeclineTmr,   0.0f,  30.0f,  10.0f);
     /* PID gains */
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_P_term,       0.0f, 100.0f,   9.5f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_I_term,       0.0f,  10.0f,   0.3f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Iboost_term,  0.0f,  20.0f,   6.5f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Imax_term,    0.0f, 500.0f, 100.0f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_D_term,       0.0f,  50.0f,   0.0f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Dlpf_term,    0.0f,   1.0f,   0.0f);
-    all_valid &= fcn_ValidateFloat_InRange(&profile->Pid_Gain_term,    0.01f, 10.0f,   1.0f);
+    all_valid &= validate_float_in_range(&profile->pidPTerm,          0.0f, 100.0f,   9.5f);
+    all_valid &= validate_float_in_range(&profile->pidITerm,          0.0f,  10.0f,   0.3f);
+    all_valid &= validate_float_in_range(&profile->pidImaxTerm,       0.0f, 500.0f, 100.0f);
+    all_valid &= validate_float_in_range(&profile->pidDTerm,          0.0f,  50.0f,   0.0f);
+    all_valid &= validate_float_in_range(&profile->pidPboostTerm,     0.0f,  10.0f,   1.0f);
+    all_valid &= validate_float_in_range(&profile->pidIboostTerm,     0.0f,  20.0f,   6.5f);
 
     return all_valid ? PROFILE_VALID : PROFILE_CLAMPED;
 }
@@ -953,13 +952,12 @@ Or call `fcn_ValidateAndClampProfile` once at the end of `cus_evt_handler` for b
 | `prof_InfuseTmr` | 0.0 | 60.0 | 25.0 | s |
 | `Prof_DeclinePwr` | 0.0 | 100.0 | 60.0 | % |
 | `Prof_DeclineTmr` | 0.0 | 30.0 | 10.0 | s |
-| `Pid_P_term` | 0.0 | 100.0 | 9.5 | — |
-| `Pid_I_term` | 0.0 | 10.0 | 0.3 | — |
-| `Pid_Iboost_term` | 0.0 | 20.0 | 6.5 | — |
-| `Pid_Imax_term` | 0.0 | 500.0 | 100.0 | — |
-| `Pid_D_term` | 0.0 | 50.0 | 0.0 | — |
-| `Pid_Dlpf_term` | 0.0 | 1.0 | 0.0 | — |
-| `Pid_Gain_term` | 0.01 | 10.0 | 1.0 | — |
+| `pidPTerm` | 0.0 | 100.0 | 9.5 | — |
+| `pidITerm` | 0.0 | 10.0 | 0.3 | — |
+| `pidImaxTerm` | 0.0 | 500.0 | 100.0 | — |
+| `pidDTerm` | 0.0 | 50.0 | 0.0 | — |
+| `pidPboostTerm` | 0.0 | 10.0 | 1.0 | — |
+| `pidIboostTerm` | 0.0 | 20.0 | 6.5 | — |
 
 ---
 

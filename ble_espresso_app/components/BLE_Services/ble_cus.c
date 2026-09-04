@@ -106,7 +106,7 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
         p_cus->evt_handler(p_cus, &evt);
     }
     // Writing to this Custom Value Characteristic: BLE_CHAR_STEAM_TEMP_UUID
-    else if (p_evt_write->handle == p_cus->brew_temp_char_handles.value_handle)
+    else if (p_evt_write->handle == p_cus->steam_temp_char_handles.value_handle)
     {
         evt.param_command.Steam_temp_s.ptr_data  = p_evt_write->data;
         evt.param_command.Steam_temp_s.length    = p_evt_write->len;
@@ -187,14 +187,6 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
         evt.evt_type = PID_I_TERM_INT_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: pidITerm_WINDUP_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_Iwindup_char_handles.value_handle)
-    {
-        evt.param_command.PidIwindupTerm_s.ptr_data  = p_evt_write->data;
-        evt.param_command.PidIwindupTerm_s.length    = p_evt_write->len;
-        evt.evt_type = PID_I_TERM_WINDUP_CHAR_RX_EVT;
-        p_cus->evt_handler(p_cus, &evt);
-    }
     // Writing to this Custom Value Characteristic: pidDTerm_CHAR_RX_EVT
     else if (p_evt_write->handle == p_cus->pid_Dterm_char_handles.value_handle)
     {
@@ -203,20 +195,20 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
         evt.evt_type = PID_D_TERM_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: pidDTerm_LPF_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_DlpfTerm_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: PID_P_BOOST_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->pid_Pboost_char_handles.value_handle)
     {
-        evt.param_command.PidDlpfTerm_s.ptr_data  = p_evt_write->data;
-        evt.param_command.PidDlpfTerm_s.length    = p_evt_write->len;
-        evt.evt_type = PID_D_TERM_LPF_CHAR_RX_EVT;
+        evt.param_command.PidPboost_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidPboost_s.length    = p_evt_write->len;
+        evt.evt_type = PID_P_BOOST_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }
-    // Writing to this Custom Value Characteristic: PID_GAIN___CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->pid_GainTerm_char_handles.value_handle)
+    // Writing to this Custom Value Characteristic: PID_I_BOOST_CHAR_RX_EVT
+    else if (p_evt_write->handle == p_cus->pid_Iboost_char_handles.value_handle)
     {
-        evt.param_command.PidGainTerm_s.ptr_data  = p_evt_write->data;
-        evt.param_command.PidGainTerm_s.length    = p_evt_write->len;
-        evt.evt_type = PID_GAIN___CHAR_RX_EVT;
+        evt.param_command.PidIboost_s.ptr_data  = p_evt_write->data;
+        evt.param_command.PidIboost_s.length    = p_evt_write->len;
+        evt.evt_type = PID_I_BOOST_CHAR_RX_EVT;
         p_cus->evt_handler(p_cus, &evt);
     }else{}
 }
@@ -606,31 +598,6 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add PID_I_WINDUP_TERM characteristic   
-    memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_PID_I_TERM_WINDUP_UUID;   //set UUID
-    add_char_param.uuid_type        = p_cus->uuid_type;
-    add_char_param.init_len         = 1;                             
-    add_char_param.max_len          = 1;
-    if(ptr_initVal->pidIwindupTerm == true)
-    {
-      initValueChar[0] = '1';
-      add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
-    }else{
-      initValueChar[0] = '0';
-      add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
-    } 
-    add_char_param.char_props.read  = 1;                  //Enable Read
-    add_char_param.char_props.write = 1;                  //Enable write
-    add_char_param.char_props.notify= 0;
-    add_char_param.read_access      = SEC_OPEN;
-    add_char_param.write_access     = SEC_OPEN;
-    err_code = characteristic_add(p_cus->service_handle, 
-                                  &add_char_param,
-                                  &p_cus->pid_Iwindup_char_handles);
-    if (err_code != NRF_SUCCESS)
-    { return err_code;  }
-
     // Add BLE_CHAR_pidDTerm characteristic
     //uint8_t pidDterm[3] = {'0','0','0'};  //0.0  
     float_to_chr_array(ptr_initVal->pidDTerm,(uint8_t*)&initValueChar[0],2,1);  
@@ -651,46 +618,46 @@ static uint32_t ble_cus_controller_char_add(ble_cus_t * p_cus, const ble_cus_ini
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_pidDTerm_LPF characteristic
-    //uint8_t pidDlpfTerm[4] = {'0','0','0','0'};  //0.0 
-    float_to_chr_array(ptr_initVal->pidDlpfTerm,(uint8_t*)&initValueChar[0],3,1);   
+    // Add BLE_CHAR_PID_P_BOOST characteristic
+    //uint8_t pidPboost[3] = {'0','0','0'};  //1.0
+    float_to_chr_array(ptr_initVal->pidPboostTerm,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_PID_D_TERM_LPF_UUID;   //set UUID
+    add_char_param.uuid             = BLE_CHAR_PID_P_BOOST_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
-    add_char_param.init_len         = 4;                             
-    add_char_param.max_len          = 4;
+    add_char_param.init_len         = 3;
+    add_char_param.max_len          = 3;
     add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
     add_char_param.char_props.read  = 1;                  //Enable Read
     add_char_param.char_props.write = 1;                  //Enable write
     add_char_param.char_props.notify= 0;
     add_char_param.read_access      = SEC_OPEN;
     add_char_param.write_access     = SEC_OPEN;
-    err_code = characteristic_add(p_cus->service_handle, 
+    err_code = characteristic_add(p_cus->service_handle,
                                   &add_char_param,
-                                  &p_cus->pid_DlpfTerm_char_handles);
+                                  &p_cus->pid_Pboost_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    // Add BLE_CHAR_pidDTerm_LPF characteristic
-    //uint8_t pidGainTerm[4] = {'0','0','0','0'};  //0.0  
-    float_to_chr_array(ptr_initVal->pidGainTerm,(uint8_t*)&initValueChar[0],3,1);  
+    // Add BLE_CHAR_PID_I_BOOST characteristic
+    //uint8_t pidIboost[3] = {'0','0','0'};  //6.5
+    float_to_chr_array(ptr_initVal->pidIboostTerm,(uint8_t*)&initValueChar[0],2,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
-    add_char_param.uuid             = BLE_CHAR_PID_GAIN___UUID;   //set UUID
+    add_char_param.uuid             = BLE_CHAR_PID_I_BOOST_UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
-    add_char_param.init_len         = 4;                             
-    add_char_param.max_len          = 4;
+    add_char_param.init_len         = 3;
+    add_char_param.max_len          = 3;
     add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
     add_char_param.char_props.read  = 1;                  //Enable Read
     add_char_param.char_props.write = 1;                  //Enable write
     add_char_param.char_props.notify= 0;
     add_char_param.read_access      = SEC_OPEN;
     add_char_param.write_access     = SEC_OPEN;
-    err_code = characteristic_add(p_cus->service_handle, 
+    err_code = characteristic_add(p_cus->service_handle,
                                   &add_char_param,
-                                  &p_cus->pid_GainTerm_char_handles);
+                                  &p_cus->pid_Iboost_char_handles);
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
-   
+
     return NRF_SUCCESS;
 }
 

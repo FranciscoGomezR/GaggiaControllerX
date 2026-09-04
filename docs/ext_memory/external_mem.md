@@ -38,9 +38,9 @@ The application stores all user-configurable data (brew profile + PID parameters
 | Byte Address | Size | Field | Type | Description |
 |---|---|---|---|---|
 | `0x00`–`0x03` | 4 B | `nvmWcycles` | `uint32_t` | Write-cycle counter — MSW: Shot profile writes, LSW: Controller writes |
-| `0x04`–`0x07` | 4 B | `nvmKey` | `uint32_t` | Magic key `0x00AA00AA` — if present, data is valid; `0xFFFFFFFF` = empty |
-| `0x08`–`0x0B` | 4 B | `temp_Target` | `float` | Brew target temperature (°C) |
-| `0x0C`–`0x0F` | 4 B | *(reserved)* | — | Reserved / unused (`0x00000000`) |
+| `0x04`–`0x07` | 4 B | `nvmKey` | `uint32_t` | Magic key `0x00AB00AB` — if present, data is valid; `0xFFFFFFFF` = empty |
+| `0x08`–`0x0B` | 4 B | `brewTempDegC` | `float` | Brew preset temperature (°C) |
+| `0x0C`–`0x0F` | 4 B | `steamTempDegC` | `float` | Steam preset temperature (°C) |
 | `0x10`–`0x13` | 4 B | `prof_preInfusePwr` | `float` | Pre-infusion pump power (0–100.0 %) |
 | `0x14`–`0x17` | 4 B | `prof_preInfuseTmr` | `float` | Pre-infusion duration (seconds) |
 | `0x18`–`0x1B` | 4 B | `prof_InfusePwr` | `float` | Infusion pump power (0–100.0 %) |
@@ -51,11 +51,20 @@ The application stores all user-configurable data (brew profile + PID parameters
 | `0x2C`–`0x2F` | 4 B | `Pid_I_term` | `float` | PID integral gain (Ki) |
 | `0x30`–`0x33` | 4 B | `Pid_Imax_term` | `float` | PID integral limit |
 | `0x34`–`0x37` | 4 B | `Pid_D_term` | `float` | PID derivative gain (Kd) |
-| `0x38`–`0x3B` | 4 B | `Pid_Dlpf_term` | `float` | PID D-term low-pass filter cutoff |
-| `0x3C`–`0x3F` | 4 B | `Pid_Gain_term` | `float` | PID overall gain |
-| `0x40` | 1 B | `Pid_Iwindup_term` | `bool` | Anti-windup enable flag |
+| `0x38`–`0x3B` | 4 B | `pid_Pboost` | `float` | Phase-1 proportional-gain boost multiplier |
+| `0x3C`–`0x3F` | 4 B | `pid_Iboost` | `float` | Phase-1 integral-gain boost multiplier |
+| `0x40` | 1 B | *(unused)* | — | Was `pid_Iwindup` — removed 2026-08-30; anti-windup is now always enabled when the I term is active |
 
-**Total: 65 bytes** (of a 256-byte page)
+**Total: 64 bytes used** (of a 256-byte page)
+
+> **`nvmKey` is a FIXED value — do not modify.** The magic key must never be
+> changed by a human developer or an AI agent. Changing it silently invalidates
+> every already-provisioned unit's stored config.
+
+> **Key bump (2026-08-29):** `nvmKey` changed `0x00AA00AA` → `0x00AB00AB` because slots
+> `0x38`/`0x3C` were repurposed (`Pid_Dlpf_term`/`Pid_Gain_term` removed, `pid_Pboost`/`pid_Iboost`
+> added). Units provisioned with the old key read as *empty* on load (defaults applied) and will
+> not re-persist until the param page is erased.
 
 ### Logical Sections Within User Data
 
@@ -88,15 +97,15 @@ block-beta
       WC2["LSW: Controller Write Count"]
     end
 
-    block:key["0x04–0x07 : nvmKey = 0x00AA00AA"]
+    block:key["0x04–0x07 : nvmKey = 0x00AB00AB"]
       columns 1
-      K1["Magic Key — validates stored data"]
+      K1["Magic Key — validates stored data — FIXED, never modify"]
     end
 
     block:shot["0x08–0x27 : Shot Profile (32 bytes)"]
       columns 3
-      S1["temp_Target"]
-      S2["(reserved)"]
+      S1["brewTempDegC"]
+      S2["steamTempDegC"]
       S3["preInfusePwr"]
       S4["preInfuseTmr"]
       S5["InfusePwr"]
@@ -106,15 +115,14 @@ block-beta
       space
     end
 
-    block:ctrl["0x28–0x40 : Controller Profile (25 bytes)"]
+    block:ctrl["0x28–0x3F : Controller Profile (24 bytes)"]
       columns 3
       C1["Pid_P_term"]
       C2["Pid_I_term"]
       C3["Pid_Imax_term"]
       C4["Pid_D_term"]
-      C5["Pid_Dlpf_term"]
-      C6["Pid_Gain_term"]
-      C7["Pid_Iwindup"]
+      C5["pid_Pboost"]
+      C6["pid_Iboost"]
       space
       space
     end
@@ -131,7 +139,7 @@ block-beta
 
 1. **Read** the entire 65-byte user data block from Page 0.
 2. **Check** the magic key at `0x04`:
-   - `0x00AA00AA` → data exists; preserve unchanged sections.
+   - `0x00AB00AB` → data exists; preserve unchanged sections.
    - `0xFFFFFFFF` → first write; embed the key.
 3. **Increment** the appropriate write-cycle counter in `nvmWcycles`.
 4. **Encode** updated float values into the TX buffer.

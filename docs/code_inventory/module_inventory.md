@@ -301,7 +301,7 @@ A machine agent will later apply all non-blank proposals to the source files.
 |----------|-----------|-------------|---------------|
 | `test_set_milisTicks` | `void (uint32_t)` | Injects a millisecond count for deterministic PID delta-time in unit tests |  |
 | `test_get_milisTicks` | `uint32_t (void)` | Reads back `milisTicks` for assertion |  |
-| `test_get_integral_error` | `float (void)` | Reads back `sctrl_profile_main.HistoryError` for I-term assertions |  |
+| `test_get_integral_error` | `float (void)` | Reads back `Profile_ctrl_main_s.historyError` for I-term assertions |  |
 
 ---
 
@@ -888,14 +888,12 @@ A machine agent will later apply all non-blank proposals to the source files.
 | `prof_InfuseTmr` | `float` | Infusion stage duration (seconds) |  |
 | `Prof_DeclinePwr` | `float` | Decline stage pump power (0–100 %) |  |
 | `Prof_DeclineTmr` | `float` | Decline stage duration (seconds) |  |
-| `Pid_P_term` | `float` | PID proportional gain Kp |  |
-| `Pid_I_term` | `float` | PID integral gain Ki |  |
-| `Pid_Iboost_term` | `float` | PID integral boost multiplier used during brew phase 1 |  |
-| `Pid_Imax_term` | `float` | PID integrator anti-windup clamp limit |  |
-| `Pid_Iwindup_term` | `bool` | Enable flag for PID integrator anti-windup |  |
-| `Pid_D_term` | `float` | PID derivative gain Kd |  |
-| `Pid_Dlpf_term` | `float` | D-term low-pass filter cutoff frequency (Hz) |  |
-| `Pid_Gain_term` | `float` | Overall PID output gain multiplier |  |
+| `pidPTerm` | `float` | PID proportional gain Kp |  |
+| `pidITerm` | `float` | PID integral gain Ki |  |
+| `pidImaxTerm` | `float` | PID integrator anti-windup clamp limit |  |
+| `pidDTerm` | `float` | PID derivative gain Kd |  |
+| `pidPboostTerm` | `float` | Phase-1 proportional-gain boost multiplier (BLE `0x1505`) |  |
+| `pidIboostTerm` | `float` | Phase-1 integral-gain boost multiplier (BLE `0x1506`) |  |
 
 ---
 
@@ -1018,13 +1016,12 @@ A machine agent will later apply all non-blank proposals to the source files.
 | `param_command.s_InfuseTmr` | `struct_CharData` | Payload for infusion timer write |  |
 | `param_command.s_DeclinePwr` | `struct_CharData` | Payload for decline power write |  |
 | `param_command.s_DeclineTmr` | `struct_CharData` | Payload for decline timer write |  |
-| `param_command.sPid_P_term` | `struct_CharData` | Payload for PID Kp write |  |
-| `param_command.sPid_I_term` | `struct_CharData` | Payload for PID Ki write |  |
-| `param_command.sPid_Imax_term` | `struct_CharData` | Payload for PID integrator limit write |  |
-| `param_command.sPid_Iwindup_term` | `struct_CharData` | Payload for PID anti-windup enable write |  |
-| `param_command.sPid_D_term` | `struct_CharData` | Payload for PID Kd write |  |
-| `param_command.sPid_Dlpf_term` | `struct_CharData` | Payload for D-term LPF cutoff write |  |
-| `param_command.sPid_Gain_term` | `struct_CharData` | Payload for PID output gain write |  |
+| `param_command.PidPTerm_s` | `struct_CharData` | Payload for PID Kp write |  |
+| `param_command.PidITerm_s` | `struct_CharData` | Payload for PID Ki write |  |
+| `param_command.PidImaxTerm_s` | `struct_CharData` | Payload for PID integrator limit write |  |
+| `param_command.PidDTerm_s` | `struct_CharData` | Payload for PID Kd write |  |
+| `param_command.PidPboost_s` | `struct_CharData` | Payload for phase-1 P-boost multiplier write |  |
+| `param_command.PidIboost_s` | `struct_CharData` | Payload for phase-1 I-boost multiplier write |  |
 
 ---
 
@@ -1048,10 +1045,9 @@ A machine agent will later apply all non-blank proposals to the source files.
 | `pid_Pterm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID Kp characteristic |  |
 | `pid_Iterm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID Ki characteristic |  |
 | `pid_ImaxTerm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID I-limit characteristic |  |
-| `pid_Iwindup_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID anti-windup characteristic |  |
 | `pid_Dterm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID Kd characteristic |  |
-| `pid_DlpfTerm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for D-term LPF characteristic |  |
-| `pid_GainTerm_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for PID gain characteristic |  |
+| `pid_Pboost_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for phase-1 P-boost characteristic |  |
+| `pid_Iboost_char_attr` | `ble_srv_cccd_security_mode_t` | Security mode for phase-1 I-boost characteristic |  |
 
 ---
 
@@ -1076,10 +1072,9 @@ A machine agent will later apply all non-blank proposals to the source files.
 | `pid_Pterm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID Kp characteristic |  |
 | `pid_Iterm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID Ki characteristic |  |
 | `pid_ImaxTerm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID I-limit characteristic |  |
-| `pid_Iwindup_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID anti-windup characteristic |  |
 | `pid_Dterm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID Kd characteristic |  |
-| `pid_DlpfTerm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for D-term LPF characteristic |  |
-| `pid_GainTerm_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for PID gain characteristic |  |
+| `pid_Pboost_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for phase-1 P-boost characteristic |  |
+| `pid_Iboost_char_handles` | `ble_gatts_char_handles_t` | GATTS handles for phase-1 I-boost characteristic |  |
 | `conn_handle` | `uint16_t` | Active BLE connection handle; `BLE_CONN_HANDLE_INVALID` when disconnected |  |
 | `uuid_type` | `uint8_t` | UUID type index assigned by SoftDevice when the vendor UUID was registered |  |
 
@@ -1110,72 +1105,42 @@ A machine agent will later apply all non-blank proposals to the source files.
 
 ---
 
-### `input_PID_Block_fStruct`
+### `pid_input_t`
 **File:** `x205_PID_Block.h`  
-**Rename type to:**
+Was `input_PID_Block_fStruct`. Members renamed to snake_case (struct elements per convention are camelCase; scalar leaf fields carry unit suffixes).
 
-| Member | Type | Description | Proposed Name |
-|--------|------|-------------|---------------|
-| `ProcessVariable` | `float` | Current measured value fed into the PID (e.g. boiler temperature) |  |
-| `SetPoint` | `float` | Desired target value |  |
-| `TimeMilis` | `uint32_t` | Current timestamp in milliseconds used to compute dt |  |
+| Member | Type | Description |
+|--------|------|-------------|
+| `processVariable` | `float` | Current measured value fed into the PID (e.g. boiler temperature) |
+| `setPoint` | `float` | Desired target value |
+| `timeMsecs` | `uint32_t` | Current timestamp in milliseconds used to compute dt (was `TimeMilis`) |
 
 ---
 
-### `PID_Block_fStruct`
+### `pid_imc_block_t`
 **File:** `x205_PID_Block.h`  
-**Rename type to:**
+Was `PID_IMC_Block_fStruct`. Renamed and re-laid-out for memory efficiency: all `float` fields grouped to remove alignment padding; the eight scattered `int8_t` control/status flags collapsed into one `bool` bitfield byte plus a single `int8_t` for the 3-state saturation flag (≈12 bytes saved per instance, ×3 static instances in `tempController.c`).
 
-| Member | Type | Description | Proposed Name |
-|--------|------|-------------|---------------|
-| `feedPIDblock` | `input_PID_Block_fStruct` | Current PV, setpoint, and timestamp inputs |  |
-| `PrevError` | `float` | Error value from the previous iteration (used for D-term) |  |
-| `prevT_Milis` | `float` | Timestamp of the previous iteration (ms) |  |
-| `OutputLimit` | `float` | Symmetric clamp applied to the PID output |  |
-| `OutputSaturationOut` | `int8_t` | Saturation status flag: +1, −1, or 0 |  |
-| `Output` | `float` | Current PID output value after clamping |  |
-| `P_TERM_CTRL` | `bool` | Enable flag for the proportional term |  |
-| `Kp` | `float` | Proportional gain |  |
-| `I_TERM_CTRL` | `bool` | Enable flag for the integral term |  |
-| `Ki` | `float` | Integral gain |  |
-| `HistoryError` | `float` | Accumulated integral (sum of error × dt) |  |
-| `IntegralLimit` | `float` | Anti-windup clamp on the integrator accumulator |  |
-| `I_ANTIWINDUP_CTRL` | `bool` | Enable flag for integrator anti-windup clamping |  |
-| `WindupClampStatus` | `bool` | True when the integrator is currently clamped |  |
-| `D_TERM_CTRL` | `bool` | Enable flag for the derivative term |  |
-| `Kd` | `float` | Derivative gain |  |
-| `D_TERM_LP_FILTER_CTRL` | `bool` | Enable flag for the D-term low-pass filter |  |
-| `sLPF_Param` | `lpf_rc_param_t` | RC low-pass filter state for D-term noise suppression |  |
-| `LPF_FCUTOFF_HZ` | `float` | D-term LPF cutoff frequency (Hz) |  |
-
----
-
-### `PID_IMC_Block_fStruct`
-**File:** `x205_PID_Block.h`  
-**Rename type to:**
-
-| Member | Type | Description | Proposed Name |
-|--------|------|-------------|---------------|
-| `feedPIDblock` | `input_PID_Block_fStruct` | Current PV, setpoint, and timestamp inputs |  |
-| `prevT_Milis` | `float` | Timestamp of the previous iteration (ms) |  |
-| `errorK_1` | `float` | Error at previous sample k−1 |  |
-| `errorK_2` | `float` | Error at sample k−2 (used in IMC Type-B velocity form) |  |
-| `OutputLimit` | `float` | Symmetric clamp applied to the PID output |  |
-| `OutputSaturationOut` | `int8_t` | Saturation status flag: +1, −1, or 0 |  |
-| `Output` | `float` | Current PID output value after clamping |  |
-| `P_TERM_CTRL` | `bool` | Enable flag for the proportional term |  |
-| `Kp` | `float` | Proportional gain |  |
-| `I_TERM_CTRL` | `bool` | Enable flag for the integral term |  |
-| `I_ANTIWINDUP_CTRL` | `bool` | Enable flag for integrator anti-windup clamping |  |
-| `Ki` | `float` | Integral gain |  |
-| `HistoryError` | `float` | Accumulated integral (sum of error × dt) |  |
-| `IntegralError` | `float` | Current raw integral error before anti-windup clamp |  |
-| `IntegralLimit` | `float` | Anti-windup clamp on the integrator accumulator |  |
-| `WindupClampStatus` | `bool` | True when the integrator is currently clamped |  |
-| `D_TERM_CTRL` | `bool` | Enable flag for the derivative term |  |
-| `D_TERM_FILTER_CTRL` | `bool` | Enable flag for the D-term filter |  |
-| `prevPV` | `float` | Previous process variable value (used for IMC Type-B D on PV) |  |
-| `Kd` | `float` | Derivative gain |  |
+| Member | Type | Description | Former name |
+|--------|------|-------------|-------------|
+| `feedPidBlock` | `pid_input_t` | Current PV, setpoint, and timestamp inputs | `feedPIDblock` |
+| `prevTimeMsecs` | `uint32_t` | Timestamp of the previous iteration (ms); was `float` | `prevT_Milis` |
+| `errorK1` | `float` | Error at previous sample k−1 | `errorK_1` |
+| `errorK2` | `float` | Error at sample k−2 (used in IMC Type-B velocity form) | `errorK_2` |
+| `output` | `float` | Current PID output value after clamping | `Output` |
+| `outputLimit` | `float` | Symmetric clamp applied to the PID output | `OutputLimit` |
+| `kp` | `float` | Proportional gain | `Kp` |
+| `ki` | `float` | Integral gain | `Ki` |
+| `historyError` | `float` | Accumulated integral (sum of error × dt) | `HistoryError` |
+| `integralError` | `float` | Current raw integral error before anti-windup clamp | `IntegralError` |
+| `integralLimit` | `float` | Anti-windup clamp on the integrator accumulator | `IntegralLimit` |
+| `kd` | `float` | Derivative gain | `Kd` |
+| `outputSaturation` | `int8_t` | 3-state saturation flag: `POSITIVE_SATURATION` / `NEGATIVE_SATURATION` / `NO_SATURATION` | `OutputSaturationOut` |
+| `isPTermEnabled` | `bool : 1` | Enable flag for the proportional term | `P_TERM_CTRL` |
+| `isITermEnabled` | `bool : 1` | Enable flag for the integral term | `I_TERM_CTRL` |
+| `isIAntiwindupEnabled` | `bool : 1` | Enable flag for integrator anti-windup clamping | `I_ANTIWINDUP_CTRL` |
+| `isDTermEnabled` | `bool : 1` | Enable flag for the derivative term | `D_TERM_CTRL` |
+| `flagWindupClamped` | `bool : 1` | True when the integrator is currently clamped | `WindupClampStatus` |
 
 ---
 

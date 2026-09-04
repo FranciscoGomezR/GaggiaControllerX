@@ -39,37 +39,36 @@
 //*****************************************************************************
 typedef struct
 {
-    float ProcessVariable;
-    float SetPoint;
-    uint32_t TimeMilis;
+    float       processVariable;
+    float       setPoint;
+    uint32_t    timeMsecs;
 }pid_input_t;
- 
+
 typedef struct
 {
-    pid_input_t feedPIDblock;
-    float   prevT_Milis;
-    float   errorK_1;
-    float   errorK_2;
-    
-    float   OutputLimit;
-    int8_t  OutputSaturationOut;
-    float   Output;
+    pid_input_t feedPidBlock;
+    uint32_t    prevTimeMsecs;
+    float       errorK1;
+    float       errorK2;
+    float       output;
+    float       outputLimit;
 
-    bool    P_TERM_CTRL;
-    float   Kp;
+    float       kp;
+    float       ki;
+    float       historyError;
+    float       integralError;
+    float       integralLimit;
+    float       kd;
 
-    bool    I_TERM_CTRL;
-    bool    I_ANTIWINDUP_CTRL;
-    float   Ki;
-    float   HistoryError;
-    float   IntegralError;
-    float   IntegralLimit;
-    bool    WindupClampStatus;
+    /* 3-state saturation flag (NO/POSITIVE/NEGATIVE_SATURATION) */
+    int8_t      outputSaturation;
 
-    bool    D_TERM_CTRL;
-    bool    D_TERM_FILTER_CTRL;
-    float   prevPV;
-    float   Kd;  
+    /* control/status flags packed into one storage unit */
+    bool        isPTermEnabled       : 1;
+    bool        isITermEnabled       : 1;
+    bool        isIAntiwindupEnabled : 1;
+    bool        isDTermEnabled       : 1;
+    bool        flagWindupClamped    : 1;
 }pid_imc_block_t;
 
 //*****************************************************************************

@@ -645,7 +645,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             #endif
             g_Espresso_user_config_s.boilerTempSetpointDegC = (float) chr_array_to_float((char *)p_evt->param_command.Boiler_temp_set_point_s.ptr_data,3,1);
             /* H2 fix: reject values outside safe operating range */
-            validate_float_in_range((float *)&g_Espresso_user_config_s.boilerTempSetpointDegC, 20.0f, 110.0f, 93.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.boilerTempSetpointDegC,
+                BOILER_SETPOINT_TEMP_MIN_DEGC, BOILER_SETPOINT_TEMP_MAX_DEGC, BOILER_SETPOINT_TEMP_DEFAULT_DEGC);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m TARGET Temp: %d . %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.boilerTempSetpointDegC);
             #endif
@@ -656,7 +657,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             NRF_LOG_DEBUG("BLE -> New BREW Temperature");
             #endif
             g_Espresso_user_config_s.brewTempDegC = (float) chr_array_to_float((char *)p_evt->param_command.Brew_temp_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.steamTempDegC, 10.0f, 99.5f, 95.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.brewTempDegC,
+                BREW_TEMP_MIN_DEGC, BREW_TEMP_MAX_DEGC, BREW_TEMP_DEFAULT_DEGC);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m BREW Preset Temp: %d . %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.brewTempDegC);
             #endif
@@ -668,7 +670,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
           NRF_LOG_DEBUG("BLE -> New STEAM Temperature");
           #endif
           g_Espresso_user_config_s.steamTempDegC = (float) chr_array_to_float((char *)p_evt->param_command.Steam_temp_s.ptr_data,3,1);
-          validate_float_in_range((float *)&g_Espresso_user_config_s.steamTempDegC, 99.5f, 140.0f, 125.0f);
+          validate_float_in_range((float *)&g_Espresso_user_config_s.steamTempDegC,
+              STEAM_TEMP_MIN_DEGC, STEAM_TEMP_MAX_DEGC, STEAM_TEMP_DEFAULT_DEGC);
           #if(NRF_LOG_ENABLED == 1)
           NRF_LOG_INFO("\033[0;36m STEAM Preset Temp: %d . %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.steamTempDegC);
           #endif
@@ -700,7 +703,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_POWER */
         case BLE_BREW_PRE_INFUSION_POWER_CHAR_RX_EVT:
             g_Espresso_user_config_s.profPreInfusePwr = (float) chr_array_to_float((char *)p_evt->param_command.PreInfusePwr_s.ptr_data,2,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.profPreInfusePwr, 0.0f, 100.0f, 50.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.profPreInfusePwr,
+                PROF_PREINFUSE_PWR_MIN_PWR, PROF_PREINFUSE_PWR_MAX_PWR, PROF_PREINFUSE_PWR_DEFAULT_PWR);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m PreInfusion POWER: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.profPreInfusePwr);
             #endif
@@ -708,7 +712,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  BREW_PRE_INFUSION_TIME */
         case BLE_BREW_PRE_INFUSION_TIME__CHAR_RX_EVT:
             g_Espresso_user_config_s.profPreInfuseTmr = (float) chr_array_to_float((char *)p_evt->param_command.PreInfuseTmr_s.ptr_data,2,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.profPreInfuseTmr, 0.0f, 15.0f, 3.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.profPreInfuseTmr,
+                PROF_PREINFUSE_TMR_MIN_SECS, PROF_PREINFUSE_TMR_MAX_SECS, PROF_PREINFUSE_TMR_DEFAULT_SECS);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m PreInfusion TIME: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.profPreInfuseTmr);
             #endif
@@ -716,7 +721,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  BREW_INFUSION_POWER */
         case BLE_BREW_INFUSION_POWER_CHAR_RX_EVT:
             g_Espresso_user_config_s.profInfusePwr = (float) chr_array_to_float((char *)p_evt->param_command.InfusePwr_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.profInfusePwr, 0.0f, 100.0f, 100.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.profInfusePwr,
+                PROF_INFUSE_PWR_MIN_PWR, PROF_INFUSE_PWR_MAX_PWR, PROF_INFUSE_PWR_DEFAULT_PWR);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Infusion POWER: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.profInfusePwr);
             #endif
@@ -724,7 +730,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
      /* Event -> Get new value from mobile for char:  BREW_INFUSION_TIME */
         case BLE_BREW_INFUSION_TIME__CHAR_RX_EVT:
             g_Espresso_user_config_s.profInfuseTmr = (float) chr_array_to_float((char *)p_evt->param_command.InfuseTmr_s.ptr_data,2,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.profInfuseTmr, 0.0f, 60.0f, 25.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.profInfuseTmr,
+                PROF_INFUSE_TMR_MIN_SECS, PROF_INFUSE_TMR_MAX_SECS, PROF_INFUSE_TMR_DEFAULT_SECS);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Infusion TIME: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.profInfuseTmr);
             #endif
@@ -732,7 +739,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  BREW_DECLINING_PR_POWER */
         case BLE_BREW_DECLINING_PR_POWER_CHAR_RX_EVT:
             g_Espresso_user_config_s.profTaperingPwr = (float) chr_array_to_float((char *)p_evt->param_command.TaperingPwr_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.profTaperingPwr, 0.0f, 100.0f, 60.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.profTaperingPwr,
+                PROF_TAPERING_PWR_MIN_PWR, PROF_TAPERING_PWR_MAX_PWR, PROF_TAPERING_PWR_DEFAULT_PWR);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Declining Pressure POWER: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.profTaperingPwr);
             #endif
@@ -750,7 +758,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  pidPTerm */
         case PID_P_TERM_CHAR_RX_EVT:
             g_Espresso_user_config_s.pidPTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidPTerm_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.pidPTerm, 0.0f, 100.0f, 9.5f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidPTerm,
+                PID_P_TERM_MIN, PID_P_TERM_MAX, PID_P_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m P Term: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidPTerm);
             #endif
@@ -758,7 +767,8 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  pidITerm */
         case PID_I_TERM_CHAR_RX_EVT:
             g_Espresso_user_config_s.pidITerm = (float) chr_array_to_float((char *)p_evt->param_command.PidITerm_s.ptr_data,2,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.pidITerm, 0.0f, 10.0f, 0.3f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidITerm,
+                PID_I_TERM_MIN, PID_I_TERM_MAX, PID_I_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m I term: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidITerm);
             #endif
@@ -766,53 +776,37 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
     /* Event -> Get new value from mobile for char:  pidITerm_INT */
         case PID_I_TERM_INT_CHAR_RX_EVT:
             g_Espresso_user_config_s.pidImaxTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidImaxTerm_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.pidImaxTerm, 0.0f, 500.0f, 100.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidImaxTerm,
+                PID_I_MAX_TERM_MIN, PID_I_MAX_TERM_MAX, PID_I_MAX_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m Imax Term: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidImaxTerm);
             #endif
         break;
-     /* Event -> Get new value from mobile for char:  pidITerm_WINDUP */
-        case PID_I_TERM_WINDUP_CHAR_RX_EVT:
-            if(i_target_temp == 0U)
-            {
-              g_Espresso_user_config_s.pidIwindupTerm = false;
-              #if(NRF_LOG_ENABLED == 1)
-              NRF_LOG_INFO("\033[0;36m I windup Term: FALSE \r\n \033[0;40m");
-              #endif
-            }else if (i_target_temp == 1U)
-            {
-              g_Espresso_user_config_s.pidIwindupTerm = true;
-              #if(NRF_LOG_ENABLED == 1)
-              NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
-              #endif
-            }else{
-              g_Espresso_user_config_s.pidIwindupTerm = true;
-              #if(NRF_LOG_ENABLED == 1)
-              NRF_LOG_INFO("\033[0;36m I windup Term: TRUE \r\n \033[0;40m");
-              #endif
-            }
-        break;
      /* Event -> Get new value from mobile for char:  pidDTerm */
         case PID_D_TERM_CHAR_RX_EVT:
             g_Espresso_user_config_s.pidDTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidDTerm_s.ptr_data,2,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.pidDTerm, 0.0f, 50.0f, 0.0f);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidDTerm,
+                PID_D_TERM_MIN, PID_D_TERM_MAX, PID_D_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\033[0;36m D term: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidDTerm);
             #endif
         break;
-     /* Event -> Get new value from mobile for char:  pidDTerm_LPF */
-        case PID_D_TERM_LPF_CHAR_RX_EVT:
-            g_Espresso_user_config_s.pidDlpfTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidDlpfTerm_s.ptr_data,3,1);
-            validate_float_in_range((float *)&g_Espresso_user_config_s.pidDlpfTerm, 0.0f, 1.0f, 0.0f);
+     /* Event -> Get new value from mobile for char:  pidPboost */
+        case PID_P_BOOST_CHAR_RX_EVT:
+            g_Espresso_user_config_s.pidPboostTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidPboost_s.ptr_data,2,1);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidPboostTerm,
+                PID_P_BOOST_TERM_MIN, PID_P_BOOST_TERM_MAX, PID_P_BOOST_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
-            NRF_LOG_INFO("\033[0;36m D Low-Pass Filter: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidDlpfTerm);
+            NRF_LOG_INFO("\033[0;36m P boost: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidPboostTerm);
             #endif
         break;
-     /* Event -> Get new value from mobile for char:  PID_GAIN */
-        case PID_GAIN___CHAR_RX_EVT:
-            g_Espresso_user_config_s.pidGainTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidGainTerm_s.ptr_data,3,1);
+     /* Event -> Get new value from mobile for char:  pidIboost */
+        case PID_I_BOOST_CHAR_RX_EVT:
+            g_Espresso_user_config_s.pidIboostTerm = (float) chr_array_to_float((char *)p_evt->param_command.PidIboost_s.ptr_data,2,1);
+            validate_float_in_range((float *)&g_Espresso_user_config_s.pidIboostTerm,
+                PID_I_BOOST_TERM_MIN, PID_I_BOOST_TERM_MAX, PID_I_BOOST_TERM_DEFAULT);
             #if(NRF_LOG_ENABLED == 1)
-            NRF_LOG_INFO("\033[0;36m PID Gain: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidGainTerm);
+            NRF_LOG_INFO("\033[0;36m I boost: %d \r\n \033[0;40m", (int)g_Espresso_user_config_s.pidIboostTerm);
             #endif
             /*  fcn has collected all parameter for the PID controller  */
             flag_pid_cfg = 1U;

@@ -30,10 +30,9 @@
 #define BLE_CHAR_PID_P_TERM_UUID                0x1501
 #define BLE_CHAR_PID_I_TERM_UUID                0x1502
 #define BLE_CHAR_PID_I_MAX_TERM_UUID            0x1503
-#define BLE_CHAR_PID_I_TERM_WINDUP_UUID         0x1504
-#define BLE_CHAR_PID_D_TERM_UUID                0x1505
-#define BLE_CHAR_PID_D_TERM_LPF_UUID            0x1506
-#define BLE_CHAR_PID_GAIN___UUID                0x1507
+#define BLE_CHAR_PID_D_TERM_UUID                0x1504
+#define BLE_CHAR_PID_P_BOOST_UUID               0x1505
+#define BLE_CHAR_PID_I_BOOST_UUID               0x1506
 
 
 /**@brief   Macro for defining a ble_hrs instance.
@@ -81,10 +80,9 @@ typedef enum
     PID_P_TERM_CHAR_RX_EVT,
     PID_I_TERM_CHAR_RX_EVT,
     PID_I_TERM_INT_CHAR_RX_EVT,
-    PID_I_TERM_WINDUP_CHAR_RX_EVT,
     PID_D_TERM_CHAR_RX_EVT,
-    PID_D_TERM_LPF_CHAR_RX_EVT,
-    PID_GAIN___CHAR_RX_EVT,
+    PID_P_BOOST_CHAR_RX_EVT,
+    PID_I_BOOST_CHAR_RX_EVT,
 
     BLE_CUS_EVT_DISCONNECTED,
     BLE_CUS_EVT_CONNECTED
@@ -116,10 +114,9 @@ typedef struct
       struct_CharData PidPTerm_s;
       struct_CharData PidITerm_s;
       struct_CharData PidImaxTerm_s;
-      struct_CharData PidIwindupTerm_s;
       struct_CharData PidDTerm_s;
-      struct_CharData PidDlpfTerm_s;
-      struct_CharData PidGainTerm_s;
+      struct_CharData PidPboost_s;
+      struct_CharData PidIboost_s;
     }param_command;
 } ble_cus_evt_t;
 
@@ -153,10 +150,9 @@ typedef struct
     ble_srv_cccd_security_mode_t  pid_Pterm_char_attr;
     ble_srv_cccd_security_mode_t  pid_Iterm_char_attr;
     ble_srv_cccd_security_mode_t  pid_ImaxTerm_char_attr;
-    ble_srv_cccd_security_mode_t  pid_Iwindup_char_attr;
     ble_srv_cccd_security_mode_t  pid_Dterm_char_attr;
-    ble_srv_cccd_security_mode_t  pid_DlpfTerm_char_attr;
-    ble_srv_cccd_security_mode_t  pid_GainTerm_char_attr;
+    ble_srv_cccd_security_mode_t  pid_Pboost_char_attr;
+    ble_srv_cccd_security_mode_t  pid_Iboost_char_attr;
 
 } ble_cus_init_t;
 
@@ -181,10 +177,9 @@ struct ble_cus_s
     ble_gatts_char_handles_t      pid_p_term_char_handles;
     ble_gatts_char_handles_t      pid_i_term_char_handles;
     ble_gatts_char_handles_t      pid_i_max_term_char_handles;
-    ble_gatts_char_handles_t      pid_Iwindup_char_handles;
     ble_gatts_char_handles_t      pid_Dterm_char_handles;
-    ble_gatts_char_handles_t      pid_DlpfTerm_char_handles;
-    ble_gatts_char_handles_t      pid_GainTerm_char_handles;
+    ble_gatts_char_handles_t      pid_Pboost_char_handles;
+    ble_gatts_char_handles_t      pid_Iboost_char_handles;
 
     uint16_t                      conn_handle;                    /**< Handle of the current connection (as provided by the BLE stack, is BLE_CONN_HANDLE_INVALID if not in a connection). */
     uint8_t                       uuid_type; 

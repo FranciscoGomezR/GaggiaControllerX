@@ -136,7 +136,7 @@ This document maps every module in the BLEspresso embedded application: peripher
 | `fcn_update_PIDimc_typeB()` | IMC Type B — derivative acts on PV only (not SP) |
 | **Anti-windup** | Clamping scheme: when output saturates, integral error is reduced by `I_error -= I_error × dt` |
 | **Structs** | `PID_Block_fStruct` (classic), `PID_IMC_Block_fStruct` (IMC) |
-| **Time Tracking** | Delta-time computed from millisecond tick difference (`TimeMilis` field) |
+| **Time Tracking** | Delta-time computed from millisecond tick difference (`timeMsecs` field) |
 
 ---
 
@@ -190,10 +190,9 @@ This document maps every module in the BLEspresso embedded application: peripher
 | P Term | `0x1501` | Read + Write | Proportional gain |
 | I Term | `0x1502` | Read + Write | Integral gain |
 | I Max | `0x1503` | Read + Write | Integral limit |
-| I Windup | `0x1504` | Read + Write | Anti-windup enable |
-| D Term | `0x1505` | Read + Write | Derivative gain |
-| D LPF | `0x1506` | Read + Write | D-term filter cutoff |
-| Gain | `0x1507` | Read + Write | Overall gain |
+| D Term | `0x1504` | Read + Write | Derivative gain |
+| P Boost | `0x1505` | Read + Write | Phase-1 proportional-gain boost multiplier |
+| I Boost | `0x1506` | Read + Write | Phase-1 integral-gain boost multiplier |
 
 ### 3.3 BLE/BLEspressoServices (.c / .h) — BLE-side struct definition
 
@@ -494,7 +493,7 @@ flowchart LR
         P5["prof_InfusePwr/Tmr"]
         P6["Prof_DeclinePwr/Tmr"]
         P7["Pid_P/I/Iboost/Imax/D"]
-        P8["Pid_Iwindup/Dlpf/Gain"]
+        P8["pidPboost/pidIboost"]
     end
 
     subgraph Readers["📖 Readers ← blEspressoProfile"]

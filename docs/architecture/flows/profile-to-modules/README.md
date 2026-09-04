@@ -12,7 +12,7 @@ This flow documents how data stored in the global `blEspressoProfile` struct is 
 |---|---|---|
 | `temp_Boiler` | `fcn_updateTemperatureController()` | Every 500 ms (via BLEspressoServices monitor tick) |
 | `temp_Target` | `fcn_updateTemperatureController()` | Every 500 ms |
-| `Pid_P_term`, `Pid_I_term`, `Pid_Imax_term`, `Pid_D_term`, `Pid_Iwindup_term` | `fcn_loadPID_ParamToCtrl_Temp()` | At boot (from NVM) or after BLE PID config |
+| `Pid_P_term`, `Pid_I_term`, `Pid_Imax_term`, `Pid_D_term` | `fcn_loadPID_ParamToCtrl_Temp()` | At boot (from NVM) or after BLE PID config |
 | `Pid_Iboost_term` | `fcn_loadIboost_ParamToCtrl_Temp()` | When brew pump activates |
 | `Pid_I_term` (×factor) | `fcn_multiplyI_ParamToCtrl_Temp()` | Post-brew recovery |
 | `sp_BrewTemp`, `sp_StemTemp` | `fcn_loaddSetPoint_ParamToCtrl_Temp()` | Mode transitions |

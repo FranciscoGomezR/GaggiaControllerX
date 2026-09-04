@@ -8,22 +8,22 @@ flowchart LR
 
     subgraph nvm["💾 W25Q64 Flash — Page 0"]
         direction LR
-        KEY["0x04: Magic Key\n0x00AA00AA"]
+        KEY["0x04: Magic Key\n0x00AB00AB\nFIXED - never modify"]
         WCYC["0x00: Write Cycles\nMSW=Shot, LSW=Ctrl"]
         SHOT_NVM["0x08–0x27: Shot Profile\n32 bytes"]
-        CTRL_NVM["0x28–0x40: Controller\n25 bytes"]
+        CTRL_NVM["0x28–0x3F: Controller\n24 bytes"]
     end
 
     subgraph profile["📋 blEspressoProfile"]
         direction LR
         BREW_F["temp_Target\nprof_preInfuse*\nprof_Infuse*\nProf_Decline*"]
-        PID_F["Pid_P/I/Imax\nPid_D/Dlpf/Gain\nPid_Iwindup"]
+        PID_F["pidP/I/Imax/D Term\npidPboost/pidIboost"]
     end
 
     subgraph ble_trigger["📱 BLE Trigger"]
         direction LR
         FLG_B["flg_BrewCfg = 1\n(after DeclineTmr write)"]
-        FLG_P["flg_PidCfg = 1\n(after Gain write)"]
+        FLG_P["flag_pid_cfg = 1\n(after I Boost write)"]
     end
 
     subgraph store["💾 Store Operations"]

@@ -21,11 +21,84 @@
 //*****************************************************************************
 
 #define LOAD_USERDATA_FROM_NVM_EN     0
-#define ALLOW_USERDATA_WR_NVM__EN     1
 #define SET_TEST_USERDATA_EN          1
+#define ALLOW_USERDATA_WR_NVM__EN     1
 
 #define SERVICE_PUMP_ACTION_EN        1
 #define SERVICE_HEAT_ACTION_EN        1
+
+/* ---------------------------------------------------------------------------
+ * espresso_user_config_t field limits.
+ *
+ * Single source of truth for validate_float_in_range() callers
+ * (StorageController.c validate_clamp_data(), bluetooth_drv.c BLE RX handlers).
+ * StorageController.c values are canonical; bluetooth_drv.c was previously
+ * hardcoding its own, drifted, literals for the same fields (STATUS TODO).
+ * --------------------------------------------------------------------------- */
+
+/* ---- Temperature setpoints (degC) ---- */
+#define BOILER_SETPOINT_TEMP_MIN_DEGC      20.0f
+#define BOILER_SETPOINT_TEMP_MAX_DEGC      110.0f
+#define BOILER_SETPOINT_TEMP_DEFAULT_DEGC  95.5f
+
+#define BREW_TEMP_MIN_DEGC                 20.0f
+#define BREW_TEMP_MAX_DEGC                 110.0f
+#define BREW_TEMP_DEFAULT_DEGC             95.0f
+
+#define STEAM_TEMP_MIN_DEGC                100.0f
+#define STEAM_TEMP_MAX_DEGC                160.0f
+#define STEAM_TEMP_DEFAULT_DEGC            110.0f
+
+/* ---- Brew profile power (pwr %) ---- */
+#define PROF_PREINFUSE_PWR_MIN_PWR         0.0f
+#define PROF_PREINFUSE_PWR_MAX_PWR         100.0f
+#define PROF_PREINFUSE_PWR_DEFAULT_PWR     75.0f
+
+#define PROF_INFUSE_PWR_MIN_PWR            0.0f
+#define PROF_INFUSE_PWR_MAX_PWR            100.0f
+#define PROF_INFUSE_PWR_DEFAULT_PWR        100.0f
+
+#define PROF_TAPERING_PWR_MIN_PWR          0.0f
+#define PROF_TAPERING_PWR_MAX_PWR          100.0f
+#define PROF_TAPERING_PWR_DEFAULT_PWR      85.0f
+
+/* ---- Brew profile timers (secs) ---- */
+#define PROF_PREINFUSE_TMR_MIN_SECS        0.0f
+#define PROF_PREINFUSE_TMR_MAX_SECS        15.0f
+#define PROF_PREINFUSE_TMR_DEFAULT_SECS    8.0f
+
+#define PROF_INFUSE_TMR_MIN_SECS           0.0f
+#define PROF_INFUSE_TMR_MAX_SECS           60.0f
+#define PROF_INFUSE_TMR_DEFAULT_SECS       8.0f
+
+#define PROF_TAPERING_TMR_MIN_SECS         0.0f
+#define PROF_TAPERING_TMR_MAX_SECS         30.0f
+#define PROF_TAPERING_TMR_DEFAULT_SECS     8.0f
+
+/* ---- PID gains ---- */
+#define PID_P_TERM_MIN                     0.0f
+#define PID_P_TERM_MAX                     100.0f
+#define PID_P_TERM_DEFAULT                 9.5f
+
+#define PID_I_TERM_MIN                     0.0f
+#define PID_I_TERM_MAX                     10.0f
+#define PID_I_TERM_DEFAULT                 0.3f
+
+#define PID_I_MAX_TERM_MIN                 0.0f
+#define PID_I_MAX_TERM_MAX                 500.0f
+#define PID_I_MAX_TERM_DEFAULT             100.0f
+
+#define PID_D_TERM_MIN                     0.0f
+#define PID_D_TERM_MAX                     50.0f
+#define PID_D_TERM_DEFAULT                 0.0f
+
+#define PID_P_BOOST_TERM_MIN               0.0f
+#define PID_P_BOOST_TERM_MAX               10.0f
+#define PID_P_BOOST_TERM_DEFAULT           1.0f
+
+#define PID_I_BOOST_TERM_MIN               0.0f
+#define PID_I_BOOST_TERM_MAX               20.0f
+#define PID_I_BOOST_TERM_DEFAULT           6.5f
 
 //*****************************************************************************
 //
@@ -50,19 +123,15 @@
 
     float pidPTerm;
     float pidITerm;
-    float pidIboostTerm;
     float pidImaxTerm;
-    bool  pidIwindupTerm;
     float pidDTerm;
-
-    float pidDlpfTerm;  //to Be Deleted
-    float pidGainTerm;  //to Be Deleted
+    float pidPboostTerm;
+    float pidIboostTerm;
    }espresso_user_config_t;
-   //Old Format
-   //   14 floats
+   //Format
+   //   12 floats
    //   2 uint32_t
-   //   1  byte
-   // Equal to 65 bytes
+   // Equal to 56 bytes
 
 typedef enum {
   ESPRESSO_MODE__TUNE = 0,
