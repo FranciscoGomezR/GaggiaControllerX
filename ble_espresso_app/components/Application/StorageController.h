@@ -51,6 +51,7 @@ typedef enum {
   STORAGE_USERDATA_PRINTED,
   STORAGE_PROFILEDATA_STORED,
   STORAGE_CONTROLLERDATA_STORED,
+  STORAGE_USERDATA_ERASED,
   STORAGE_USERDATA_ERROR
 } storage_controller_status_t;
 
@@ -73,6 +74,7 @@ typedef enum {
 //*****************************************************************************
 uint32_t storage_init(void);
 uint32_t storage_has_user_config(void);
+uint32_t storage_erase_user_config(void);
 uint32_t storage_load_user_config(espresso_user_config_t *ptr_rxData);
 uint32_t storage_save_shot_profile(espresso_user_config_t *ptr_sxData);
 uint32_t storage_save_controller_config(espresso_user_config_t *ptr_sxData);

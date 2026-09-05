@@ -1,7 +1,7 @@
-# STATUS Documents
+# STATUS actions
 This document tracks ToDo list on gaggia_controller_git, known bugs and failed attempts that developer shall not push again.
-Everyt time a developer or AID agent works on an item in this list shall update STATUS.md and CHANGELOG.md doc (Link TODO item to its log entry inside CHANGELOG.md for good tracebility)
-
+Everyt time a developer or AID agent works on a TODO item in this list, he shall mark downthe item and add link comment in STATUS.md to CHANGELOG.md doc that contains details of what changed.
+After a TODO item has been marked down, generate a commit-comment to be used by user; Follow Conventional Commits spec: https://www.conventionalcommits.org/en/v1.0.0/
 # TODO LIST
 - 1[x]Update PID controller parameter from: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |
@@ -71,14 +71,28 @@ Everyt time a developer or AID agent works on an item in this list shall update 
         CHANGELOG.md -> "2026-09-04 — Centralize validate_float_in_range() limits (STATUS TODO #7)".
         Note: profTaperingTmr (and previously brewTempDegC) have no BLE-write-time clamp at all — only StorageController.c validates them. Left as-is, flagged as follow-up — say if you want that added too.
 
-- [ ]add a function inside "StorageController.h" that allows developer to erease the NVM_PARAM_MEM_KEY and the rest of the parameter from the NVM chip. Expose a wraper inside spi_devices.h module (use code under comment: "erase the entire sector: 4KB"). Then add the wrapper in StorageController module. As trigger, add a compile-time one-shot in espressoMachineServices.h with a macro #define ESPRESSO_CFG_ERASE_NVM_KEY   0   /* set 1, flash, boot once, set back to 0 */ 
+- 8[x]add into "StorageController.h" capability to erease the NVM_PARAM_MEM_KEY and the rest of the parameter from the NVM chip. Expose a wraper inside spi_devices.h module (use code under comment: "erase the entire sector: 4KB"). Then add the wrapper in StorageController module. As trigger, add a compile-time one-shot in espressoMachineServices.h with a macro #define ESPRESSO_CFG_ERASE_NVM_KEY   0   /* set 1, flash, boot once, set back to 0 */ 
+        Done: spi_NVMemoryEraseSector() made static (private); public wrapper
+        spi_NVMemoryErasePage(page) added in spi_Devices.c/.h, converts page->sector
+        so callers stay in page terms like spi_NVMemoryRead/WritePage(). New
+        StorageController.storage_erase_user_config() calls
+        spi_NVMemoryErasePage(NVM_PARAM_PAGE_ADD), returns new
+        STORAGE_USERDATA_ERASED status. Trigger: ESPRESSO_CFG_ERASE_NVM_KEY
+        one-shot macro in espressoMachineServices.h
 
-- [ ]add a function inside "StorageController.h" that allows developer to load default values into the g_Espresso_user_config_s var (using method: init_result_flag = storage_has_user_config()& checking STORAGE_USERDATA_EMPTY) from three different (Tables or NVM) sources, first: FACTORY_DEFAULT_VALUES (from #defines), second: TEST_VALUES (from #defines) and third one is: normal flow logic, load values from NVM after every start. We shall add a new #define table for max. and min. values used by validate_clamp_data().
-        -Propse a solution/logic that allows the developer using #defines in ESPRESSOMACHINESERVICES_H__ to select between three values sources. Implement easy logic and keep an eye on the FLASH memory footprint and any possible code that may break logic flow.
-        -Propose a location to move, add the code and #defines into the best module to achieve the goal.
-        Goal: control source data  loaded into g_Espresso_user_config_s. Control method via compile-time. 
-        
-        Comment: If source selected is not NVM then exclude from compilation any code that interact with reading the NVM.
+- 9[x] Add next feature into main.c: If code detects NVM is empty then write factory_deafult values into NVM (use fucntion already available from StorageController module)
+        Done: main.c, on storage_has_user_config()==STORAGE_USERDATA_EMPTY, assigns
+        g_Espresso_user_config_s from the *_FACTORY_DEFAULT_* table (espressoMachineServices.h),
+        then calls storage_save_shot_profile() followed by storage_save_controller_config()
+        CHANGELOG.md -> "2026-09-05 — Factory-default NVM auto-provisioning (STATUS TODO #9)".
+
+- 10[x] from code lines 23-26 in espressoMachineService, Implement a logic code in main.c that loads the correct data into g_Espresso_user_config_s var. Use already existing functions. 
+        FACTORY_DEFAULT_NO_NVM selected-> load from defines, 
+        TEST_VALUES_NO_NVM  selected-> load from defines,
+        USER_DATA_NVM selected-> load from NVM-> logic implemented in TODO item 9 shall be avaiable in this case.
+        LOAD_USERDATA_FROM_NVM_EN becomes useless
+        Done: main.c now selects on ESPRESSO_CFG_DATA_SOURCE via one #if/#elif/#elif.
+        CHANGELOG.md -> "2026-09-05 — Unify config data-source selection (STATUS TODO #10)".
 
 - [ ]change PID controller parameter Length mentioned below: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |

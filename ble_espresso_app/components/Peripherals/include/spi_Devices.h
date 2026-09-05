@@ -67,6 +67,7 @@ void spim_DevCommMng(void);
 /* NVM SECTION  */
 void spi_NVMemoryRead(uint32_t page, uint8_t offset, uint32_t noByte, uint8_t * rData);
 void spi_NVMemoryWritePage(uint32_t page, uint8_t offset, uint32_t noByte, uint8_t * wData);
+void spi_NVMemoryErasePage(uint32_t page);
 
 #ifdef __cplusplus
 }

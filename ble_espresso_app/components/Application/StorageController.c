@@ -165,6 +165,20 @@ uint32_t storage_has_user_config(void)
 }
 
 /*****************************************************************************
+* Function: 	storage_erase_user_config
+* Description:  Erases the NVM param sector (NVM_PARAM_MEM_KEY + the rest of
+*               espresso_user_config_t). Developer/debug tool only, triggered
+*               via the ESPRESSO_CFG_ERASE_NVM_KEY compile-time one-shot in
+*               espressoMachineServices.h.
+* Return:       STORAGE_USERDATA_ERASED
+*****************************************************************************/
+uint32_t storage_erase_user_config(void)
+{
+  spi_NVMemoryErasePage(NVM_PARAM_PAGE_ADD);
+  return STORAGE_USERDATA_ERASED;
+}
+
+/*****************************************************************************
 * Function: 	storage_load_user_config
 * Description:  Reads data from the external memory and store it the UserData Pointer
 * Return:       STORAGE_USERDATA_LOADED = memory read success

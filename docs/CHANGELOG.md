@@ -10,6 +10,86 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-09-05 — Unify config data-source selection (STATUS TODO #10)
+
+### Changed
+- `main.c`: the old three overlapping switches (`SET_TEST_USERDATA_EN`,
+  `EXCLUDE_NVM_SECTION`, and the dead `LOAD_USERDATA_FROM_NVM_EN`) are
+  replaced by one `#if/#elif/#elif` on `ESPRESSO_CFG_DATA_SOURCE`
+  (`espressoMachineServices.h`): `FACTORY_DEFAULT_NO_NVM` and
+  `TEST_VALUES_NO_NVM` inline-assign `g_Espresso_user_config_s` from the
+  matching `#define` table and set `user_data_loaded_flag` directly, with no
+  NVM code compiled in for either. `USER_DATA_NVM` keeps `storage_init()` /
+  the erase one-shot / `storage_has_user_config()` / TODO #9's provisioning —
+  now the only branch touching `spi_Devices`/`StorageController`.
+- Pump-parameter and PID-config pushes into `PumpController`/`tempController`
+  (previously dead — gated on the no-longer-defined
+  `LOAD_USERDATA_FROM_NVM_EN`) now run off one runtime
+  `user_data_loaded_flag == STORAGE_USERDATA_LOADED` check, uniform across
+  all 3 sources. Fixes the regression flagged in TODO #9's follow-up note.
+
+### Fixed
+- `espressoMachineServices.h`: stray trailing `;` on `PID_P_TERM_TEST`
+  removed — broke inline use of the macro in an expression.
+
+### Removed
+- Dead defines: `SET_TEST_USERDATA_EN`, main.c-local `EXCLUDE_NVM_SECTION`,
+  and all remaining `LOAD_USERDATA_FROM_NVM_EN` references.
+
+## 2026-09-05 — Factory-default NVM auto-provisioning (STATUS TODO #9)
+
+### Added
+- `main.c`: when `storage_has_user_config()` returns `STORAGE_USERDATA_EMPTY`,
+  `g_Espresso_user_config_s` is populated from the `*_FACTORY_DEFAULT_*`
+  constant table (`espressoMachineServices.h`) and persisted via
+  `storage_save_shot_profile()` then `storage_save_controller_config()`, in
+  that order — the first call writes the NVM key on its first-write path, the
+  second must run after it so it preserves the just-written real bytes
+  instead of erased-flash (`0xFF`) filler for the other half of the record.
+  Finishes with `storage_load_user_config()` to sync `nvmKey`/`nvmWcycles`
+  bookkeeping and run the existing `validate_clamp_data()` pass.
+- No new `StorageController`/`spi_Devices` functions added — built entirely
+  from functions that already existed, per the TODO's constraint.
+
+### Follow-up (not yet done, tracked as STATUS TODO #10)
+- `main.c` lines guarded by `LOAD_USERDATA_FROM_NVM_EN` (pushing pump
+  parameters / PID gains into `PumpController`/`tempController` at boot)
+  reference a macro no longer defined in `espressoMachineServices.h` — it was
+  replaced by `ESPRESSO_CFG_DATA_SOURCE` /
+  `FACTORY_DEFAULT_NO_NVM`/`TEST_VALUES_NO_NVM`/`USER_DATA_NVM` ahead of TODO
+  #10. An undefined macro in `#if` evaluates to 0, so those blocks currently
+  never compile in on either branch — pump/PID config is not reaching the
+  controllers at boot regardless of data source. Pre-existing on disk, not
+  introduced by this change; left for TODO #10's selector rewire.
+
+## 2026-09-04 — NVM param erase capability (STATUS TODO #8)
+
+### Added
+- `spi_Devices.c`/`.h`: public wrapper `spi_NVMemoryErasePage(uint32_t page)`
+  around the existing (now `static`) `spi_NVMemoryEraseSector()` — converts a
+  page number to its containing 4KB sector, so callers stay in page terms
+  like `spi_NVMemoryRead()` / `spi_NVMemoryWritePage()` already do.
+- `StorageController.c`/`.h`: `storage_erase_user_config()` — erases the NVM
+  param sector (`NVM_PARAM_MEM_KEY` + the rest of `espresso_user_config_t`)
+  via `spi_NVMemoryErasePage(NVM_PARAM_PAGE_ADD)`. New
+  `STORAGE_USERDATA_ERASED` status value.
+- `espressoMachineServices.h`: `#define ESPRESSO_CFG_ERASE_NVM_KEY 0`
+  compile-time one-shot trigger (set 1, flash, boot once, set back to 0).
+- `main.c`: erase call wired into the `EXCLUDE_NVM_SECTION == 0` init block,
+  right after `storage_init()` and before `storage_has_user_config()`, so the
+  same boot session reads back `STORAGE_USERDATA_EMPTY` post-erase.
+
+### Changed
+- `spi_NVMemoryEraseSector()` changed from an unexposed module-global to a
+  `static` (private) function — no longer directly callable from outside
+  `spi_Devices.c`; use `spi_NVMemoryErasePage()` instead.
+
+### Docs
+- `NVM_PARAM_START_ADDR` / `NVM_PARAM_END_ADDR` in `StorageController.c`
+  confirmed unreferenced anywhere in the codebase (0 bytes flash/RAM cost as
+  plain `#define`s) — left in place per developer instruction, not wired to
+  the erase path.
+
 ## 2026-09-04 — Centralize `validate_float_in_range()` limits (STATUS TODO #7)
 
 ### Changed

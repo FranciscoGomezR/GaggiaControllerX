@@ -20,12 +20,78 @@
 // 
 //*****************************************************************************
 
-#define LOAD_USERDATA_FROM_NVM_EN     0
-#define SET_TEST_USERDATA_EN          1
-#define ALLOW_USERDATA_WR_NVM__EN     1
+#define FACTORY_DEFAULT_NO_NVM        0
+#define TEST_VALUES_NO_NVM            1
+#define USER_DATA_NVM                 2
+#define ESPRESSO_CFG_DATA_SOURCE      USER_DATA_NVM
+
+/* Developer/debug one-shot: erases NVM_PARAM_MEM_KEY + the rest of the user
+ * config from the NVM chip on next boot. Set 1, flash, boot once to erase,
+ * then set back to 0 and reflash. Never leave set to 1 in a release build. */
+#define ESPRESSO_CFG_ERASE_NVM_KEY    0
 
 #define SERVICE_PUMP_ACTION_EN        1
 #define SERVICE_HEAT_ACTION_EN        1
+
+/* ---------------------------------------------------------------------------
+ * espresso_user_config_t Developer Test values.
+ *
+ * Single source of truth for Factory values to be used by espresso_user_config_t 
+ * and to be stored into NVM first time MCU boots beacuse NVM_PARAM_MEM_KEY 
+ * is not present
+ * --------------------------------------------------------------------------- */
+/* ---- Temperature setpoints (degC) ---- */
+#define BOILER_SETPOINT_TEMP_TEST_DEGC  95.5f
+#define BREW_TEMP_TEST_DEGC             95.0f
+#define STEAM_TEMP_TEST_DEGC            130.0f
+
+/* ---- Brew profile power (pwr %) ---- */
+#define PROF_PREINFUSE_PWR_TEST_PWR     80.0f
+#define PROF_INFUSE_PWR_TEST_PWR        100.0f
+#define PROF_TAPERING_PWR_TEST_PWR      85.0f
+
+/* ---- Brew profile timers (secs) ---- */
+#define PROF_PREINFUSE_TMR_TEST_SECS    8.0f
+#define PROF_INFUSE_TMR_TEST_SECS       10.0f
+#define PROF_TAPERING_TMR_TEST_SECS     10.0f
+
+/* ---- PID gains ---- */
+#define PID_P_TERM_TEST                 9.52156f
+#define PID_I_TERM_TEST                 0.3f
+#define PID_I_MAX_TERM_TEST             100.0f
+#define PID_D_TERM_TEST                 0.0f
+#define PID_P_BOOST_TERM_TEST           1.0f
+#define PID_I_BOOST_TERM_TEST           6.5f
+
+/* ---------------------------------------------------------------------------
+ * espresso_user_config_t Factory values.
+ *
+ * Single source of truth for Factory values to be used by espresso_user_config_t 
+ * and to be stored into NVM first time MCU boots beacuse NVM_PARAM_MEM_KEY 
+ * is not present
+ * --------------------------------------------------------------------------- */
+/* ---- Temperature setpoints (degC) ---- */
+#define BOILER_SETPOINT_TEMP_FACTORY_DEFAULT_DEGC  95.5f
+#define BREW_TEMP_FACTORY_DEFAULT_DEGC             95.0f
+#define STEAM_TEMP_FACTORY_DEFAULT_DEGC            125.0f
+
+/* ---- Brew profile power (pwr %) ---- */
+#define PROF_PREINFUSE_PWR_FACTORY_DEFAULT_PWR     75.0f
+#define PROF_INFUSE_PWR_FACTORY_DEFAULT_PWR        100.0f
+#define PROF_TAPERING_PWR_FACTORY_DEFAULT_PWR      85.0f
+
+/* ---- Brew profile timers (secs) ---- */
+#define PROF_PREINFUSE_TMR_FACTORY_DEFAULT_SECS    8.0f
+#define PROF_INFUSE_TMR_FACTORY_DEFAULT_SECS       8.0f
+#define PROF_TAPERING_TMR_FACTORY_DEFAULT_SECS     8.0f
+
+/* ---- PID gains ---- */
+#define PID_P_TERM_FACTORY_DEFAULT                 9.5f
+#define PID_I_TERM_FACTORY_DEFAULT                 0.3f
+#define PID_I_MAX_TERM_FACTORY_DEFAULT             100.0f
+#define PID_D_TERM_FACTORY_DEFAULT                 0.0f
+#define PID_P_BOOST_TERM_FACTORY_DEFAULT           1.0f
+#define PID_I_BOOST_TERM_FACTORY_DEFAULT           6.5f
 
 /* ---------------------------------------------------------------------------
  * espresso_user_config_t field limits.
@@ -35,70 +101,69 @@
  * StorageController.c values are canonical; bluetooth_drv.c was previously
  * hardcoding its own, drifted, literals for the same fields (STATUS TODO).
  * --------------------------------------------------------------------------- */
-
 /* ---- Temperature setpoints (degC) ---- */
 #define BOILER_SETPOINT_TEMP_MIN_DEGC      20.0f
-#define BOILER_SETPOINT_TEMP_MAX_DEGC      110.0f
-#define BOILER_SETPOINT_TEMP_DEFAULT_DEGC  95.5f
+#define BOILER_SETPOINT_TEMP_MAX_DEGC      135.0f
+#define BOILER_SETPOINT_TEMP_DEFAULT_DEGC  BOILER_SETPOINT_TEMP_FACTORY_DEFAULT_DEGC
 
 #define BREW_TEMP_MIN_DEGC                 20.0f
 #define BREW_TEMP_MAX_DEGC                 110.0f
-#define BREW_TEMP_DEFAULT_DEGC             95.0f
+#define BREW_TEMP_DEFAULT_DEGC             BREW_TEMP_FACTORY_DEFAULT_DEGC
 
 #define STEAM_TEMP_MIN_DEGC                100.0f
-#define STEAM_TEMP_MAX_DEGC                160.0f
-#define STEAM_TEMP_DEFAULT_DEGC            110.0f
+#define STEAM_TEMP_MAX_DEGC                135.0f
+#define STEAM_TEMP_DEFAULT_DEGC            STEAM_TEMP_FACTORY_DEFAULT_DEGC
 
 /* ---- Brew profile power (pwr %) ---- */
 #define PROF_PREINFUSE_PWR_MIN_PWR         0.0f
 #define PROF_PREINFUSE_PWR_MAX_PWR         100.0f
-#define PROF_PREINFUSE_PWR_DEFAULT_PWR     75.0f
+#define PROF_PREINFUSE_PWR_DEFAULT_PWR     PROF_PREINFUSE_PWR_FACTORY_DEFAULT_PWR
 
 #define PROF_INFUSE_PWR_MIN_PWR            0.0f
 #define PROF_INFUSE_PWR_MAX_PWR            100.0f
-#define PROF_INFUSE_PWR_DEFAULT_PWR        100.0f
+#define PROF_INFUSE_PWR_DEFAULT_PWR        PROF_INFUSE_PWR_FACTORY_DEFAULT_PWR
 
 #define PROF_TAPERING_PWR_MIN_PWR          0.0f
 #define PROF_TAPERING_PWR_MAX_PWR          100.0f
-#define PROF_TAPERING_PWR_DEFAULT_PWR      85.0f
+#define PROF_TAPERING_PWR_DEFAULT_PWR      PROF_TAPERING_PWR_FACTORY_DEFAULT_PWR
 
 /* ---- Brew profile timers (secs) ---- */
 #define PROF_PREINFUSE_TMR_MIN_SECS        0.0f
-#define PROF_PREINFUSE_TMR_MAX_SECS        15.0f
-#define PROF_PREINFUSE_TMR_DEFAULT_SECS    8.0f
+#define PROF_PREINFUSE_TMR_MAX_SECS        30.0f
+#define PROF_PREINFUSE_TMR_DEFAULT_SECS    PROF_PREINFUSE_TMR_FACTORY_DEFAULT_SECS
 
 #define PROF_INFUSE_TMR_MIN_SECS           0.0f
-#define PROF_INFUSE_TMR_MAX_SECS           60.0f
-#define PROF_INFUSE_TMR_DEFAULT_SECS       8.0f
+#define PROF_INFUSE_TMR_MAX_SECS           30.0f
+#define PROF_INFUSE_TMR_DEFAULT_SECS       PROF_INFUSE_TMR_FACTORY_DEFAULT_SECS
 
 #define PROF_TAPERING_TMR_MIN_SECS         0.0f
 #define PROF_TAPERING_TMR_MAX_SECS         30.0f
-#define PROF_TAPERING_TMR_DEFAULT_SECS     8.0f
+#define PROF_TAPERING_TMR_DEFAULT_SECS     PROF_TAPERING_TMR_FACTORY_DEFAULT_SECS
 
 /* ---- PID gains ---- */
 #define PID_P_TERM_MIN                     0.0f
-#define PID_P_TERM_MAX                     100.0f
-#define PID_P_TERM_DEFAULT                 9.5f
+#define PID_P_TERM_MAX                     50.0f
+#define PID_P_TERM_DEFAULT                 PID_P_TERM_FACTORY_DEFAULT
 
 #define PID_I_TERM_MIN                     0.0f
-#define PID_I_TERM_MAX                     10.0f
-#define PID_I_TERM_DEFAULT                 0.3f
+#define PID_I_TERM_MAX                     30.0f
+#define PID_I_TERM_DEFAULT                 PID_I_TERM_FACTORY_DEFAULT
 
 #define PID_I_MAX_TERM_MIN                 0.0f
 #define PID_I_MAX_TERM_MAX                 500.0f
-#define PID_I_MAX_TERM_DEFAULT             100.0f
+#define PID_I_MAX_TERM_DEFAULT             PID_I_MAX_TERM_FACTORY_DEFAULT
 
 #define PID_D_TERM_MIN                     0.0f
-#define PID_D_TERM_MAX                     50.0f
-#define PID_D_TERM_DEFAULT                 0.0f
+#define PID_D_TERM_MAX                     10.0f
+#define PID_D_TERM_DEFAULT                 PID_D_TERM_FACTORY_DEFAULT
 
 #define PID_P_BOOST_TERM_MIN               0.0f
 #define PID_P_BOOST_TERM_MAX               10.0f
-#define PID_P_BOOST_TERM_DEFAULT           1.0f
+#define PID_P_BOOST_TERM_DEFAULT           PID_P_BOOST_TERM_FACTORY_DEFAULT
 
 #define PID_I_BOOST_TERM_MIN               0.0f
-#define PID_I_BOOST_TERM_MAX               20.0f
-#define PID_I_BOOST_TERM_DEFAULT           6.5f
+#define PID_I_BOOST_TERM_MAX               10.0f
+#define PID_I_BOOST_TERM_DEFAULT           PID_I_BOOST_TERM_FACTORY_DEFAULT
 
 //*****************************************************************************
 //

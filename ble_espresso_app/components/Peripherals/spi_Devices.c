@@ -135,7 +135,7 @@ uint32_t spi_NVMemoryReadJEDECID(void);
 void spi_NVMemoryWriteEnable(void);
 void spi_NVMemoryWriteDisable(void);
 
-void spi_NVMemoryEraseSector(uint16_t noSector);
+static void spi_NVMemoryEraseSector(uint16_t noSector);
 uint32_t NVMpageNoByteToW(uint32_t NoByte, uint16_t offset);
 
 /* TEMP DEVICE SECTION  */
@@ -596,13 +596,13 @@ uint32_t NVMpageNoByteToW(uint32_t NoByte, uint16_t offset)
  * Parameter:
  *             noSector 
  *****************************************************************************/
-void spi_NVMemoryEraseSector(uint16_t noSector)
+static void spi_NVMemoryEraseSector(uint16_t noSector)
 {
   uint32_t memAddr24bit = (uint32_t)(noSector*16*256); //24bit / 3byte address
   spi_NVMemoryWriteEnable();    //Write Enable instruction must be executed
   nvm_tx_buf[0] = 0x20;           //Erease Sector COMMAND
   nvm_tx_buf[1] = (uint8_t)((memAddr24bit>>16) & 0xFF);   //MSB of the 24bit address
-  nvm_tx_buf[2] = (uint8_t)((memAddr24bit>>8) & 0xFF); 
+  nvm_tx_buf[2] = (uint8_t)((memAddr24bit>>8) & 0xFF);
   nvm_tx_buf[3] = (uint8_t)((memAddr24bit) & 0xFF);       //LSB of the address
   spi_xfer_done = false;
   spi_NVMemoryCSenable();       //SPI-CTRL: Selecting NVM Device
@@ -612,6 +612,19 @@ void spi_NVMemoryEraseSector(uint16_t noSector)
   spi_NVMemoryCSdisable();      //SPI-CTRL: Unselecting NVM Device
   nrf_delay_ms(450);
   spi_NVMemoryWriteDisable();   //Write Enable Latch (WEL) bit in the Status Register is cleared to 0.
+}
+
+/*****************************************************************************
+ * Function: 	spi_NVMemoryErasePage
+ * Description: Public wrapper for spi_NVMemoryEraseSector(). Erases the 4KB
+ *              sector that contains the given page, so callers stay in
+ *              "page" terms, matching spi_NVMemoryRead()/spi_NVMemoryWritePage().
+ * Parameter:
+ *             page   page number whose containing sector gets erased
+ *****************************************************************************/
+void spi_NVMemoryErasePage(uint32_t page)
+{
+  spi_NVMemoryEraseSector((uint16_t)(page / 16U));
 }
 /*
 NVM W25Q64FV (64M-bit)

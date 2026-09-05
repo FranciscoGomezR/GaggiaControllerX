@@ -25,7 +25,6 @@ volatile uint16_t g_ssr_power = 0U;
 volatile uint16_t g_ssr_pump  = 0U;
 
 
-#define EXCLUDE_NVM_SECTION         1
 #define EXCLUDE_BLE_ADV_SECTION     0
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
@@ -88,8 +87,6 @@ static void handle_scheduler_tick(void * p_context)
   {
     g_scheduler_flags_s.flag_svc_step_function = true;
   }else{}
-
-
 
 }
 
@@ -223,47 +220,79 @@ int main(void)
     NRF_LOG_DEBUG("DRV INIT SPI interface ::READY::");
     NRF_LOG_FLUSH();
   #endif
-  #if SET_TEST_USERDATA_EN == 1 
-    g_Espresso_user_config_s.brewTempDegC     = 95.0f;
-    g_Espresso_user_config_s.steamTempDegC    = 135.0f;
-
-    g_Espresso_user_config_s.profPreInfusePwr = 80.0f;
-    g_Espresso_user_config_s.profPreInfuseTmr = 8.0f;
-
-    g_Espresso_user_config_s.profInfusePwr    = 100.0f;
-    g_Espresso_user_config_s.profInfuseTmr    = 10.0f;
-
-    g_Espresso_user_config_s.profTaperingPwr  = 90.0f;
-    g_Espresso_user_config_s.profTaperingTmr  = 15.0f;
-
-    g_Espresso_user_config_s.pidPTerm        = 9.52156f;
-    g_Espresso_user_config_s.pidITerm        = 0.3f;
-    g_Espresso_user_config_s.pidImaxTerm     = 100.0f;
-    g_Espresso_user_config_s.pidDTerm        = 0.0f;
-    g_Espresso_user_config_s.pidPboostTerm   = 1.0f;
-    g_Espresso_user_config_s.pidIboostTerm   = 6.5f;
-    NRF_LOG_DEBUG("SET DATA ::TEST DATA::");
+  /*  INITIALIZATION: SPI - EXTERNAL STORAGE DEVICE DRIVER */
+  init_result_flag = storage_init();
+  #if(NRF_LOG_ENABLED == 1)
+    if( init_result_flag == NVM_INIT_OK)
+    {
+      NRF_LOG_DEBUG("CNTRL INIT SPI External MEM ::READY::");
+    }else{
+      NRF_LOG_DEBUG("CNTRL INIT SPI External MEM  ::FAILED::");
+    }
     NRF_LOG_FLUSH();
-  #else
+  #endif
 
-  #if EXCLUDE_NVM_SECTION == 0
-    /*  INITIALIZATION: SPI - EXTERNAL STORAGE DEVICE DRIVER */
-    init_result_flag = storage_init();
+  #if (ESPRESSO_CFG_ERASE_NVM_KEY == 1)
+     /* DEVELOPER ONE-SHOT: erase NVM param sector, then set back to 0 and reflash.
+     * Runs regardless of ESPRESSO_CFG_DATA_SOURCE — hardware-level action,
+     * independent of which source feeds g_Espresso_user_config_s. */
+    storage_erase_user_config();
     #if(NRF_LOG_ENABLED == 1)
-      if( init_result_flag == NVM_INIT_OK)
-      { 
-        NRF_LOG_DEBUG("CNTRL INIT SPI External MEM ::READY::");
-      }else{
-        NRF_LOG_DEBUG("CNTRL INIT SPI External MEM  ::FAILED::");
-      }
+      NRF_LOG_WARNING("NVM PARAM ERASED -- set ESPRESSO_CFG_ERASE_NVM_KEY back to 0 and reflash!");
+      NRF_LOG_FLUSH();
+    #endif
+  #endif
+    
+  #if (ESPRESSO_CFG_DATA_SOURCE == FACTORY_DEFAULT_NO_NVM)
+    /* g_Espresso_user_config_s <- FACTORY_DEFAULT_* #defines, NVM untouched */
+    g_Espresso_user_config_s.brewTempDegC     = BREW_TEMP_FACTORY_DEFAULT_DEGC;
+    g_Espresso_user_config_s.steamTempDegC    = STEAM_TEMP_FACTORY_DEFAULT_DEGC;
+    g_Espresso_user_config_s.profPreInfusePwr = PROF_PREINFUSE_PWR_FACTORY_DEFAULT_PWR;
+    g_Espresso_user_config_s.profPreInfuseTmr = PROF_PREINFUSE_TMR_FACTORY_DEFAULT_SECS;
+    g_Espresso_user_config_s.profInfusePwr    = PROF_INFUSE_PWR_FACTORY_DEFAULT_PWR;
+    g_Espresso_user_config_s.profInfuseTmr    = PROF_INFUSE_TMR_FACTORY_DEFAULT_SECS;
+    g_Espresso_user_config_s.profTaperingPwr  = PROF_TAPERING_PWR_FACTORY_DEFAULT_PWR;
+    g_Espresso_user_config_s.profTaperingTmr  = PROF_TAPERING_TMR_FACTORY_DEFAULT_SECS;
+    g_Espresso_user_config_s.pidPTerm         = PID_P_TERM_FACTORY_DEFAULT;
+    g_Espresso_user_config_s.pidITerm         = PID_I_TERM_FACTORY_DEFAULT;
+    g_Espresso_user_config_s.pidImaxTerm      = PID_I_MAX_TERM_FACTORY_DEFAULT;
+    g_Espresso_user_config_s.pidDTerm         = PID_D_TERM_FACTORY_DEFAULT;
+    g_Espresso_user_config_s.pidPboostTerm    = PID_P_BOOST_TERM_FACTORY_DEFAULT;
+    g_Espresso_user_config_s.pidIboostTerm    = PID_I_BOOST_TERM_FACTORY_DEFAULT;
+    user_data_loaded_flag = STORAGE_USERDATA_LOADED;
+    #if(NRF_LOG_ENABLED == 1)
+      NRF_LOG_DEBUG("SET DATA ::FACTORY DEFAULT (NO NVM)::");
       NRF_LOG_FLUSH();
     #endif
 
+  #elif (ESPRESSO_CFG_DATA_SOURCE == TEST_VALUES_NO_NVM)
+    /* g_Espresso_user_config_s <- *_TEST_* #defines, NVM untouched */
+    g_Espresso_user_config_s.brewTempDegC     = BREW_TEMP_TEST_DEGC;
+    g_Espresso_user_config_s.steamTempDegC    = STEAM_TEMP_TEST_DEGC;
+    g_Espresso_user_config_s.profPreInfusePwr = PROF_PREINFUSE_PWR_TEST_PWR;
+    g_Espresso_user_config_s.profPreInfuseTmr = PROF_PREINFUSE_TMR_TEST_SECS;
+    g_Espresso_user_config_s.profInfusePwr    = PROF_INFUSE_PWR_TEST_PWR;
+    g_Espresso_user_config_s.profInfuseTmr    = PROF_INFUSE_TMR_TEST_SECS;
+    g_Espresso_user_config_s.profTaperingPwr  = PROF_TAPERING_PWR_TEST_PWR;
+    g_Espresso_user_config_s.profTaperingTmr  = PROF_TAPERING_TMR_TEST_SECS;
+    g_Espresso_user_config_s.pidPTerm         = PID_P_TERM_TEST;
+    g_Espresso_user_config_s.pidITerm         = PID_I_TERM_TEST;
+    g_Espresso_user_config_s.pidImaxTerm      = PID_I_MAX_TERM_TEST;
+    g_Espresso_user_config_s.pidDTerm         = PID_D_TERM_TEST;
+    g_Espresso_user_config_s.pidPboostTerm    = PID_P_BOOST_TERM_TEST;
+    g_Espresso_user_config_s.pidIboostTerm    = PID_I_BOOST_TERM_TEST;
+    user_data_loaded_flag = STORAGE_USERDATA_LOADED;
+    #if(NRF_LOG_ENABLED == 1)
+      NRF_LOG_DEBUG("SET DATA ::TEST VALUES (NO NVM)::");
+      NRF_LOG_FLUSH();
+    #endif
+
+  #elif (ESPRESSO_CFG_DATA_SOURCE == USER_DATA_NVM)
     /*  CHECK FOR KEY CONTAINED INSIDE EXTERNAL STORAGE DEVICE */
     init_result_flag = storage_has_user_config();
     #if(NRF_LOG_ENABLED == 1)
       if( init_result_flag == STORAGE_USERDATA_LOADED)
-      { 
+      {
         NRF_LOG_DEBUG("EXT MEM ::HAS DATA::");
       }else{
         NRF_LOG_DEBUG("EXT MEM ::IS EMPTY::");
@@ -276,27 +305,58 @@ int main(void)
     {
       /* STORAGE_USERDATA_LOADED = memory read success and stored in: g_Espresso_user_config_s */
       user_data_loaded_flag = storage_load_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
+    }else if( init_result_flag == STORAGE_USERDATA_EMPTY)
+    {
+      /* NVM has no key yet -> populate factory defaults and persist them.
+       * Order matters: storage_save_shot_profile() writes the NVM key on its
+       * first-write path; storage_save_controller_config() must run after it
+       * so it reads back that key + the shot profile bytes just written,
+       * instead of preserving erased-flash (0xFF) filler as the other half
+       * of the record. */
+      g_Espresso_user_config_s.brewTempDegC     = BREW_TEMP_FACTORY_DEFAULT_DEGC;
+      g_Espresso_user_config_s.steamTempDegC    = STEAM_TEMP_FACTORY_DEFAULT_DEGC;
+      g_Espresso_user_config_s.profPreInfusePwr = PROF_PREINFUSE_PWR_FACTORY_DEFAULT_PWR;
+      g_Espresso_user_config_s.profPreInfuseTmr = PROF_PREINFUSE_TMR_FACTORY_DEFAULT_SECS;
+      g_Espresso_user_config_s.profInfusePwr    = PROF_INFUSE_PWR_FACTORY_DEFAULT_PWR;
+      g_Espresso_user_config_s.profInfuseTmr    = PROF_INFUSE_TMR_FACTORY_DEFAULT_SECS;
+      g_Espresso_user_config_s.profTaperingPwr  = PROF_TAPERING_PWR_FACTORY_DEFAULT_PWR;
+      g_Espresso_user_config_s.profTaperingTmr  = PROF_TAPERING_TMR_FACTORY_DEFAULT_SECS;
+      g_Espresso_user_config_s.pidPTerm         = PID_P_TERM_FACTORY_DEFAULT;
+      g_Espresso_user_config_s.pidITerm         = PID_I_TERM_FACTORY_DEFAULT;
+      g_Espresso_user_config_s.pidImaxTerm      = PID_I_MAX_TERM_FACTORY_DEFAULT;
+      g_Espresso_user_config_s.pidDTerm         = PID_D_TERM_FACTORY_DEFAULT;
+      g_Espresso_user_config_s.pidPboostTerm    = PID_P_BOOST_TERM_FACTORY_DEFAULT;
+      g_Espresso_user_config_s.pidIboostTerm    = PID_I_BOOST_TERM_FACTORY_DEFAULT;
+
+      (void)storage_save_shot_profile((espresso_user_config_t*)&g_Espresso_user_config_s);
+      (void)storage_save_controller_config((espresso_user_config_t*)&g_Espresso_user_config_s);
+
+      /* re-load: syncs nvmKey/nvmWcycles bookkeeping + runs validate_clamp_data() */
+      user_data_loaded_flag = storage_load_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
+      #if(NRF_LOG_ENABLED == 1)
+        NRF_LOG_DEBUG("EXT MEM ::FACTORY DEFAULTS WRITTEN::");
+        NRF_LOG_FLUSH();
+      #endif
     }else{}
     #if(NRF_LOG_ENABLED == 1)
       if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
-      { 
+      {
         NRF_LOG_DEBUG("USER DATA ::Loaded::");
       }else{
         NRF_LOG_DEBUG("USER DATA ::Empty::");
       }
       NRF_LOG_FLUSH();
     #endif
-   #endif
+  #endif
 
-    #if(NRF_LOG_ENABLED == 1)
-      if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
-      { 
-        storage_print_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
-      }else{
-        NRF_LOG_DEBUG("USER DATA ::Couldn't be Printed::");
-      }
-      NRF_LOG_FLUSH();
-    #endif
+  #if(NRF_LOG_ENABLED == 1)
+    if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
+    {
+      storage_print_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
+    }else{
+      NRF_LOG_DEBUG("USER DATA ::Couldn't be Printed::");
+    }
+    NRF_LOG_FLUSH();
   #endif
 
   /*  INITIALIZATION: SPI - TEMPERATURE SENSOR DRIVER */
@@ -377,22 +437,14 @@ int main(void)
     NRF_LOG_FLUSH();
   #endif
   /*  AFTER PUMP DRV INIT - LOAD OF USER PARAM FROM g_Espresso_user_config_s INTO PUMP DRV */
-  #if(LOAD_USERDATA_FROM_NVM_EN == 1)
-    if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
-    {
-      init_result_flag = load_new_pump_parameters((espresso_user_config_t*)&g_Espresso_user_config_s);
-    }else{}
-    NRF_LOG_DEBUG("Pump Controller ::DATA READY::");
-    NRF_LOG_FLUSH();
-  #endif
-  #if(LOAD_USERDATA_FROM_NVM_EN ==  0 && SET_TEST_USERDATA_EN==1)
-    if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
-    {
-      init_result_flag = load_new_pump_parameters((espresso_user_config_t*)&g_Espresso_user_config_s);
-    }else{}
-    NRF_LOG_DEBUG("Pump Controller ::TEST Configuration::");
-    NRF_LOG_FLUSH();
-  #endif
+  if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
+  {
+    init_result_flag = load_new_pump_parameters((espresso_user_config_t*)&g_Espresso_user_config_s);
+    #if(NRF_LOG_ENABLED == 1)
+      NRF_LOG_DEBUG("Pump Controller ::DATA READY::");
+      NRF_LOG_FLUSH();
+    #endif
+  }else{}
 
   /*  INITIALIZATION: BOILER TEMPERATURE CONTROLLER/DRIVER  */
   init_result_flag = temp_ctrl_init();
@@ -405,18 +457,15 @@ int main(void)
     }
     NRF_LOG_FLUSH();
   #endif
-  #if(LOAD_USERDATA_FROM_NVM_EN == 1)
-    /*  LOADING [USER] BOILER TEMP PID CONTROLLER's PARAMETERS */
+  if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
+  {
+    /*  LOADING BOILER TEMP PID CONTROLLER's PARAMETERS */
     temp_ctrl_set_pid_config((espresso_user_config_t*)&g_Espresso_user_config_s);
-    NRF_LOG_DEBUG("Boiler Controller ::DATA READY::");
-    NRF_LOG_FLUSH();
-  #endif
-  #if(LOAD_USERDATA_FROM_NVM_EN ==  0 && SET_TEST_USERDATA_EN==1)
-    /*  LOADING [TEST] BOILER TEMP PID CONTROLLER's PARAMETERS */
-    temp_ctrl_set_pid_config((espresso_user_config_t*)&g_Espresso_user_config_s);
-    NRF_LOG_DEBUG("Boiler Temperature Controller ::TEST Configuration::");
-    NRF_LOG_FLUSH();
-  #endif
+    #if(NRF_LOG_ENABLED == 1)
+      NRF_LOG_DEBUG("Boiler Controller ::DATA READY::");
+      NRF_LOG_FLUSH();
+    #endif
+  }else{}
   init_result_flag = temp_ctrl_set_boiler_setpoint(
                                                       (espresso_user_config_t*)&g_Espresso_user_config_s,
                                                       SET_POINT_BREW);
