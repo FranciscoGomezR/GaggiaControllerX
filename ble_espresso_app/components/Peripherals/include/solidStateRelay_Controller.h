@@ -107,8 +107,13 @@ ssr_status_t init_ssr_pump_element(void);
 
 ssr_status_t ssr_instance_init(uint8_t zero_cross_input, uint8_t solenoid_ouput);
 
-void solenoid_ssr_on(void);
+
+
+void pump_ssr_pwr_update( uint16_t outputPower);
+void boiler_ssr_pwr_update( uint16_t outputPower);
+
 ssr_status_t get_SolenoidSSR_State(void);
+void solenoid_ssr_on(void);
 void solenoid_ssr_off(void);
 
 //External interrupt ISR has to be created in the main thread 

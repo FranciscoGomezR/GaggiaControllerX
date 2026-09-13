@@ -93,6 +93,41 @@ After a TODO item has been marked down, generate a commit-comment to be used by 
         LOAD_USERDATA_FROM_NVM_EN becomes useless
         Done: main.c now selects on ESPRESSO_CFG_DATA_SOURCE via one #if/#elif/#elif.
         CHANGELOG.md -> "2026-09-05 — Unify config data-source selection (STATUS TODO #10)".
+These items have not been commited
+- 11[x] Fix `svcStartT` to  uint32_t across espressoMachiveServices module.
+        CHANGELOG.md -> "2026-09-11 — svcStartT width fix + extractionTimeMsecs (STATUS TODO #11/#12)".
+
+- 12[x]  Add `uint32_t extractionTimeMsecs` to `espresso_user_config_t` to persist the shot duration (in milliseconds, exact integer) across the brew cycle. 
+        This var will not be mapped into NVM, it only lives during machine operation; no need to store it.
+        CHANGELOG.md -> "2026-09-11 — svcStartT width fix + extractionTimeMsecs (STATUS TODO #11/#12)".
+        Bump SVC_LOG_LEN 90 -> 128 (covers this + margin for other long msgs in file).
+
+- 13[x]  In Profile Mode: duplicate code in Three cases (`PROFILE_MODE_PREINFUSE`, `PROFILE_MODE_INFUSE`, `PROFILE_MODE_DECLINE`) each have an identical `else` body when `swBrew` de-asserts.
+        `PROFILE_MODE_STOP` already contains this exact cleanup block, Replace the entire duplicated stop body with a single state jump: `PROFILE_MODE_STOP`
+        Done: CHANGELOG.md -> "2026-09-13 — Dedup Profile-mode stop code (STATUS TODO #13)".
+        
+- 14[x]  Check is  `is_active == true` makes logic sense: (guarded in `PROFILE_MODE_STOP`).
+        Removed. profile_ended - max_time_reached - is_stopped introduced instead.
+
+- 15[x]  H5 auto-stop (120s `MAX_BREW_TICKS`) restart-loop gap: in Profile mode
+        (`PROFILE_MODE_PREINFUSE` ~line 601) and Classic mode (`CLASSIC_MODE_1`
+        ~line 301) the auto-stop sets is_active/state false and jumps directly
+        to `PROFILE_IDLE`/`CLASSIC_IDLE`, bypassing `PROFILE_MODE_STOP`'s.
+        Done: Profile side already routed through PROFILE_MODE_STOP (see #13/#14).
+        Classic side: added `bool max_time_reached` to `s_classic_data_t` (same
+        name/role as the Profile-mode field). Auto-stop block (CLASSIC_MODE_1)
+        sets it true. CLASSIC_IDLE's brew-start condition now requires
+        `!Classic_data_s.max_time_reached`; the flag clears when swBrew is
+        observed DEASSERTED in CLASSIC_IDLE's else-branch. Machine now stays
+        parked after a 120s hard-stop until the switch is released and re-pressed.
+        CHANGELOG.md -> "2026-09-14 — Classic-mode auto-stop restart-loop fix (STATUS TODO #15)".
+
+- [ ]Update serial data from: 
+        -> "%s;Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power"
+        To
+        -> "%s;System_Time_Miliseconds;Brew_time;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
+- []
+- []
 
 - [ ]change PID controller parameter Length mentioned below: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |
@@ -107,10 +142,7 @@ After a TODO item has been marked down, generate a commit-comment to be used by 
         | `0x1505` | P Boost | S2+9 | S2+10 | — | — | R, W | 4 B | From NVM / `pid_Pboost` (1.0) |
         | `0x1506` | I Boost | S2+11 | S2+12 | — | — | R, W | 4 B | From NVM / `pid_Iboost` (6.5) |
         affected modules: ble_cus.h/ble_cus.c, ble_cus_init(), ble_cus_controller_char_add()
-- [ ]Update serial data from: 
-        -> "%s;Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power"
-        To
-        -> "%s;System_Time_Miliseconds;Brew_time;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
+
 
 
 # Development IDE version updates

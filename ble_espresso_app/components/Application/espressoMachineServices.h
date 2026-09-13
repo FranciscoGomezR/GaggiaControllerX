@@ -192,11 +192,15 @@
     float pidDTerm;
     float pidPboostTerm;
     float pidIboostTerm;
+
+    /* RAM-only: current/last shot duration, exact msecs. Not (de)serialized
+     * by StorageController.c -> never mapped into the NVM layout. */
+    uint32_t extractionTimeMsecs;
    }espresso_user_config_t;
    //Format
    //   12 floats
-   //   2 uint32_t
-   // Equal to 56 bytes
+   //   3 uint32_t (nvmWcycles, nvmKey persisted; extractionTimeMsecs RAM-only)
+   // Equal to 60 bytes
 
 typedef enum {
   ESPRESSO_MODE__TUNE = 0,

@@ -10,6 +10,87 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-09-14 — Classic-mode auto-stop restart-loop fix (STATUS TODO #15)
+
+### Fixed
+- `espressoMachineServices.c`: `CLASSIC_MODE_1`'s 120s `MAX_BREW_TICKS`
+  auto-stop jumped straight to `CLASSIC_IDLE`, which decides whether to
+  start a new brew purely from the live `swBrew` level. If the switch was
+  still held down at the 120s mark, the machine silently restarted a new
+  shot on the very next tick — the hard stop never actually stopped
+  anything while the switch stayed pressed.
+
+### Added
+- `s_classic_data_t`: new `bool max_time_reached` field (same name/role
+  as the equivalent field already used in `s_profile_data_t`). Set `true`
+  by the auto-stop block; `CLASSIC_IDLE`'s brew-start condition now
+  requires `!max_time_reached`; cleared only once `swBrew` is observed
+  `DEASSERTED` in `CLASSIC_IDLE`. The machine now stays parked after a
+  hard-stop until the switch is released and pressed again, mirroring
+  Profile mode's wait-for-release behavior (`PROFILE_MODE_STOP`).
+
+---
+
+## 2026-09-13 — Dedup Profile-mode stop code (STATUS TODO #13)
+
+### Changed
+- `espressoMachineServices.c`, `service_profile_mode()`: the identical
+  `else` cleanup body duplicated across `PROFILE_MODE_PREINFUSE`,
+  `PROFILE_MODE_INFUSE`, and `PROFILE_MODE_DECLINE` (is_active reset,
+  I-gain scale, pump off, solenoid off, direct jump to `PROFILE_IDLE`,
+  own log block) is replaced in all three with a single state jump —
+  `Profile_service_status_s.sRunning = PROFILE_MODE_STOP;`.
+  `PROFILE_MODE_STOP`'s existing `is_active`-guarded block now performs
+  that cleanup for all three abort paths, not just normal full-profile
+  completion.
+
+### Fixed
+- Same block: `#if(NRF_LOG_ENABLED == 2)` typo (always false, dead code)
+  corrected to `== 1` — restores the "Espresso shot time" /
+  "Profile service ended" log lines on brew stop.
+
+### Breaking
+- Early brew-release (mid pre-infuse/infuse/decline) now takes one extra
+  100 ms tick before pump/solenoid shut off, since cleanup runs on the
+  next dispatch into `PROFILE_MODE_STOP` instead of inline. Abort-path
+  serial log messages now read as `PROFILE_MODE_STOP`'s format instead
+  of each stage's own "Service Stop_time" / duration lines.
+
+---
+
+## 2026-09-11 — svcStartT width fix + extractionTimeMsecs (STATUS TODO #11/#12)
+
+### Fixed
+- `espressoMachineServices.c`: `s_classic_data_t.svcStartT` and
+  `s_profile_data_t.svcStartT` widened `uint16_t` -> `uint32_t`. They were
+  assigned from the free-running `uint32_t service_tick`, silently truncating
+  past ~65535 ticks (~6553 s / ~109 min uptime) and corrupting every
+  elapsed-brew-time subtraction (`MAX_BREW_TICKS` auto-stop check, shot
+  duration logging) in both Classic and Profile modes.
+
+### Added
+- `espresso_user_config_t` (`espressoMachineServices.h`): new
+  `uint32_t extractionTimeMsecs` field — exact shot duration in
+  milliseconds. RAM-only: not mapped into the NVM layout, not touched by
+  StorageController.c. Reset to `0` at brew start (Classic
+  `CLASSIC_IDLE`->`CLASSIC_MODE_1`, Profile `PROFILE_IDLE`->
+  `PROFILE_MODE_PREINFUSE`); stored unconditionally (outside
+  `NRF_LOG_ENABLED` guards) at every stop/auto-stop site. The existing
+  `svr_duration_msecs` log-only variable now derives from it
+  (`/1000.0f`) instead of recomputing the subtraction.
+
+### Fixed
+- `espressoMachineServices.c`: `SVC_LOG_LEN` bumped `90` -> `120`. The
+  `service_profile_mode()` one-time init block's format-header `sprintf`
+  needed ~99 bytes into a 90-byte `log_text_arr` stack buffer — a
+  pre-existing overflow that had been silently landing in unused stack
+  padding. Local stack layout shifted enough (widened `svcStartT`,
+  `extractionTimeMsecs` bookkeeping) that the same overflow started
+  clobbering live stack content, causing an immediate
+  `SOFTDEVICE: INVALID MEMORY ACCESS` on entering Profile mode.
+
+---
+
 ## 2026-09-05 — Unify config data-source selection (STATUS TODO #10)
 
 ### Changed
