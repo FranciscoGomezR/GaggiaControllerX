@@ -30,8 +30,8 @@
  * then set back to 0 and reflash. Never leave set to 1 in a release build. */
 #define ESPRESSO_CFG_ERASE_NVM_KEY    0
 
-#define SERVICE_PUMP_ACTION_EN        1
-#define SERVICE_HEAT_ACTION_EN        1
+#define SERVICE_PUMP_ACTION_EN        0
+#define SERVICE_HEAT_ACTION_EN        0
 
 /* ---------------------------------------------------------------------------
  * espresso_user_config_t Developer Test values.

@@ -33,13 +33,13 @@
 /* H5: Maximum continuous brew duration.  120 s @ 100 ms/tick = 1200 ticks. */
 #define MAX_BREW_TICKS            (120000 / SERVICE_BASE_TIME_MSECS)
 
-#define SVC_LOG_LEN             120
+#define SVC_LOG_LEN             150
 
-static const char *TAG_SYS_MONITOR ="[System]  <Monitor:";
+static const char *TAG_SYS_MONITOR ="[System]  <Monitor";
 static const char *TAG_SYS_MSG   =  "[System]  <Message:";
 static const char *TAG_SYS_FORMAT  ="[System]   <Format:";
-static const char *TAG_PROF_MODE =  "[Profile]    <Mode:";
-static const char *TAG_CLAS_MODE =  "[Classic]    <Mode:";
+static const char *TAG_PROF_MODE =  "[Profile]    <Mode";
+static const char *TAG_CLAS_MODE =  "[Classic]    <Mode";
 
 /******************************************************************************
 *
@@ -56,7 +56,7 @@ typedef enum {
 
 typedef enum {
   PROFILE_IDLE = 0,
-  PROFILE_MODE_PREINFUSE,
+  PROFILE_MODE_RAMP_STEP,
   PROFILE_MODE_INFUSE,
   PROFILE_MODE_DECLINE,
   PROFILE_MODE_STOP,
@@ -88,6 +88,7 @@ typedef struct{
   bool            is_boostI_phase2;
   bool            is_normalI;
   bool            max_time_reached;
+  bool            is_active;
 }s_classic_data_t;
 
 typedef struct{
@@ -109,6 +110,7 @@ typedef struct{
   bool            is_stopped;
   bool            max_time_reached;
   bool            profile_ended;
+  bool            is_active;
 }s_profile_data_t;
 
 /******************************************************************************
@@ -194,7 +196,8 @@ static uint32_t get_switch_state(void);
  *****************************************************************************/
 void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
 {
-  float svr_duration_msecs;
+  float svr_duration_secs;
+  uint32_t brew_time_msecs;
   uint8_t  log_text_arr[SVC_LOG_LEN]={0};
   static bool is_app_initialized = false;  /* persists across calls */
 
@@ -204,6 +207,12 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       sprintf((char*)log_text_arr,"%s;%08d;Espresso Machine enters into ::CLASSIC MODE::;",
                         TAG_SYS_MSG,
                         service_tick*100);
+      NRF_LOG_RAW_INFO("%s\n",log_text_arr);
+      NRF_LOG_FLUSH();
+
+      sprintf((char *)log_text_arr,
+        "%s;System_Time_Miliseconds;Brew_time_Miliseconds;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
+              TAG_SYS_FORMAT);
       NRF_LOG_RAW_INFO("%s\n",log_text_arr);
       NRF_LOG_FLUSH();
     #endif
@@ -223,14 +232,17 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       boiler_ssr_pwr_update(Classic_data_s.heatingPwr);
     #endif
 
-    /*Print: Time Stamp + HeatPwr + Boiler Temperature. Delimeter symbol (;)*/
+    /*Print: Time Stamp + Brew Time + Boiler Temperature + HeatPwr + PumpPwr. Delimeter symbol (;)*/
     #if(NRF_LOG_ENABLED == 1)
-      sprintf((char *)log_text_arr,"%s;%08d;%04d;%.1f;%.2f;%04d;",
+      brew_time_msecs = Classic_data_s.is_active ?
+          (service_tick - Classic_data_s.svcStartT) * SERVICE_BASE_TIME_MSECS : 0U;
+      sprintf((char *)log_text_arr,"%s;%08d;%08d;%.1f;%.2f;%04d;%04d;",
                         TAG_SYS_MONITOR,
                         service_tick*100,
-                        Classic_data_s.heatingPwr,
+                        brew_time_msecs,
                         boiler_target_temp_degC,
                         boiler_temp_degC,
+                        Classic_data_s.heatingPwr,
                         app_pump_pwr);
       NRF_LOG_RAW_INFO("%s\n",log_text_arr);
       NRF_LOG_FLUSH();
@@ -264,6 +276,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           }
           /*Save: Strating time & Reset extraction time*/
           Classic_data_s.svcStartT = service_tick;
+          Classic_data_s.is_active = true;
           g_Espresso_user_config_s.extractionTimeMsecs = 0U;
           /*ACTION: Increase I gain*/
           temp_ctrl_set_operational_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s);
@@ -321,6 +334,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           is_phase2 = true;
           solenoid_ssr_off();
           Classic_data_s.max_time_reached = true;
+          Classic_data_s.is_active = false;
           g_Espresso_user_config_s.extractionTimeMsecs =
               (service_tick - Classic_data_s.svcStartT) * SERVICE_BASE_TIME_MSECS;
           break;
@@ -340,6 +354,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           Classic_data_s.is_boostI_phase1=false;
           Classic_data_s.is_boostI_phase2=true;
           is_phase2 = true;
+          Classic_data_s.is_active = false;
           /*ACTION: Solenoid OFF */
           solenoid_ssr_off();
           g_Espresso_user_config_s.extractionTimeMsecs =
@@ -350,13 +365,13 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
-            svr_duration_msecs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
-            svr_duration_msecs = svr_duration_msecs/1000.0f;
+            svr_duration_secs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
+            svr_duration_secs = svr_duration_secs/1000.0f;
 
             sprintf((char *)log_text_arr,"%s;%08d;%.2f s;msg::Espresso shot Duration_time(s)::;",
                               TAG_CLAS_MODE,
                               service_tick*100,
-                              svr_duration_msecs);
+                              svr_duration_secs);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
           #endif
@@ -458,6 +473,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
 
     case CLASSIC_MODE_MAX:
       Espresso_service_status_s.sRunning= CLASSIC_IDLE;
+      Classic_data_s.is_active = false;
     break;
   }
 }
@@ -470,12 +486,14 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
  *****************************************************************************/
 void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
 {
-  float svr_duration_msecs;
+  float svr_duration_secs;
+  uint32_t brew_time_msecs;
   uint8_t  log_text_arr[SVC_LOG_LEN]={0};
   static bool is_app_initialized = false;  /* persists across calls */
 
   if (!is_app_initialized) {
     /* Code to run only once */
+    Profile_data_s.svcStartT = 0;
     #if(NRF_LOG_ENABLED == 1)
       /* Print time at 0 msecs */
       sprintf((char *)log_text_arr,"%s;%08d",
@@ -489,8 +507,9 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       NRF_LOG_RAW_INFO("%s\n",log_text_arr);
       NRF_LOG_FLUSH();
 
-      sprintf((char *)log_text_arr,"%s;Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power",
-                              TAG_SYS_FORMAT);
+      sprintf((char *)log_text_arr,
+        "%s;System_Time_Miliseconds;Brew_time_Miliseconds;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
+              TAG_SYS_FORMAT);
       NRF_LOG_RAW_INFO("%s\n",log_text_arr);
       NRF_LOG_FLUSH();
     #endif
@@ -509,14 +528,17 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
     #if SERVICE_HEAT_ACTION_EN == 1
       boiler_ssr_pwr_update(Profile_data_s.heatingPwr);
     #endif
-    /*Print: Time Stamp + HeatPwr + Boiler Temperature. Delimeter symbol (;)*/
+    /*Print: Time Stamp + Brew Time + Boiler Temperature + HeatPwr + PumpPwr. Delimeter symbol (;)*/
     #if(NRF_LOG_ENABLED == 1)
-      sprintf((char *)log_text_arr,"%s;%08d;%04d;%.1f;%.2f;%04d;",
+      brew_time_msecs = Profile_data_s.is_active ?
+          (service_tick - Profile_data_s.svcStartT) * SERVICE_BASE_TIME_MSECS : 0U;
+      sprintf((char *)log_text_arr,"%s;%08d;%08d;%.1f;%.2f;%04d;%04d;",
                         TAG_SYS_MONITOR,
                         service_tick*100,
-                        Profile_data_s.heatingPwr,
+                        brew_time_msecs,
                         boiler_target_temp_degC,
                         boiler_temp_degC,
+                        Profile_data_s.heatingPwr,
                         Profile_data_s.pumpPwr);
       NRF_LOG_RAW_INFO("%s\n",log_text_arr);
       NRF_LOG_FLUSH();
@@ -572,17 +594,18 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           #endif
           /*Save: Strating time & Reset Extraction-Time */
           Profile_data_s.svcStartT = service_tick;
+          Profile_data_s.is_active = true;
           g_Espresso_user_config_s.extractionTimeMsecs = 0U;
           /*STATE JUMP: Profiler Move*/
-          Profile_service_status_s.sRunning= PROFILE_MODE_PREINFUSE;
+          Profile_service_status_s.sRunning= PROFILE_MODE_RAMP_STEP;
           Profile_service_status_s.sNext = PROFILE_MODE_INFUSE;
           #if(NRF_LOG_ENABLED == 1)
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Pulling a shot of espresso::;",
+            sprintf((char *)log_text_arr,"%s;%08d;--Pulling a shot of espresso--;",
                               TAG_PROF_MODE,
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Pre infusion Start_time(ms)::;",
+            sprintf((char *)log_text_arr,"%s;%08d;:--Pre infusion Start_time(ms)--;",
                               TAG_PROF_MODE,
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -597,7 +620,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           /*STATE JUMP: Mode2A*/
           Profile_service_status_s.sRunning = PROFILE_MODE_STEAM;
           #if(NRF_LOG_ENABLED == 1)
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Steam generation Start_time(ms)::;",
+            sprintf((char *)log_text_arr,"%s;%08d;--Steam generation Start_time(ms)--;",
                               TAG_PROF_MODE,
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -606,11 +629,12 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         }else{}
     break;
 
-    case PROFILE_MODE_PREINFUSE:
+    case PROFILE_MODE_RAMP_STEP:
       /* H5: enforce maximum brew duration — auto-stop after 120 s */
       if ((service_tick - Profile_data_s.svcStartT) >= MAX_BREW_TICKS) {
         Profile_data_s.max_time_reached = true;   //Profile time reach maximum duration time, flag -> false.
         Profile_data_s.is_stopped = false;
+        Profile_data_s.profile_ended = false;
         Profile_service_status_s.sRunning = PROFILE_MODE_STOP;   // not IDLE
         break;
       }
@@ -641,6 +665,13 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         }else{}
         if(Profile_data_s.tabCnt==0)
         {
+          if(Profile_service_status_s.sNext == PROFILE_MODE_STOP)
+          {
+            /* Natural end: all 3 profile stages completed on schedule */
+            Profile_data_s.is_stopped       = false;
+            Profile_data_s.profile_ended    = true;
+            Profile_data_s.max_time_reached = false;
+          }else{}
           Profile_service_status_s.sRunning = Profile_service_status_s.sNext;
         }else{}
       }else{
@@ -657,6 +688,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if ((service_tick - Profile_data_s.svcStartT) >= MAX_BREW_TICKS) {
         Profile_data_s.max_time_reached = true;   //Profile time reach maximum duration time, flag -> false.
         Profile_data_s.is_stopped = false;
+        Profile_data_s.profile_ended = false;
         Profile_service_status_s.sRunning = PROFILE_MODE_STOP;   // not IDLE
         break;
       }
@@ -696,10 +728,10 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           pump_ssr_pwr_update(Profile_data_s.pumpPwr);
         #endif
         /*STATE JUMP: Profiler Move*/
-        Profile_service_status_s.sRunning= PROFILE_MODE_PREINFUSE;
+        Profile_service_status_s.sRunning= PROFILE_MODE_RAMP_STEP;
         Profile_service_status_s.sNext = PROFILE_MODE_DECLINE;
         #if(NRF_LOG_ENABLED == 1)
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Infusion stage Start_time(ms)::;",
+            sprintf((char *)log_text_arr,"%s;%08d;--Infusion stage Start_time(ms)--;",
                               TAG_PROF_MODE,
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -719,6 +751,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if ((service_tick - Profile_data_s.svcStartT) >= MAX_BREW_TICKS) {
         Profile_data_s.max_time_reached = true;   //Profile time reach maximum duration time, flag -> false.
         Profile_data_s.is_stopped = false;
+        Profile_data_s.profile_ended = false;
         Profile_service_status_s.sRunning = PROFILE_MODE_STOP;   // not IDLE
         break;
       }
@@ -758,10 +791,10 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           pump_ssr_pwr_update(Profile_data_s.pumpPwr);
         #endif
         /*STATE JUMP: Profiler Move*/
-        Profile_service_status_s.sRunning= PROFILE_MODE_PREINFUSE;
+        Profile_service_status_s.sRunning= PROFILE_MODE_RAMP_STEP;
         Profile_service_status_s.sNext = PROFILE_MODE_STOP;
         #if(NRF_LOG_ENABLED == 1)
-          sprintf((char *)log_text_arr,"%s;%08d;msg::Decline stage Start_time(ms)::;",
+          sprintf((char *)log_text_arr,"%s;%08d;--Decline stage Start_time(ms)--;",
                             TAG_PROF_MODE,
                             service_tick*100);
           NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -779,10 +812,12 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
     case PROFILE_MODE_STOP:
       if(!Profile_data_s.is_stopped)
       {
-        //Profile_data_s.is_stopped = true;
+        Profile_data_s.is_stopped = true;
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
-        pump_ssr_pwr_update(app_pump_pwr);
+        #if SERVICE_PUMP_ACTION_EN == 1
+          pump_ssr_pwr_update(app_pump_pwr);
+        #endif
         /*ACTION: Solenoid OFF */
         solenoid_ssr_off();
         Profile_data_s.is_boostI_phase1=false;
@@ -796,15 +831,15 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {
         Profile_data_s.profile_ended = false;
         #if(NRF_LOG_ENABLED == 1)
-            svr_duration_msecs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
-            svr_duration_msecs = svr_duration_msecs/1000.0f;
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Espresso shot time - %.2f(s)::;",
+            svr_duration_secs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
+            svr_duration_secs = svr_duration_secs/1000.0f;
+            sprintf((char *)log_text_arr,"%s;%08d;--Espresso shot time = %.2f(s)--;",
                               TAG_PROF_MODE,
                               service_tick*100,
-                              svr_duration_msecs);
+                              svr_duration_secs);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
-            sprintf((char *)log_text_arr,"%s;msg::Profile service ended::;",
+            sprintf((char *)log_text_arr,"%s;--Profile service ended--;",
                               TAG_PROF_MODE);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
@@ -814,20 +849,20 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {
         Profile_data_s.max_time_reached = false;
         #if(NRF_LOG_ENABLED == 1)
-            svr_duration_msecs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
-            svr_duration_msecs = svr_duration_msecs/1000.0f;
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Espresso shot time - %.2f(s)::;",
+            svr_duration_secs = (float)g_Espresso_user_config_s.extractionTimeMsecs;
+            svr_duration_secs = svr_duration_secs/1000.0f;
+            sprintf((char *)log_text_arr,"%s;%08d;--Espresso shot time = %.2f(s)--;",
                               TAG_PROF_MODE,
                               service_tick*100,
-                              svr_duration_msecs);
+                              svr_duration_secs);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
-            sprintf((char *)log_text_arr,"%s;msg::Profile service ended::;",
+            sprintf((char *)log_text_arr,"%s;--Profile service ended--;",
                               TAG_PROF_MODE);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
             NRF_LOG_FLUSH();
         #endif
-      }{}
+      }else{}
 
 
       /*SWITCH Activation: Brew*/
@@ -835,8 +870,11 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*STATE JUMP: IDLE*/
         Profile_service_status_s.sRunning= PROFILE_IDLE;
+        Profile_data_s.is_active = false;
+        Profile_data_s.is_stopped = false;
+        Profile_data_s.max_time_reached = false;
         #if(NRF_LOG_ENABLED == 1)
-          sprintf((char *)log_text_arr,"%s;%08d;msg::Ready to pull a new espresso shot::;",
+          sprintf((char *)log_text_arr,"%s;%08d;--Ready to pull a new espresso shot--;",
                               TAG_PROF_MODE,
                               service_tick*100);
           NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -855,11 +893,13 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if(swBrew == AC_SWITCH_ASSERTED )
       {
         app_pump_pwr = PUMP_PWR_ON;
-        pump_ssr_pwr_update(app_pump_pwr);
+        #if SERVICE_PUMP_ACTION_EN == 1
+          pump_ssr_pwr_update(app_pump_pwr);
+        #endif
         /*STATE JUMP: Mode2B*/
         Profile_service_status_s.sRunning= PROFILE_MODE_STEAM_BREW;
         #if(NRF_LOG_ENABLED == 1)
-          sprintf((char *)log_text_arr,"%s;%08d;msg::Pump On + Solenoid Shut::;",
+          sprintf((char *)log_text_arr,"%s;%08d;--Pump On + Solenoid Shut--;",
                             TAG_PROF_MODE,
                             service_tick*100);
           NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -870,13 +910,15 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
-        pump_ssr_pwr_update(app_pump_pwr);
+        #if SERVICE_PUMP_ACTION_EN == 1
+          pump_ssr_pwr_update(app_pump_pwr);
+        #endif
         /*ACTION: Setting target temperature back to brew setpoint*/
         g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.brewTempDegC;
         /*STATE JUMP: idle*/
         Profile_service_status_s.sRunning= PROFILE_IDLE;
         #if(NRF_LOG_ENABLED == 1)
-          sprintf((char *)log_text_arr,"%s;%08d;msg::Steam Generation Stop_time(ms)::;",
+          sprintf((char *)log_text_arr,"%s;%08d;--Steam Generation Stop_time(ms)--;",
                             TAG_PROF_MODE,
                             service_tick*100);
           NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -891,11 +933,13 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
-        pump_ssr_pwr_update(app_pump_pwr);
+        #if SERVICE_PUMP_ACTION_EN == 1
+          pump_ssr_pwr_update(app_pump_pwr);
+        #endif
         /*STATE JUMP: Mode2B*/
         Profile_service_status_s.sRunning= PROFILE_MODE_STEAM;
         #if(NRF_LOG_ENABLED == 1)
-            sprintf((char *)log_text_arr,"%s;%08d;msg::Steam generation Start_time(ms)::;",
+            sprintf((char *)log_text_arr,"%s;%08d;--Steam generation Start_time(ms)--;",
                               TAG_PROF_MODE,
                               service_tick*100);
             NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -910,7 +954,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         /*STATE JUMP: Mode1A*/
         Profile_service_status_s.sRunning= PROFILE_IDLE;
         #if(NRF_LOG_ENABLED == 1)
-          sprintf((char *)log_text_arr,"%s;%08d;msg::Pulling a shot of espresso Start_time(ms)::;",
+          sprintf((char *)log_text_arr,"%s;%08d;--Pulling a shot of espresso Start_time(ms)--;",
                             TAG_PROF_MODE,
                             service_tick*100);
           NRF_LOG_RAW_INFO("%s\n",log_text_arr);
@@ -920,6 +964,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
 
     case PROFILE_MODE_MAX:
       Profile_service_status_s.sRunning= PROFILE_IDLE;
+      Profile_data_s.is_active = false;
     break;
   }
 }
@@ -956,7 +1001,9 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
           solenoid_ssr_on();
           /*ACTION: Pump ON */
           app_pump_pwr = PUMP_PWR_ON;
-          pump_ssr_pwr_update(app_pump_pwr);
+          #if SERVICE_PUMP_ACTION_EN == 1
+            pump_ssr_pwr_update(app_pump_pwr);
+          #endif
           /*STATE JUMP: Mode1*/
           Stepfcn_service_status_s.sRunning= SF_MODE_1;
           #if(NRF_LOG_ENABLED == 1)
@@ -1048,7 +1095,9 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
         if ((float)g_Espresso_user_config_s.steamTempDegC > 150.0f)
         {
           app_heat_pwr = PUMP_PWR_OFF;
-          boiler_ssr_pwr_update(app_heat_pwr);
+          #if SERVICE_HEAT_ACTION_EN == 1
+            boiler_ssr_pwr_update(app_heat_pwr);
+          #endif
           is_stpfcn_heating = false;
           Stepfcn_service_status_s.sRunning = SF_MODE_MAX;
           break;
@@ -1058,7 +1107,9 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
         {
           /*ACTION: Activating Heating Element to 100%*/
           app_heat_pwr=STPFCN_HEATING_PWR;
-          boiler_ssr_pwr_update(app_heat_pwr);
+          #if SERVICE_HEAT_ACTION_EN == 1
+            boiler_ssr_pwr_update(app_heat_pwr);
+          #endif
           #if(NRF_LOG_ENABLED == 1)
             NRF_LOG_INFO("\nSTP_FCN ::START::\n");
             NRF_LOG_FLUSH();
@@ -1104,12 +1155,16 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
     case SF_MODE_MAX:
       /*ACTION: Pump OFF */
       app_pump_pwr = PUMP_PWR_OFF;
-      pump_ssr_pwr_update(app_pump_pwr);
+      #if SERVICE_PUMP_ACTION_EN == 1
+        pump_ssr_pwr_update(app_pump_pwr);
+      #endif
       /*ACTION: Solenoid OFF */
       solenoid_ssr_off();
       /*ACTION: Heat OFF */
       app_heat_pwr=PUMP_PWR_OFF;
-      boiler_ssr_pwr_update(app_heat_pwr);
+      #if SERVICE_HEAT_ACTION_EN == 1
+        boiler_ssr_pwr_update(app_heat_pwr);
+      #endif
       /*Reset counter*/
       stpfcn_tick_cnt=0;
       Stepfcn_service_status_s.sRunning = SF_IDLE;

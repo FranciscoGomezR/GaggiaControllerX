@@ -122,12 +122,37 @@ These items have not been commited
         parked after a 120s hard-stop until the switch is released and re-pressed.
         CHANGELOG.md -> "2026-09-14 — Classic-mode auto-stop restart-loop fix (STATUS TODO #15)".
 
-- [ ]Update serial data from: 
+- 16[x]Update serial data output from: 
         -> "%s;Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power"
+        sprintf((char *)log_text_arr,"%s;%08d;%04d;%.1f;%.2f;%04d;",
+                TAG_SYS_MONITOR,
+                service_tick*100,
+                Profile_data_s.heatingPwr,
+                boiler_target_temp_degC,
+                boiler_temp_degC,
+                Profile_data_s.pumpPwr);
         To
-        -> "%s;System_Time_Miliseconds;Brew_time;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power",
-- []
-- []
+        -> "%s;System_Time_Miliseconds;Brew_time_Miliseconds;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power"
+        sprintf((char *)log_text_arr,`To be define by LLM based on next paramaters`];",
+                TAG_SYS_MONITOR,
+                service_tick*100,
+                (service_tick - Profile_data_s.svcStartT),
+                boiler_target_temp_degC,
+                boiler_temp_degC,
+                Profile_data_s.heatingPwr.
+                Profile_data_s.pumpPwr);
+        Done:CHANGELOG.md -> "2026-09-14 — Serial monitor log format + gated brew-time (STATUS TODO #16)".
+
+- 17[x] - Profile mode PROFILE_MODE_STOP entry was unreliable: only 2 of the 3 exit paths out of
+        the shared ramp-execution state (max-time hit, user releases switch) set
+        is_stopped/profile_ended/max_time_reached before jumping into PROFILE_MODE_STOP; the
+        natural-end path (tabCnt==0 reaching the last stage) set none of them. 
+        Need to add exit path into PROFILE_MODE_STOP sets all 3 flags rather than relying on inherited state.
+        - Renamed PROFILE_MODE_PREINFUSE -> PROFILE_MODE_RAMP_STEP: this state is not preinfusion
+        specifically, it is the shared tick/tab-decrement executor reused by all 3 profile stages
+        CHANGELOG.md -> "2026-09-18 — Profile-mode STOP-entry flag fix + PROFILE_MODE_RAMP_STEP rename (STATUS TODO #17)".
+
+- 18[]
 
 - [ ]change PID controller parameter Length mentioned below: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |

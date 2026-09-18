@@ -10,6 +10,55 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-09-18 — Profile-mode STOP-entry flag fix + PROFILE_MODE_RAMP_STEP rename (STATUS TODO #17)
+
+### Fixed
+- `espressoMachineServices.c`: the shared ramp-execution state (all 3 profile
+  stages reuse one state to step through the growth/decay table) has 3 exit
+  paths into `PROFILE_MODE_STOP` — max-time hit, user releases the brew
+  switch, and natural end (tabCnt reaches 0 on the last stage). Only the
+  first two set `is_stopped`/`profile_ended`/`max_time_reached` before the
+  jump; the natural-end path set none of them.
+- Consequence: `is_stopped` could still be `true` from a previous shot's
+  `PROFILE_MODE_STOP` cleanup, so on any naturally-completed shot after the
+  first since boot, `PROFILE_MODE_STOP`'s one-shot shutdown block (pump off,
+  solenoid off, integral-gain rescale, `extractionTimeMsecs` calc) was
+  silently skipped. `profile_ended` never being set on that path also meant
+  the end-of-shot summary log line never printed for a normal completion.
+- Natural-end path now explicitly sets `is_stopped=false`,
+  `profile_ended=true`, `max_time_reached=false` when
+  `sNext==PROFILE_MODE_STOP`. All 3 max-time branches (one per stage-setup
+  case) now also explicitly set `profile_ended=false`, so every exit path
+  into `PROFILE_MODE_STOP` sets all 3 flags rather than relying on
+  inherited state from a prior shot.
+
+### Changed
+- Renamed `PROFILE_MODE_PREINFUSE` -> `PROFILE_MODE_RAMP_STEP`. This state
+  isn't preinfusion-specific — it's the shared tick/tab-decrement executor
+  that `PROFILE_MODE_INFUSE` and `PROFILE_MODE_DECLINE` both load a table
+  into and jump back to run. Old name was misleading. 5 references updated
+  (enum, case label, 3 `sRunning` jump sites).
+
+## 2026-09-14 — Serial monitor log format + gated brew-time (STATUS TODO #16)
+
+### Changed
+- `espressoMachineServices.c`: `service_classic_mode()` and
+  `service_profile_mode()` monitor sprintf (`TAG_SYS_MONITOR`) reworked.
+  Old: `Time_Miliseconds;Heating_Power;Boiler_Target_DegC;Boiler_Temp_DegC;Pump_Power`.
+  New: `System_Time_Miliseconds;Brew_time_Miliseconds;Boiler_Target_DegC;Boiler_Temp_DegC;Heating_Power;Pump_Power`.
+- `service_classic_mode()` was missing its `TAG_SYS_FORMAT` header line
+  entirely; added, matching Profile mode's header.
+- `SVC_LOG_LEN` 120 -> 150 (new header string no longer fits at 120).
+
+### Added
+- `bool is_active` added to `s_classic_data_t` and `s_profile_data_t`.
+  `Brew_time_Miliseconds` prints 0 while idle/steam-only and only counts
+  up during an actual brew cycle (`CLASSIC_MODE_1` for Classic;
+  `PREINFUSE`/`INFUSE`/`DECLINE`/`STOP` for Profile). Needed because
+  `svcStartT` is never reset on entry to the steam-only states
+  (`CLASSIC_MODE_2/3`, `PROFILE_MODE_STEAM/STEAM_BREW`) — gating on
+  "not idle" alone would have printed stale brew-time during steam use.
+
 ## 2026-09-14 — Classic-mode auto-stop restart-loop fix (STATUS TODO #15)
 
 ### Fixed
