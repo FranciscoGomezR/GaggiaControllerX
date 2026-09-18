@@ -152,7 +152,15 @@ These items have not been commited
         specifically, it is the shared tick/tab-decrement executor reused by all 3 profile stages
         CHANGELOG.md -> "2026-09-18 — Profile-mode STOP-entry flag fix + PROFILE_MODE_RAMP_STEP rename (STATUS TODO #17)".
 
-- 18[]
+- 18[x] Profile-mode Monitor log (line 542) always prints Profile_data_s.pumpPwr
+        But states just update: pump_ssr_pwr_update(app_pump_pwr).
+        Same desync also present in Classic mode (Monitor log prints app_pump_pwr,
+        but Classic states only update Classic_data_s.pumpPwr).
+        CHANGELOG.md -> "2026-09-18 — Monitor log pump-power desync fix (STATUS TODO #18)".
+- 19[]
+- 20[]
+- 21[]
+- 22[]
 
 - [ ]change PID controller parameter Length mentioned below: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |

@@ -286,6 +286,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           solenoid_ssr_on();
           /*ACTION: Pump ON */
           Classic_data_s.pumpPwr = PUMP_PWR_ON;
+          app_pump_pwr = Classic_data_s.pumpPwr;
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
           #endif
@@ -325,6 +326,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         if ((service_tick - Classic_data_s.svcStartT) >= MAX_BREW_TICKS) {
           Espresso_service_status_s.sRunning = CLASSIC_IDLE;
           Classic_data_s.pumpPwr = PUMP_PWR_OFF;
+          app_pump_pwr = Classic_data_s.pumpPwr;
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
           #endif
@@ -346,6 +348,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           Espresso_service_status_s.sRunning = CLASSIC_IDLE;
           /*ACTION: Pump OFF */
           Classic_data_s.pumpPwr = PUMP_PWR_OFF;
+          app_pump_pwr = Classic_data_s.pumpPwr;
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
           #endif
@@ -399,6 +402,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if(swBrew == AC_SWITCH_ASSERTED )
       {
         Classic_data_s.pumpPwr = PUMP_PWR_ON;
+        app_pump_pwr = Classic_data_s.pumpPwr;
         #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
         #endif
@@ -416,6 +420,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         Classic_data_s.pumpPwr = PUMP_PWR_OFF;
+        app_pump_pwr = Classic_data_s.pumpPwr;
         #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
         #endif
@@ -439,6 +444,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         Classic_data_s.pumpPwr = PUMP_PWR_OFF;
+        app_pump_pwr = Classic_data_s.pumpPwr;
         #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
         #endif
@@ -815,6 +821,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         Profile_data_s.is_stopped = true;
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
+        Profile_data_s.pumpPwr = app_pump_pwr;
         #if SERVICE_PUMP_ACTION_EN == 1
           pump_ssr_pwr_update(app_pump_pwr);
         #endif
@@ -893,6 +900,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if(swBrew == AC_SWITCH_ASSERTED )
       {
         app_pump_pwr = PUMP_PWR_ON;
+        Profile_data_s.pumpPwr = app_pump_pwr;
         #if SERVICE_PUMP_ACTION_EN == 1
           pump_ssr_pwr_update(app_pump_pwr);
         #endif
@@ -910,6 +918,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
+        Profile_data_s.pumpPwr = app_pump_pwr;
         #if SERVICE_PUMP_ACTION_EN == 1
           pump_ssr_pwr_update(app_pump_pwr);
         #endif
@@ -933,6 +942,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       {}else{
         /*ACTION: shut pump down.*/
         app_pump_pwr = PUMP_PWR_OFF;
+        Profile_data_s.pumpPwr = app_pump_pwr;
         #if SERVICE_PUMP_ACTION_EN == 1
           pump_ssr_pwr_update(app_pump_pwr);
         #endif

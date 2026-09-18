@@ -10,6 +10,23 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-09-18 — Monitor log pump-power desync fix (STATUS TODO #18)
+
+### Fixed
+- `espressoMachineServices.c`: Classic-mode and Profile-mode Monitor log lines
+  each print one dedicated pump-power field (`app_pump_pwr` in Classic,
+  `Profile_data_s.pumpPwr` in Profile), but several pump on/off transitions in
+  each mode only updated the *other* pump-power variable — the one actually
+  passed to `pump_ssr_pwr_update()`. The logged field was left stale at
+  whatever value it last held, so e.g. Profile mode kept reporting the last
+  ramp power (e.g. `0850`) in the Monitor log for the entire STOP/IDLE period
+  after a shot ended, even though the pump SSR was actually off.
+- Added the missing mirror assignment at every such transition: Classic
+  mode's 6 `Classic_data_s.pumpPwr` writes now also set `app_pump_pwr`;
+  Profile mode's 4 `app_pump_pwr` writes (STOP entry, STEAM on/off,
+  STEAM_BREW off) now also set `Profile_data_s.pumpPwr`. No state-machine or
+  hardware-driver behavior changed — logging only.
+
 ## 2026-09-18 — Profile-mode STOP-entry flag fix + PROFILE_MODE_RAMP_STEP rename (STATUS TODO #17)
 
 ### Fixed
