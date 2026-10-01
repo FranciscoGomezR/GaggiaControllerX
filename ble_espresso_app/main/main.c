@@ -20,6 +20,7 @@
 #include "solidStateRelay_Controller.h"
 #include "dc12Vouput_drv.h"
 #include "app_error.h"
+#include "app_util_platform.h"
 
 volatile uint16_t g_ssr_power = 0U;
 volatile uint16_t g_ssr_pump  = 0U;
@@ -196,6 +197,9 @@ int main(void)
   ret_code_t err_code;
   uint32_t init_result_flag=0;
   static uint32_t user_data_loaded_flag=0;
+  espresso_user_config_t cfg_snapshot_s;
+  uint8_t cfg_pending_mask;
+  uint32_t cfg_save_status;
 
   #if(NRF_LOG_ENABLED == 1)
     log_init();
@@ -225,9 +229,9 @@ int main(void)
   #if(NRF_LOG_ENABLED == 1)
     if( init_result_flag == NVM_INIT_OK)
     {
-      NRF_LOG_DEBUG("CNTRL INIT SPI External MEM ::READY::");
+      NRF_LOG_DEBUG("CNTRL INIT SPI-External NonVolatileMemory ::READY::");
     }else{
-      NRF_LOG_DEBUG("CNTRL INIT SPI External MEM  ::FAILED::");
+      NRF_LOG_DEBUG("CNTRL INIT SPI-External NonVolatileMemory  ::FAILED::");
     }
     NRF_LOG_FLUSH();
   #endif
@@ -293,9 +297,9 @@ int main(void)
     #if(NRF_LOG_ENABLED == 1)
       if( init_result_flag == STORAGE_USERDATA_LOADED)
       {
-        NRF_LOG_DEBUG("EXT MEM ::HAS DATA::");
+        NRF_LOG_DEBUG("External-NonVolatileMemory ::HAS DATA::");
       }else{
-        NRF_LOG_DEBUG("EXT MEM ::IS EMPTY::");
+        NRF_LOG_DEBUG("External-NonVolatileMemory ::IS EMPTY::");
       }
       NRF_LOG_FLUSH();
     #endif
@@ -307,12 +311,8 @@ int main(void)
       user_data_loaded_flag = storage_load_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
     }else if( init_result_flag == STORAGE_USERDATA_EMPTY)
     {
-      /* NVM has no key yet -> populate factory defaults and persist them.
-       * Order matters: storage_save_shot_profile() writes the NVM key on its
-       * first-write path; storage_save_controller_config() must run after it
-       * so it reads back that key + the shot profile bytes just written,
-       * instead of preserving erased-flash (0xFF) filler as the other half
-       * of the record. */
+      /* NVM blank -> load factory defaults and save the full record (key, both
+       * regions) in one write. Re-load afterwards to sync nvmKey/nvmWcycles. */
       g_Espresso_user_config_s.brewTempDegC     = BREW_TEMP_FACTORY_DEFAULT_DEGC;
       g_Espresso_user_config_s.steamTempDegC    = STEAM_TEMP_FACTORY_DEFAULT_DEGC;
       g_Espresso_user_config_s.profPreInfusePwr = PROF_PREINFUSE_PWR_FACTORY_DEFAULT_PWR;
@@ -328,22 +328,22 @@ int main(void)
       g_Espresso_user_config_s.pidPboostTerm    = PID_P_BOOST_TERM_FACTORY_DEFAULT;
       g_Espresso_user_config_s.pidIboostTerm    = PID_I_BOOST_TERM_FACTORY_DEFAULT;
 
-      (void)storage_save_shot_profile((espresso_user_config_t*)&g_Espresso_user_config_s);
-      (void)storage_save_controller_config((espresso_user_config_t*)&g_Espresso_user_config_s);
+      (void)storage_save_user_config((espresso_user_config_t*)&g_Espresso_user_config_s,
+                                     STORAGE_REGION_SHOT | STORAGE_REGION_CTRL);
 
       /* re-load: syncs nvmKey/nvmWcycles bookkeeping + runs validate_clamp_data() */
       user_data_loaded_flag = storage_load_user_config((espresso_user_config_t*)&g_Espresso_user_config_s);
       #if(NRF_LOG_ENABLED == 1)
-        NRF_LOG_DEBUG("EXT MEM ::FACTORY DEFAULTS WRITTEN::");
+        NRF_LOG_DEBUG("External-NonVolatileMemory ::RESTORE -> FACTORY DEFAULTS::");
         NRF_LOG_FLUSH();
       #endif
     }else{}
     #if(NRF_LOG_ENABLED == 1)
       if( user_data_loaded_flag == STORAGE_USERDATA_LOADED)
       {
-        NRF_LOG_DEBUG("USER DATA ::Loaded::");
+        NRF_LOG_DEBUG("::LOADING:: User Data from <- External-NonVolatileMemory");
       }else{
-        NRF_LOG_DEBUG("USER DATA ::Empty::");
+        NRF_LOG_DEBUG("::EMPTY:: User Data is empty");
       }
       NRF_LOG_FLUSH();
     #endif
@@ -560,7 +560,51 @@ int main(void)
       /* NOTIFY to BLE the new read of the water temperature from the boiler  */
       g_scheduler_flags_s.flag_ble_update = false;
       ble_notify_boiler_water_temp(g_Espresso_user_config_s.boilerTempDegC);
-    }else{}  
+
+      /* Persist BLE config changes.
+       * Runs when: something is pending, no BLE write for BLE_CFG_SAVE_DEBOUNCE_SECS,
+       * and the brew switch is off (the NVM write blocks the loop ~0.5 s).
+       * Takes a snapshot of the config under a critical region, saves + verifies it,
+       * then clears only the bits that were saved (a write arriving meanwhile stays
+       * pending) and reloads pump / PID parameters from the saved snapshot.
+       * On failure the bits stay set and the save retries next second.
+       * FACTORY/TEST data sources: skip NVM, apply live only. */
+      if(g_ble_cfg_quiet_secs < 0xFFU)
+      {
+        g_ble_cfg_quiet_secs++;
+      }else{}
+      cfg_pending_mask = g_ble_cfg_pending_mask;
+      if( (cfg_pending_mask != BLE_CFG_PENDING_NONE) &&
+          (g_ble_cfg_quiet_secs >= BLE_CFG_SAVE_DEBOUNCE_SECS) &&
+          (get_input_status_brew() != AC_SWITCH_ASSERTED) )
+      {
+        CRITICAL_REGION_ENTER();
+        cfg_snapshot_s = g_Espresso_user_config_s;
+        CRITICAL_REGION_EXIT();
+        #if (ESPRESSO_CFG_DATA_SOURCE == USER_DATA_NVM)
+          cfg_save_status = storage_save_user_config(&cfg_snapshot_s, cfg_pending_mask);
+        #else
+          cfg_save_status = STORAGE_USERDATA_STORED;
+        #endif
+        if(cfg_save_status == STORAGE_USERDATA_STORED)
+        {
+          CRITICAL_REGION_ENTER();
+          g_ble_cfg_pending_mask &= (uint8_t)(~cfg_pending_mask);
+          CRITICAL_REGION_EXIT();
+          if((cfg_pending_mask & BLE_CFG_PENDING_SHOT) != 0U)
+          {
+            (void)load_new_pump_parameters(&cfg_snapshot_s);
+          }else{}
+          if((cfg_pending_mask & BLE_CFG_PENDING_CTRL) != 0U)
+          {
+            (void)temp_ctrl_set_pid_config(&cfg_snapshot_s);
+          }else{}
+        }else{}
+        #if(NRF_LOG_ENABLED == 1)
+          NRF_LOG_INFO("NVM cfg save: %d", cfg_save_status);
+        #endif
+      }else{}
+    }else{}
 
     if (NRF_LOG_PROCESS() == false){idle_state_handle();}
   }

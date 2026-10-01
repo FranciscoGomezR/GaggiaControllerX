@@ -41,17 +41,20 @@
 
 //https://devzone.nordicsemi.com/f/nordic-q-a/31017/fstorage-vs-softdevice-activity-application-halts-when-writing-to-flash-if-waiting-to-write-or-data-not-correctly-written-if-not-waiting
 
+/* NVM record regions, used as storage_save_user_config() pending_mask bits:
+ * picks which write counter (nvmWcycles) is bumped by the save. */
+#define STORAGE_REGION_SHOT             0x01U   /* brew/steam temp + shot profile */
+#define STORAGE_REGION_CTRL             0x02U   /* PID gains                      */
+
 typedef enum {
   STORAGE_INIT_OK = 0,
   STORAGE_INIT_ERROR,
   STORAGE_USERDATA_EMPTY,
-  STORAGE_USERDATA_FIRSTW,
   STORAGE_USERDATA_LOADED,
   STORAGE_USERDATA_STORED,
   STORAGE_USERDATA_PRINTED,
-  STORAGE_PROFILEDATA_STORED,
-  STORAGE_CONTROLLERDATA_STORED,
   STORAGE_USERDATA_ERASED,
+  STORAGE_USERDATA_VERIFY_FAIL,
   STORAGE_USERDATA_ERROR
 } storage_controller_status_t;
 
@@ -76,8 +79,7 @@ uint32_t storage_init(void);
 uint32_t storage_has_user_config(void);
 uint32_t storage_erase_user_config(void);
 uint32_t storage_load_user_config(espresso_user_config_t *ptr_rxData);
-uint32_t storage_save_shot_profile(espresso_user_config_t *ptr_sxData);
-uint32_t storage_save_controller_config(espresso_user_config_t *ptr_sxData);
+uint32_t storage_save_user_config(espresso_user_config_t *ptr_sxData, uint8_t pending_mask);
 uint32_t storage_print_user_config(espresso_user_config_t *ptr_rxData);
 
 #endif // BLESPRESSOSERVICES_H__

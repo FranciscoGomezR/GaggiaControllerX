@@ -56,7 +56,10 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
     ble_cus_evt_t                 evt;
-  
+
+    /* All param_command members share one address: set the handle once here,
+       the per-char branches below only fill ptr_data/length */
+    evt.param_command.Brew_temp_s.handle = p_evt_write->handle;
     // Writing to this Custom Value Characteristic: BLE_MACHINE_STATUS_CHAR_NOTIFY_
     if ( (p_evt_write->handle == p_cus->machine_status_char_handles.cccd_handle)  )
     {

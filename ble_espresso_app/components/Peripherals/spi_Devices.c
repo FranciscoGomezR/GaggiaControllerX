@@ -97,7 +97,7 @@ static float rtdTemperature;
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
 static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instance completed the transfer. */
 
-static uint8_t       nvm_tx_buf[256];    /**< TX buffe. */
+static uint8_t       nvm_tx_buf[256+4];  /**< TX buffer: 4 B CMD+ADDR + 1 page */
 static uint8_t       nvm_rx_buf[256+4];   /**< RX buffer maximum 1 page; 4byte for CMD+ADD */
 
 static const uint8_t tmp_buf_len = 3;   /**< Transfer length. */
@@ -263,13 +263,18 @@ spi_nvm_status_t spim_initNVmemory(void)
             spi_xfer_done = false;
             nrf_drv_gpiote_out_clear(SPI_SS_PIN);   //SPI-CTRL: Selecting Temp Device
             APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, tmp_tx_buf, tmp_buf_len, tmp_rx_buf, tmp_buf_len));
+            /* Wait (~30 us) and release CS before returning: the SPI bus is
+               shared with the NVM, which must never run with this CS still low */
+            while (!spi_xfer_done)
+            {   __WFE();    }
+            nrf_drv_gpiote_out_set(SPI_SS_PIN);     //SPI-CTRL: Unselecting Temp Device
             sm_SPIdevices.sRunning = sm_state1;
           break;
 
           case sm_state1:
+            /* Transfer already complete and CS released in sm_state0 */
             if(spi_xfer_done == true)
             {
-              nrf_drv_gpiote_out_set(SPI_SS_PIN);     //SPI-CTRL: Unselecting Temp Device
               AdcConv = (((uint16_t)tmp_rx_buf[1])<<8 | (uint16_t)tmp_rx_buf[2]);
               AdcConv = AdcConv >>1;
               resistanceRTD = (AdcConv * 430.0f)/32768.0f;
@@ -288,11 +293,6 @@ spi_nvm_status_t spim_initNVmemory(void)
       }      
  }
 
-
- bool spim_operation_done(void)
- {
-    return spi_xfer_done;
- }
 
  /*****************************************************************************
  * Function: 	f_getBoilerTemperature
@@ -513,22 +513,27 @@ void spi_NVMemoryRead(uint32_t page, uint8_t offset, uint32_t noByte, uint8_t * 
  }
 
 /*****************************************************************************
- * Function: 	spi_NVMemoryWritePage
- * Description: CMD 02h: PAge Program from NVM
- *              allow to write data from 1 to 256 bytes (page)
- *              BUT it also erease the sector first
+ * Function:    spi_NVMemoryWritePage
+ * Description: Erases every 4KB sector touched by [page:offset, +noByte),
+ *              then programs the data one 256 B page at a time (CMD 02h),
+ *              moving to the next page address after each chunk.
+ *              Blocking: ~450 ms per sector erase + ~6 ms per page.
+ *              Must be called from main-loop context, never from an IRQ.
  * Parameter:
- *             page 
+ *             page
  *             offset offset from the start page and has a range from: 0 - 255
  *             noByte
  *             *wData
- * Caveats:   this function can only address up to 512 block or addr: 0xFF FFFF
+ * Caveats:     Max 251 data bytes per call (nRF52832 SPIM EasyDMA 255 B
+ *              transfer limit minus 4 B command+address).
+ *              Erases the WHOLE sector: any other data in it is lost.
+ *              Can only address up to 512 block or addr: 0xFF FFFF
  *****************************************************************************/
 void spi_NVMemoryWritePage(uint32_t page, uint8_t offset, uint32_t noByte, uint8_t * wData)
 {
   uint32_t startPage = page;
   uint32_t endPage = startPage + ((offset+noByte-1)/256);
-  uint32_t noPages = ( startPage - endPage )+1;
+  uint32_t noPages = ( endPage - startPage ) + 1U;
 
   //Now, we need to erase the entire sector: 4KB
   uint16_t startSector = startPage/16;
@@ -543,7 +548,7 @@ void spi_NVMemoryWritePage(uint32_t page, uint8_t offset, uint32_t noByte, uint8
   //write data to each page 256bytes
   for (uint32_t cnt=0; cnt<noPages; cnt++)
   {
-    uint32_t memAddr24bit = (uint32_t)((page *256) + offset); //24bit / 3byte address
+    uint32_t memAddr24bit = (uint32_t)((startPage * 256U) + offset); //24bit / 3byte address
     uint32_t byteStillToW = NVMpageNoByteToW(noByte,offset);
     
     spi_NVMemoryWriteEnable();    //Write Enable instruction must be executed

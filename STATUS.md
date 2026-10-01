@@ -157,8 +157,15 @@ These items have not been commited
         Same desync also present in Classic mode (Monitor log prints app_pump_pwr,
         but Classic states only update Classic_data_s.pumpPwr).
         CHANGELOG.md -> "2026-09-18 — Monitor log pump-power desync fix (STATUS TODO #18)".
-- 19[]
-- 20[]
+
+- 19[x]  Check if the function to write user-data into ext-memory works properly
+        Done: BLE write -> parse/validate (reject, no clamp) -> pending bit + 2 s debounce ->
+        main loop (brew off) storage_save_user_config() one erase+write + read-back verify ->
+        live reload pump/PID. Save fns merged, SPI multi-page bugs + w-cycle mask fixed.
+        See: docs/CHANGELOG.md -> "2026-10-01 — BLE->NVM persist pipeline (STATUS TODO #19)".
+- 20[]  The PID boost terms (pidPboostTerm / pidIboostTerm) are saved, but temp_ctrl_set_pid_config() 
+        doesn't load them. I didn't confirm whether the controller reads them directly from the global config, 
+        so a boost change may not take effect until reboot.
 - 21[]
 - 22[]
 

@@ -66,6 +66,8 @@ typedef enum
     BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_ENABLED,  /**< Boiler water temp notification enabled event. */
     BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_DISABLED, /**< Boiler water temp notification disabled event. */
     
+    /* RX_EVT entries (SET_POINT .. PID_I_BOOST) must stay contiguous and in
+       BLE_CFG_CHAR_arr order (bluetooth_drv.c) */
     BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT,     /* write new set point for the Boiler temperature */
     BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT,            /* write to Brew preset setpoint for the Boiler */
     BLE_MACHINE_STEAM_TEMP_CHAR_RX_EVT,           /* write to Steam preset setpoint for the Boiler */
@@ -92,6 +94,9 @@ typedef struct
 {
     uint8_t const*  ptr_data;
     uint16_t        length;
+    /* GATT value handle of the written char, used to restore the value after
+       a rejected write */
+    uint16_t        handle;
 }struct_CharData;
 
 /**@brief Custom Service event. */

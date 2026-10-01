@@ -59,7 +59,6 @@ spi_nvm_status_t spim_initNVmemory(void);
 /* TEMP DEVICE SECTION  */
 spi_Tmp_status_t spim_initRTDconverter(void);
 void spim_ReadRTDconverter(void);
-bool spim_operation_done(void);
 float f_getBoilerTemperature(void);
 
 void spim_DevCommMng(void);

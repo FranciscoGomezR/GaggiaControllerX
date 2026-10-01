@@ -10,6 +10,59 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-01 — BLE->NVM persist pipeline (STATUS TODO #19)
+
+Why: BLE config writes only changed RAM. They were never saved to the ext-NVM
+and never reached the pump/PID controllers until reboot. `flag_brew_cfg` /
+`flag_pid_cfg` were set (only on the last char of each group) but never read.
+
+### Added
+- `bluetooth_drv.c`: table-driven config write path. `BLE_CFG_CHAR_arr` (one row
+  per writable char 0x1403–0x140B, 0x1501–0x1506) + `parse_ble_ascii_float()`
+  replace 15 copy-paste `case` blocks. Payload is **rejected** (not clamped to
+  default) on wrong length, non-digit byte or out-of-range value. On reject,
+  `restore_gatt_value()` puts the last valid value back into the GATT table.
+- `g_ble_cfg_pending_mask` (SHOT / CTRL bits) + `g_ble_cfg_quiet_secs`: any
+  accepted write marks its NVM region pending and restarts a 2 s debounce
+  (`BLE_CFG_SAVE_DEBOUNCE_SECS`).
+- `main.c` 1 s BLE task: when pending, quiet >= 2 s and brew switch off ->
+  snapshot config, `storage_save_user_config()`, then reload
+  `load_new_pump_parameters()` / `temp_ctrl_set_pid_config()` live. On failure
+  the bits stay set and it retries next second. FACTORY/TEST data sources skip
+  NVM and apply live only.
+- `StorageController`: `storage_save_user_config(ptr, pending_mask)`: range check,
+  one sector erase + one page write of the full 65 B record, read-back `memcmp`.
+  New status `STORAGE_USERDATA_VERIFY_FAIL`; region bits `STORAGE_REGION_SHOT/CTRL`.
+- `ble_cus.h`: `struct_CharData.handle` (set once in `on_write()`).
+
+### Fixed
+- 0x140B `profTaperingTmr` had no range check.
+- BLE payload length was never checked (short write -> stale bytes parsed).
+- `nvmWcycles` ctrl counter masked with `0x00FF` -> `0xFFFF` (save + print).
+- `spi_NVMemoryWritePage()`: page count `(startPage - endPage)+1` reversed and
+  page address never advanced (latent: broke multi-page writes, not the 65 B
+  record). `nvm_tx_buf` 256 -> 260 B (cmd+addr+page overflowed by 4 B).
+- NVM key bytes are now packed from `NVM_PARAM_MEM_KEY` instead of hardcoded bytes.
+- `spi_Devices.c` `spim_ReadRTDconverter()`: `sm_state0` started the RTD transfer and
+  returned with the MAX31865 CS still low until `sm_state1` (100 ms later). An NVM
+  save in that window ran with both CS lines low, the MAX31865 drove MISO during
+  the read-back, so every first save returned `STORAGE_USERDATA_VERIFY_FAIL` and the
+  retry bumped the write counter a second time (+2 per save). `sm_state0` now waits
+  for the transfer (~30 us) and releases CS before returning. Read cadence unchanged.
+
+### Removed
+- `storage_save_shot_profile()` / `storage_save_controller_config()` (merged;
+  2 erases per update -> 1). Status values `STORAGE_USERDATA_FIRSTW`,
+  `STORAGE_PROFILEDATA_STORED`, `STORAGE_CONTROLLERDATA_STORED`.
+- Dead code in `bluetooth_drv.c/.h`: `flag_brew_cfg`, `flag_pid_cfg`,
+  `flag_read_cfg`, `read_NvmData`, `DataReceived`, `i_target_temp*`, `dataLen`,
+  commented-out parser block. Unused `volatile` counters in `storage_load_user_config()`.
+- `spim_operation_done()` (spi_Devices.c/.h): never called.
+
+### Migration
+- NVM layout and key unchanged: no erase needed.
+- Flash usage: 93.1% -> 92.7% (net reduction). Compiled OK; hardware test pending.
+
 ## 2026-09-18 — Monitor log pump-power desync fix (STATUS TODO #18)
 
 ### Fixed

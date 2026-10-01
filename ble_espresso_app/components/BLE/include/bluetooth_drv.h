@@ -90,6 +90,7 @@ extern  "C" {
 #include "ble_nus.h"
 #include "ble_cus.h"
 #include "espressoMachineServices.h"
+#include "StorageController.h"
 
 /*******************************************************************************
  *
@@ -126,6 +127,15 @@ extern  "C" {
 
 #define MESSAGE_BUFFER_SIZE             20
 
+/* g_ble_cfg_pending_mask bits: NVM region changed over BLE, not yet saved.
+ * Same values as the StorageController regions, so the mask is passed as-is
+ * to storage_save_user_config(). */
+#define BLE_CFG_PENDING_NONE            0x00U                 /* nothing waiting   */
+#define BLE_CFG_PENDING_SHOT            STORAGE_REGION_SHOT   /* temps + profile   */
+#define BLE_CFG_PENDING_CTRL            STORAGE_REGION_CTRL   /* PID gains         */
+/* Quiet time after the last BLE config write before saving to NVM */
+#define BLE_CFG_SAVE_DEBOUNCE_SECS      2U
+
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */
@@ -141,15 +151,9 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
  *		PUBLIC VARIABLES PROTOTYPE
  *
  ******************************************************************************/
-extern volatile uint8_t DataReceived[];
-extern volatile uint32_t i_target_temp;
-extern volatile uint8_t dataLen;
-/* flag_brew_cfg & flag_pid_cfg are set to:
-    flag_brew_cfg = 1 -> means there is new Brew Profiel data from the mobile phone
-    flag_pid_cfg  = 1 -> means there is new PID profile data from the mobile phone
- */
-extern volatile uint8_t flag_brew_cfg, flag_pid_cfg;
-extern volatile uint8_t flag_read_cfg;
+/* BLE config pending-save state; see bluetooth_drv.c for the full contract */
+extern volatile uint8_t g_ble_cfg_pending_mask;
+extern volatile uint8_t g_ble_cfg_quiet_secs;
 
 /*******************************************************************************
  *
