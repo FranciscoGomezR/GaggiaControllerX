@@ -37,6 +37,7 @@ typedef struct
   volatile float *ptrValue;     /* field in g_Espresso_user_config_s           */
   float           minVal;       /* lowest accepted value                       */
   float           maxVal;       /* highest accepted value                      */
+  uint16_t        charUuid;     /* 16-bit char UUID, for logs (fills padding)  */
   uint8_t         intDigits;    /* ASCII integer digits; payload adds 1 decimal */
   uint8_t         pendingBit;   /* BLE_CFG_PENDING_SHOT / _CTRL / _NONE        */
 } ble_cfg_char_t;
@@ -82,51 +83,78 @@ static const ble_cfg_char_t BLE_CFG_CHAR_arr[] =
 {
   /* 0x1403 active boiler setpoint: RAM only, not stored in NVM */
   { &g_Espresso_user_config_s.boilerTempSetpointDegC,
-    BOILER_SETPOINT_TEMP_MIN_DEGC, BOILER_SETPOINT_TEMP_MAX_DEGC, 3U, BLE_CFG_PENDING_NONE },
+    BOILER_SETPOINT_TEMP_MIN_DEGC, BOILER_SETPOINT_TEMP_MAX_DEGC,
+    BLE_CHAR_BOILER_SET_POINT_TEMP_UUID, 3U, BLE_CFG_PENDING_NONE },
   /* 0x1404 brew temperature preset */
   { &g_Espresso_user_config_s.brewTempDegC,
-    BREW_TEMP_MIN_DEGC, BREW_TEMP_MAX_DEGC, 3U, BLE_CFG_PENDING_SHOT },
+    BREW_TEMP_MIN_DEGC, BREW_TEMP_MAX_DEGC,
+    BLE_CHAR_BREW_TEMP_UUID, 3U, BLE_CFG_PENDING_SHOT },
   /* 0x1405 steam temperature preset */
   { &g_Espresso_user_config_s.steamTempDegC,
-    STEAM_TEMP_MIN_DEGC, STEAM_TEMP_MAX_DEGC, 3U, BLE_CFG_PENDING_SHOT },
+    STEAM_TEMP_MIN_DEGC, STEAM_TEMP_MAX_DEGC,
+    BLE_CHAR_STEAM_TEMP_UUID, 3U, BLE_CFG_PENDING_SHOT },
   /* 0x1406 pre-infusion pump power */
   { &g_Espresso_user_config_s.profPreInfusePwr,
-    PROF_PREINFUSE_PWR_MIN_PWR, PROF_PREINFUSE_PWR_MAX_PWR, 2U, BLE_CFG_PENDING_SHOT },
+    PROF_PREINFUSE_PWR_MIN_PWR, PROF_PREINFUSE_PWR_MAX_PWR,
+    BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID, 2U, BLE_CFG_PENDING_SHOT },
   /* 0x1407 pre-infusion time */
   { &g_Espresso_user_config_s.profPreInfuseTmr,
-    PROF_PREINFUSE_TMR_MIN_SECS, PROF_PREINFUSE_TMR_MAX_SECS, 2U, BLE_CFG_PENDING_SHOT },
+    PROF_PREINFUSE_TMR_MIN_SECS, PROF_PREINFUSE_TMR_MAX_SECS,
+    BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID, 2U, BLE_CFG_PENDING_SHOT },
   /* 0x1408 infusion pump power */
   { &g_Espresso_user_config_s.profInfusePwr,
-    PROF_INFUSE_PWR_MIN_PWR, PROF_INFUSE_PWR_MAX_PWR, 3U, BLE_CFG_PENDING_SHOT },
+    PROF_INFUSE_PWR_MIN_PWR, PROF_INFUSE_PWR_MAX_PWR,
+    BLE_CHAR_BREW_INFUSION_POWER_UUID, 3U, BLE_CFG_PENDING_SHOT },
   /* 0x1409 infusion time */
   { &g_Espresso_user_config_s.profInfuseTmr,
-    PROF_INFUSE_TMR_MIN_SECS, PROF_INFUSE_TMR_MAX_SECS, 2U, BLE_CFG_PENDING_SHOT },
+    PROF_INFUSE_TMR_MIN_SECS, PROF_INFUSE_TMR_MAX_SECS,
+    BLE_CHAR_BREW_INFUSION_TIME__UUID, 2U, BLE_CFG_PENDING_SHOT },
   /* 0x140A declining-pressure pump power */
   { &g_Espresso_user_config_s.profTaperingPwr,
-    PROF_TAPERING_PWR_MIN_PWR, PROF_TAPERING_PWR_MAX_PWR, 3U, BLE_CFG_PENDING_SHOT },
+    PROF_TAPERING_PWR_MIN_PWR, PROF_TAPERING_PWR_MAX_PWR,
+    BLE_CHAR_BREW_DECLINING_PR_POWER_UUID, 3U, BLE_CFG_PENDING_SHOT },
   /* 0x140B declining-pressure time */
   { &g_Espresso_user_config_s.profTaperingTmr,
-    PROF_TAPERING_TMR_MIN_SECS, PROF_TAPERING_TMR_MAX_SECS, 2U, BLE_CFG_PENDING_SHOT },
+    PROF_TAPERING_TMR_MIN_SECS, PROF_TAPERING_TMR_MAX_SECS,
+    BLE_CHAR_BREW_DECLINING_PR_TIME__UUID, 2U, BLE_CFG_PENDING_SHOT },
   /* 0x1501 PID P term */
   { &g_Espresso_user_config_s.pidPTerm,
-    PID_P_TERM_MIN, PID_P_TERM_MAX, 3U, BLE_CFG_PENDING_CTRL },
+    PID_P_TERM_MIN, PID_P_TERM_MAX,
+    BLE_CHAR_PID_P_TERM_UUID, 3U, BLE_CFG_PENDING_CTRL },
   /* 0x1502 PID I term */
   { &g_Espresso_user_config_s.pidITerm,
-    PID_I_TERM_MIN, PID_I_TERM_MAX, 2U, BLE_CFG_PENDING_CTRL },
+    PID_I_TERM_MIN, PID_I_TERM_MAX,
+    BLE_CHAR_PID_I_TERM_UUID, 2U, BLE_CFG_PENDING_CTRL },
   /* 0x1503 PID I max */
   { &g_Espresso_user_config_s.pidImaxTerm,
-    PID_I_MAX_TERM_MIN, PID_I_MAX_TERM_MAX, 3U, BLE_CFG_PENDING_CTRL },
+    PID_I_MAX_TERM_MIN, PID_I_MAX_TERM_MAX,
+    BLE_CHAR_PID_I_MAX_TERM_UUID, 3U, BLE_CFG_PENDING_CTRL },
   /* 0x1504 PID D term */
   { &g_Espresso_user_config_s.pidDTerm,
-    PID_D_TERM_MIN, PID_D_TERM_MAX, 2U, BLE_CFG_PENDING_CTRL },
+    PID_D_TERM_MIN, PID_D_TERM_MAX,
+    BLE_CHAR_PID_D_TERM_UUID, 2U, BLE_CFG_PENDING_CTRL },
   /* 0x1505 PID P boost */
   { &g_Espresso_user_config_s.pidPboostTerm,
-    PID_P_BOOST_TERM_MIN, PID_P_BOOST_TERM_MAX, 2U, BLE_CFG_PENDING_CTRL },
+    PID_P_BOOST_TERM_MIN, PID_P_BOOST_TERM_MAX,
+    BLE_CHAR_PID_P_BOOST_UUID, 2U, BLE_CFG_PENDING_CTRL },
   /* 0x1506 PID I boost */
   { &g_Espresso_user_config_s.pidIboostTerm,
-    PID_I_BOOST_TERM_MIN, PID_I_BOOST_TERM_MAX, 2U, BLE_CFG_PENDING_CTRL }
+    PID_I_BOOST_TERM_MIN, PID_I_BOOST_TERM_MAX,
+    BLE_CHAR_PID_I_BOOST_UUID, 2U, BLE_CFG_PENDING_CTRL }
 };
 STATIC_ASSERT(ARRAY_SIZE(BLE_CFG_CHAR_arr) == BLE_CFG_CHAR_CNT);
+
+#if (NRF_LOG_ENABLED == 1)
+/** Short log names, one per BLE_CFG_CHAR_arr row (same order).
+ *  Compiled only when logging is on: release builds pay no flash. */
+static const char * const BLE_CFG_NAME_arr[] =
+{
+  "Setpoint", "BrewTemp", "SteamTemp", "PreInfPwr", "PreInfTime",
+  "InfPwr", "InfTime", "TaperPwr", "TaperTime",
+  "PID_P", "PID_I", "PID_Imax", "PID_D", "PID_Pboost", "PID_Iboost"
+};
+STATIC_ASSERT(ARRAY_SIZE(BLE_CFG_NAME_arr) == BLE_CFG_CHAR_CNT);
+#endif
 
 /*******************************************************************************
  *
@@ -704,12 +732,14 @@ static void power_management_init(void)
 static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
 {
     const ble_cfg_char_t *ptr_row;
+    uint32_t row_idx;
     float value;
 
     UNUSED_PARAMETER(p_cus);
     if ((p_evt->evt_type >= BLE_CFG_EVT_FIRST) && (p_evt->evt_type <= BLE_CFG_EVT_LAST))
     {
-        ptr_row = &BLE_CFG_CHAR_arr[(uint32_t)p_evt->evt_type - (uint32_t)BLE_CFG_EVT_FIRST];
+        row_idx = (uint32_t)p_evt->evt_type - (uint32_t)BLE_CFG_EVT_FIRST;
+        ptr_row = &BLE_CFG_CHAR_arr[row_idx];
         /* All param_command members are struct_CharData at the same address */
         if (parse_ble_ascii_float(&p_evt->param_command.Brew_temp_s, ptr_row->intDigits,
                                   ptr_row->minVal, ptr_row->maxVal, &value) == true)
@@ -718,15 +748,17 @@ static void cus_evt_handler(ble_cus_t * p_cus, ble_cus_evt_t * p_evt)
             g_ble_cfg_pending_mask |= ptr_row->pendingBit;
             g_ble_cfg_quiet_secs    = 0U;
             #if(NRF_LOG_ENABLED == 1)
-            NRF_LOG_INFO("BLE cfg %d = " NRF_LOG_FLOAT_MARKER, p_evt->evt_type,
-                         NRF_LOG_FLOAT(value));
+            NRF_LOG_INFO("BLE 0x%04X %s = " NRF_LOG_FLOAT_MARKER, ptr_row->charUuid,
+                         BLE_CFG_NAME_arr[row_idx], NRF_LOG_FLOAT(value));
             #endif
         }
         else
         {
             restore_gatt_value(&p_evt->param_command.Brew_temp_s, ptr_row);
             #if(NRF_LOG_ENABLED == 1)
-            NRF_LOG_WARNING("BLE cfg %d rejected", p_evt->evt_type);
+            NRF_LOG_WARNING("BLE 0x%04X %s rejected (len %d)", ptr_row->charUuid,
+                            BLE_CFG_NAME_arr[row_idx],
+                            p_evt->param_command.Brew_temp_s.length);
             #endif
         }
         return;

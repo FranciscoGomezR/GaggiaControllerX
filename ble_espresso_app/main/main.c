@@ -167,6 +167,33 @@ static void application_timers_start(void)
     APP_ERROR_CHECK(err_code);
 }
 
+#if(NRF_LOG_ENABLED == 1)
+/*****************************************************************************
+ * Function:    log_nvm_save_result
+ * Description: Logs the result of a BLE config NVM save in readable form:
+ *              saved regions (SHOT / CTRL / SHOT|CTRL) and status name.
+ *              Non-STORED results are logged as warnings.
+ *****************************************************************************/
+static void log_nvm_save_result(uint8_t pending_mask, uint32_t save_status)
+{
+  static const char * const REGION_NAME_arr[] = { "-", "SHOT", "CTRL", "SHOT|CTRL" };
+  const char *ptr_region = REGION_NAME_arr[pending_mask & 0x03U];
+
+  if(save_status == STORAGE_USERDATA_STORED)
+  {
+    NRF_LOG_INFO("NVM save [%s] -> STORED", ptr_region);
+  }else if(save_status == STORAGE_USERDATA_VERIFY_FAIL)
+  {
+    NRF_LOG_WARNING("NVM save [%s] -> VERIFY_FAIL", ptr_region);
+  }else if(save_status == STORAGE_USERDATA_ERROR)
+  {
+    NRF_LOG_WARNING("NVM save [%s] -> ERROR", ptr_region);
+  }else{
+    NRF_LOG_WARNING("NVM save [%s] -> status %d", ptr_region, save_status);
+  }
+}
+#endif
+
   /**@brief Function for handling the idle state (main loop).
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
@@ -601,7 +628,7 @@ int main(void)
           }else{}
         }else{}
         #if(NRF_LOG_ENABLED == 1)
-          NRF_LOG_INFO("NVM cfg save: %d", cfg_save_status);
+          log_nvm_save_result(cfg_pending_mask, cfg_save_status);
         #endif
       }else{}
     }else{}

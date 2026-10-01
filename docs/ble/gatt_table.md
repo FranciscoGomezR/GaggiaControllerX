@@ -152,13 +152,50 @@ ble_cus.c: ble_cus_on_ble_evt() → on_write()
   - matches p_evt_write->handle to a known value_handle / cccd_handle
   - builds ble_cus_evt_t (data pointer + length), calls evt_handler
        ↓
-bluetooth_drv.c: cus_evt_handler()
-  - chr_array_to_float() parses ASCII → float
-  - validate_float_in_range() clamps
-  - writes result into g_Espresso_user_config_s.*
-  - sets flag_brew_cfg = 1 (after 0x140B / profTaperingTmr write)
-        or flag_pid_cfg  = 1 (after 0x1506 / pidIboostTerm write)
+bluetooth_drv.c: cus_evt_handler()  (SoftDevice IRQ context)
+  - row = BLE_CFG_CHAR_arr[evt_type - BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT]
+  - parse_ble_ascii_float(): length == int_digits+1, all '0'..'9', min <= value <= max
+  - valid   -> write g_Espresso_user_config_s.*, set pending bit (SHOT / CTRL),
+               restart save debounce (g_ble_cfg_quiet_secs = 0)
+  - invalid -> keep old value, restore it in the GATT table (restore_gatt_value())
+       ↓
+main.c: 1 s BLE task
+  - pending && quiet >= BLE_CFG_SAVE_DEBOUNCE_SECS (2 s) && brew switch off
+  - storage_save_user_config(): one sector erase + page write + read-back verify
+  - reload load_new_pump_parameters() (SHOT) / temp_ctrl_set_pid_config() (CTRL)
 ```
+
+## Debug Log Format (RTT / UART)
+
+Config writes and NVM saves are logged with UUID + short name:
+```
+<info> app: BLE 0x1408 InfPwr = 100.00
+<warning> app: BLE 0x1408 InfPwr rejected (len 2)
+<info> app: NVM save [SHOT] -> STORED
+<warning> app: NVM save [SHOT|CTRL] -> VERIFY_FAIL
+```
+
+| UUID | Log name | Field | NVM region |
+|---|---|---|---|
+| `0x1403` | Setpoint | `boilerTempSetpointDegC` | — (RAM only) |
+| `0x1404` | BrewTemp | `brewTempDegC` | SHOT |
+| `0x1405` | SteamTemp | `steamTempDegC` | SHOT |
+| `0x1406` | PreInfPwr | `profPreInfusePwr` | SHOT |
+| `0x1407` | PreInfTime | `profPreInfuseTmr` | SHOT |
+| `0x1408` | InfPwr | `profInfusePwr` | SHOT |
+| `0x1409` | InfTime | `profInfuseTmr` | SHOT |
+| `0x140A` | TaperPwr | `profTaperingPwr` | SHOT |
+| `0x140B` | TaperTime | `profTaperingTmr` | SHOT |
+| `0x1501` | PID_P | `pidPTerm` | CTRL |
+| `0x1502` | PID_I | `pidITerm` | CTRL |
+| `0x1503` | PID_Imax | `pidImaxTerm` | CTRL |
+| `0x1504` | PID_D | `pidDTerm` | CTRL |
+| `0x1505` | PID_Pboost | `pidPboostTerm` | CTRL |
+| `0x1506` | PID_Iboost | `pidIboostTerm` | CTRL |
+
+NVM save status: `STORED` (written + verified), `VERIFY_FAIL` (read-back mismatch, retried
+next second), `ERROR` (invalid value or corrupt NVM key). Names are compiled only when
+`NRF_LOG_ENABLED == 1`.
 
 ## BLE Notification Flow (TX Path — Temperature only)
 

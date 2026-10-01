@@ -10,6 +10,23 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-01 — Readable BLE config / NVM save logs
+
+Why: `BLE cfg 9 = 100.00` / `NVM cfg save: 4` printed raw enum numbers; the user
+could not tell which characteristic or result they meant.
+
+### Changed
+- `bluetooth_drv.c`: `ble_cfg_char_t` gains `charUuid` (fills existing struct
+  padding, 0 B). New `BLE_CFG_NAME_arr` short names (only when
+  `NRF_LOG_ENABLED == 1`). Logs now read `BLE 0x1408 InfPwr = 100.00` and
+  `BLE 0x1408 InfPwr rejected (len 2)`.
+- `main.c`: new `log_nvm_save_result()` (logging builds only) prints
+  `NVM save [SHOT|CTRL] -> STORED / VERIFY_FAIL / ERROR`; non-STORED as warning.
+
+### Docs
+- `docs/ble/gatt_table.md`: RX flow updated to the TODO #19 pipeline (was the old
+  clamp + flag_brew_cfg description); new "Debug Log Format" UUID/name table.
+
 ## 2026-10-01 — BLE->NVM persist pipeline (STATUS TODO #19)
 
 Why: BLE config writes only changed RAM. They were never saved to the ext-NVM
