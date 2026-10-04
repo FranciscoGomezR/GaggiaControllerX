@@ -163,11 +163,71 @@ These items have not been commited
         main loop (brew off) storage_save_user_config() one erase+write + read-back verify ->
         live reload pump/PID. Save fns merged, SPI multi-page bugs + w-cycle mask fixed.
         See: docs/CHANGELOG.md -> "2026-10-01 — BLE->NVM persist pipeline (STATUS TODO #19)".
-- 20[]  The PID boost terms (pidPboostTerm / pidIboostTerm) are saved, but temp_ctrl_set_pid_config() 
+        
+- 20[x]  The PID boost terms (pidPboostTerm / pidIboostTerm) are saved, but temp_ctrl_set_pid_conf() 
         doesn't load them. I didn't confirm whether the controller reads them directly from the global config, 
         so a boost change may not take effect until reboot.
-- 21[]
-- 22[]
+        Done (I-boost): pidIboostTerm read live from g_Espresso_user_config_s at every brew start
+        (Classic start_i_boost(), Profile kiStepFactor) -> BLE change applies next shot, no reboot.
+        P-boost still unused -> TODO #21. Reload side effect -> TODO #24.
+        CHANGELOG.md -> "2026-10-02 — I-gain boost fix, Classic + Profile modes (STATUS TODO #20)".
+
+
+- 21[x]  PID config reload (main.c:627 temp_ctrl_set_pid_config()) vs boost state.
+        Reload runs with brew switch OFF -> overlaps recovery window (Ki x2).
+        It writes ki = pidITerm (tempController.c:169) but iBoost.isPhase2 stays true.
+        Effects:
+        a) Recovery cut short: Ki x2 -> x1 early; monitor later re-writes x1 (no-op).
+        b) BLE pidITerm write mid-brew (reload blocked) still changes Ki base live:
+           next Profile ramp step uses new pidITerm via temp_ctrl_scale_integral_gain(),
+           Classic waits for release. No debounce/NVM gate on this path.
+        c) BLE pidIboostTerm write mid-Profile-brew: kiStepFactor fixed at brew start,
+           clamp uses new value -> lowered: ramp stops early; raised: never reaches it.
+        Fix options:
+        1) temp_ctrl_set_pid_config() keeps current factor: store factor in tempController
+           (ki = pidITerm * active_factor). Cleanest; tempController owns Ki.
+        2) Gate reload in main.c until !isPhase2 for active mode (needs getter).
+        3) Snapshot pidIboostTerm/pidITerm at brew start (fixes b, c only).
+        Recommended: 1) + 3).
+        Done: 1) implemented (fixes a; ki_base_term also covers b).
+        c) dropped: mobile app blocks BLE writes while a shot is in progress.
+        CHANGELOG.md -> "2026-10-04 — Ki boost survives PID reload; brew-time gain snapshot (STATUS TODO #24)".
+- 22[x]  Dead PID blocks Profile_ctrl_phi1_s / Profile_ctrl_phi2_s (tempController.c).
+        Set only in temp_ctrl_init() (Ki x6.5 / x2.0 copies of main), never read: the
+        controller runs only Profile_ctrl_main_s; boost is now a Ki factor (TODO #20/#24).
+        Done: both statics + init blocks removed (-2 pid_imc_block_t RAM, init code flash).
+        Docs still describe them: docs/architecture/modules/modules.md (L252-255, L356-388),
+        docs/code_inventory/module_inventory.md (L268-269, L284-285) -> refresh later.
+        CHANGELOG.md -> "2026-10-04 — Remove dead phi1/phi2 PID blocks (STATUS TODO #25)".
+
+- 23[]  machine service module shall pull the boilder-setpoint from either brewTempDegC and steamTempDegC from two
+        different conditions: the status of switches (BREW & STEAM) and from a CHAR write event 
+        (user write a new values into: brewTempDegC/steamTempDegC).
+
+- []  Extend Profile/Classic boost to P gain (pidPboostTerm), same logic as I-boost.
+        - tempController: replace temp_ctrl_scale_integral_gain() with
+          temp_ctrl_scale_gains(cfg, kp_factor, ki_factor).
+        - Profile struct: gain_factor_t {kp, ki} boostFactor + boostStepFactor
+          (step.kp = (pidPboostTerm-1)/(2*noTabs)), clamp each to its boost term.
+        - Recovery: P_BOOST_RECOVERY_FACTOR (1.0f placeholder) next to
+          I_BOOST_RECOVERY_FACTOR; both revert to 1.0 when boiler reaches target.
+        - i_boost_flags_t -> rename gain_boost_flags_t.
+        - Risk: Kp step = immediate heater output jump per tab.
+        See: docs/CHANGELOG.md -> "2026-10-02 — I-gain boost fix, Classic + Profile modes (STATUS TODO #20)".
+- []  Profile ramp: stage time < ~0.1 s -> tickTabTarget = 0 -> tick-- underflows (uint16).
+- []  pidIboostTerm < 1.0 breaks Profile Ki ramp.
+        Allowed range PID_I_BOOST_TERM_MIN = 0.0f (espressoMachineServices.h:164).
+        Profile brew start: kiStepFactor = (pidIboostTerm - 1)/(2*noTabs) -> negative.
+        step_profile_integral_boost() only clamps upper bound (kiFactor > pidIboostTerm),
+        so Ki ramps DOWN from pidITerm to pidITerm*pidIboostTerm (e.g. Iboost 0.0 -> Ki 0).
+        Classic: Ki = pidITerm*pidIboostTerm directly -> brew Ki below normal.
+        Options (pick one):
+        a) Raise PID_I_BOOST_TERM_MIN to 1.0f (espressoMachineServices.h) -> BLE write
+           rejected + NVM validate_float_in_range() falls back to default. Fixes both modes,
+           0 B flash. Android app range/hint must match.
+        b) Keep range, clamp in firmware: factor = max(pidIboostTerm, 1.0f) at brew start
+           (Classic start_i_boost arg + Profile kiStepFactor). Few bytes flash.
+        Recommended: a). Same review applies to PID_P_BOOST_TERM_MIN (TODO #21).
 
 - [ ]change PID controller parameter Length mentioned below: 
         | UUID | Name | Char Declaration | Char Value | CCCD | CUDD | Properties | Val Len | Default |

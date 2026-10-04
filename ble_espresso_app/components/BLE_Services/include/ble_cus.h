@@ -15,6 +15,7 @@
 #define BLE_CHAR_MACHINE_STATUS__UUID           0x1401
 #define BLE_CHAR_BOILER_WATER_TEMP_UUID         0x1402
 #define BLE_CHAR_BOILER_SET_POINT_TEMP_UUID     0x1403
+
 #define BLE_CHAR_BREW_TEMP_UUID                 0x1404
 #define BLE_CHAR_STEAM_TEMP_UUID                0x1405
 

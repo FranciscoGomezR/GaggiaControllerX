@@ -10,6 +10,97 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-04 — Remove dead phi1/phi2 PID blocks (STATUS TODO #25)
+
+Why: `Profile_ctrl_phi1_s` (Ki x6.5) and `Profile_ctrl_phi2_s` (Ki x2.0) were
+initialised in `temp_ctrl_init()` but never read. Only `Profile_ctrl_main_s` runs;
+boost/recovery is applied as a Ki factor (`temp_ctrl_scale_integral_gain()`).
+
+### Removed
+- `tempController.c`: both `static pid_imc_block_t` instances and their
+  "PHASE 1 / PHASE 2" init blocks in `temp_ctrl_init()`.
+
+### Size
+- RAM -2 x `sizeof(pid_imc_block_t)`. Flash: ~20 store instructions less.
+
+### Docs (pending)
+- `docs/architecture/modules/modules.md` and `docs/code_inventory/module_inventory.md`
+  still list phi1/phi2 instances; refresh in a later docs pass.
+
+## 2026-10-04 — Ki boost survives PID reload; brew-time gain snapshot (STATUS TODO #24)
+
+Why: two writers of the same `Profile_ctrl_main_s.ki`. The BLE PID reload
+(`main.c` -> `temp_ctrl_set_pid_config()`, brew off) wrote `ki = pidITerm`, cancelling
+an active x2 recovery boost (a). `temp_ctrl_scale_integral_gain()` read `pidITerm`
+live from the global, so a BLE write mid-brew changed Ki without the debounce/NVM
+path (b). Profile clamp read live `pidIboostTerm`, so a mid-brew write bent the
+ramp (c).
+
+### Changed
+- `tempController.c`: new private `ki_base_term` (pidITerm, set only in
+  `temp_ctrl_set_pid_config()`) and `ki_scale_factor` (active multiplier).
+  Reload now writes `ki = ki_base_term * ki_scale_factor` -> boost kept (a).
+- `temp_ctrl_scale_integral_gain(float factor)`: pointer param removed; uses
+  `ki_base_term` -> BLE `pidITerm` change applies only at next reload (b).
+  Prototype updated in `tempController.h`; 4 call sites in
+  `espressoMachineServices.c` updated.
+- (c) not handled in firmware: the mobile app blocks BLE writes while a shot is in
+  progress (confirmed by user). A `kiFactorMax` snapshot was added and then removed
+  as redundant.
+
+### Size
+- RAM +8 B. Flash ~neutral (pointer arg/cast dropped at 4 call sites).
+
+## 2026-10-02 — I-gain boost fix, Classic + Profile modes (STATUS TODO #20)
+
+Why: TODO #20 asked whether BLE boost changes take effect without reboot. Now
+`pidIboostTerm` is read live from `g_Espresso_user_config_s` at every brew start,
+so a BLE change applies on the next shot (P-boost still unused -> TODO #21).
+Also: Profile mode scaled Ki by `1 + pumpPwr/10` (factor up to 101, Ki 30.3 vs
+intended 1.95) and ignored `pidIboostTerm`. Classic mode loaded `pidIboostTerm`
+as absolute Ki (6.5 instead of 0.3 x 6.5 = 1.95). Brew -> steam -> release in
+Classic left Ki boosted forever.
+
+All gains are factors of `pidITerm` (Ki = pidITerm x factor):
+
+| Mode | Stage | Factor |
+|---|---|---|
+| Classic | brew asserted | `pidIboostTerm` |
+| Profile | pre-infusion + infusion | linear 1.0 -> `pidIboostTerm`, step `(Iboost-1)/(2*noTabs)` per tab |
+| Profile | tapering + stop | 2.0 |
+| Both | brew released | 2.0 until `temp + 1.0 > setpoint`, then 1.0 |
+
+### Changed
+- `espressoMachineServices.c`: new `i_boost_flags_t` (`isPhase1/isPhase2/isNormal`)
+  replaces `is_boostI_phase1/2`, `is_normalI` in both mode structs. Shared helpers
+  `start_i_boost()`, `start_i_recovery()`, `monitor_i_recovery()`,
+  `step_profile_integral_boost()` replace duplicated inline gain/flag blocks.
+- Profile: `kiFactor` / `kiStepFactor` added; step computed from `noTabs` at brew
+  start, so the ramp always ends at `pidIboostTerm` for any `noTabs` (<= 14).
+- Profile STOP: recovery x2 not re-applied if boiler already recovered during taper.
+- Profile DECLINE entry: recovery x2 starts at tapering (was only at STOP).
+- Profile/Classic brew start: M5 "revert phase2" blocks removed; `start_i_boost()`
+  overwrites Ki directly, so no gain stacking on rapid brew cycling.
+- New defines `I_BOOST_RECOVERY_FACTOR` (2.0f), `PROFILE_BOOST_STAGES` (2U);
+  `noTabs` init comment documents the `<= 14` array limit.
+- All `temp_ctrl_scale_integral_gain()` returns cast to `(void)` (MISRA 17.7).
+- `tempController.c/.h`: `temp_ctrl_scale_integral_gain()` header/prototype comments
+  updated (Ki = pidITerm x factor).
+
+### Fixed
+- Profile RAMP_STEP: Ki factor `1 + pumpPwr/10` replaced by linear step toward
+  `pidIboostTerm`; tapering ramp no longer touches Ki.
+- Classic brew start: Ki = pidITerm x pidIboostTerm (was pidIboostTerm absolute).
+- Classic MODE_3 (steam purge) brew release now enters recovery boost.
+
+### Removed
+- `temp_ctrl_set_operational_integral_gain()`, `TEMP_CTRL_KI_BOOST`, dead `is_phase2`.
+- Orphan `/*ACTION: Increase I gain*/` comments (Profile IDLE, RAMP_STEP, INFUSE, DECLINE).
+
+### Docs
+- `STATUS.md`: TODO #20 closed; new #21 (P-boost), #22 (0-tick underflow),
+  #23 (pidIboostTerm < 1.0), #24 (PID reload vs recovery boost).
+
 ## 2026-10-01 — Readable BLE config / NVM save logs
 
 Why: `BLE cfg 9 = 100.00` / `NVM cfg save: 4` printed raw enum numbers; the user

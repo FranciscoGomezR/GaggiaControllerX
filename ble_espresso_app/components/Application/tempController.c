@@ -43,10 +43,10 @@ typedef struct
  *
  ******************************************************************************/
 static pid_imc_block_t Profile_ctrl_main_s;
-static pid_imc_block_t Profile_ctrl_phi1_s;
-static pid_imc_block_t Profile_ctrl_phi2_s;
 static hw_timer_t Hw_Tmr_msecs_s;
 static volatile uint32_t elapsed_msecs=0;
+static float ki_base_term    = TEMP_CTRL_KI;  /* pidITerm, loaded only via temp_ctrl_set_pid_config() */
+static float ki_scale_factor = 1.0f;          /* active Ki multiplier: boost / recovery / normal */
 
 /* ---- Test-only accessors -------------------------------------------------
  * These helpers are compiled ONLY when -DTEST is set (host-side unit tests).
@@ -106,35 +106,6 @@ tempCtrl_status_t temp_ctrl_init(void)
 
   Profile_ctrl_main_s.outputLimit           = TEMP_CTRL_MAX;
 
-  /* PID PARAMETERS PHASE 1 */
-  /* ----------------------------------------------------------------------------- */
-  Profile_ctrl_phi1_s.isPTermEnabled        = false;
-  Profile_ctrl_phi1_s.kp                    = 0.0f;
-
-  Profile_ctrl_phi1_s.isITermEnabled        = Profile_ctrl_main_s.isITermEnabled;
-  Profile_ctrl_phi1_s.ki                    = Profile_ctrl_main_s.ki * 6.5f;
-  Profile_ctrl_phi1_s.integralLimit         = Profile_ctrl_main_s.integralLimit;
-
-  Profile_ctrl_phi1_s.isIAntiwindupEnabled  = false;
-  Profile_ctrl_phi1_s.isDTermEnabled        = false;
-  Profile_ctrl_phi1_s.kd                    = 0.0f;
-  Profile_ctrl_phi1_s.outputLimit           = 0.0f;
-
-  /* PID PARAMETERS PHASE 2 */
-  /* ----------------------------------------------------------------------------- */
-  Profile_ctrl_phi2_s.isPTermEnabled        = false;
-  Profile_ctrl_phi2_s.kp                    = 0.0f;
-
-  Profile_ctrl_phi2_s.isITermEnabled        = Profile_ctrl_main_s.isITermEnabled;
-  Profile_ctrl_phi2_s.ki                    = Profile_ctrl_main_s.ki * 2.0f;
-  Profile_ctrl_phi2_s.integralLimit         = Profile_ctrl_main_s.integralLimit;
-
-  Profile_ctrl_phi2_s.isIAntiwindupEnabled  = false;
-  Profile_ctrl_phi2_s.isDTermEnabled        = false;
-  Profile_ctrl_phi2_s.kd                    = 0.0f;
-  Profile_ctrl_phi2_s.outputLimit           = 0.0f;
-
-
   /* TIMER SECTION TO TRACK TIME IN MILISECONDS */
   /* ----------------------------------------------------------------------------- */
   hw_timer_init_msecs_tick();
@@ -160,13 +131,16 @@ tempCtrl_status_t temp_ctrl_set_pid_config(espresso_user_config_t *ptr_prof_data
   }
   if( ptr_prof_data->pidITerm == 0.0f )
   {
+    ki_base_term                               = 0.0f;
     Profile_ctrl_main_s.isITermEnabled        = false;
     Profile_ctrl_main_s.ki                     = 0.0f;
     Profile_ctrl_main_s.integralLimit          = 0.0f;
     Profile_ctrl_main_s.isIAntiwindupEnabled  = false;
   }else{
     Profile_ctrl_main_s.isITermEnabled        = true;
-    Profile_ctrl_main_s.ki                     = ptr_prof_data->pidITerm;
+    ki_base_term                               = ptr_prof_data->pidITerm;
+    /* keep active boost/recovery factor across a config reload */
+    Profile_ctrl_main_s.ki                     = ki_base_term * ki_scale_factor;
     Profile_ctrl_main_s.integralLimit          = ptr_prof_data->pidImaxTerm;
     Profile_ctrl_main_s.isIAntiwindupEnabled  = true;
   }
@@ -208,21 +182,15 @@ tempCtrl_LoadSP_t temp_ctrl_set_boiler_setpoint(espresso_user_config_t *ptr_prof
 }
 
 /*****************************************************************************
- * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi1
- * Description: Loads only the I gain into the mainCtrl during Phase-1 (Pump Active)
+ * Function: 	temp_ctrl_scale_integral_gain
+ * Description: Loads only the I gain into the mainCtrl: Ki = ki_base_term * factor
+ *              ki_base_term = pidITerm from last temp_ctrl_set_pid_config(); BLE writes
+ *              to pidITerm mid-brew are not applied until that reload.
  *****************************************************************************/
-tempCtrl_status_t temp_ctrl_set_operational_integral_gain(espresso_user_config_t *ptr_prof_data)
+tempCtrl_status_t temp_ctrl_scale_integral_gain(float factor)
 {
-  Profile_ctrl_main_s.ki = ptr_prof_data->pidIboostTerm;
-  return TEMP_CTRL_I_LOAD_OK;
-}
-/*****************************************************************************
- * Function: 	fcn_loadI_ParamToCtrl_Temp_Phi2
- * Description: Loads only the I gain into the mainCtrl during Phase-2 (time after pump deactivation)
- *****************************************************************************/
-tempCtrl_status_t temp_ctrl_scale_integral_gain(espresso_user_config_t *ptr_prof_data, float factor)
-{
-  Profile_ctrl_main_s.ki = (float)(ptr_prof_data->pidITerm * factor);
+  ki_scale_factor = factor;
+  Profile_ctrl_main_s.ki = ki_base_term * ki_scale_factor;
   return TEMP_CTRL_I_LOAD_OK;
 }
 

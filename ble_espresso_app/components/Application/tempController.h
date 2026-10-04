@@ -26,7 +26,6 @@
 //*****************************************************************************.
 #define TEMP_CTRL_KP          9.52156f      //gain 550*Kc
 #define TEMP_CTRL_KI          0.3f          //TauI = 7.17
-#define TEMP_CTRL_KI_BOOST    (0.3f * 6.5f)    
 #define TEMP_CTRL_HIST_LIMIT  100.0f
 #define TEMP_CTRL_KD          0.0f          //TauD= 1.46 13.924f 
 #define TEMP_CTRL_MAX         1000.0f
@@ -65,10 +64,8 @@ typedef enum{
 //*****************************************************************************
 tempCtrl_status_t temp_ctrl_init(void);
 
-/* call this function before activating the pump for pulling out a shot of spresso*/
-tempCtrl_status_t temp_ctrl_set_operational_integral_gain(espresso_user_config_t *ptr_prof_data);
-/* call this function after deactivation the pump for pulling out a shot of spresso*/
-tempCtrl_status_t temp_ctrl_scale_integral_gain(espresso_user_config_t *ptr_prof_data, float factor);
+/* call this function to set Ki = pidITerm * factor (brew boost / recovery / normal)*/
+tempCtrl_status_t temp_ctrl_scale_integral_gain(float factor);
 /* call this function to load a new Set Point into the Temperature controller of the Boiler*/
 tempCtrl_LoadSP_t temp_ctrl_set_boiler_setpoint(espresso_user_config_t *ptr_prof_data, tempCtrl_LoadSP_t Setpoint);
 /* call this function to load a new controller data into the Temperature controller of the Boiler*/

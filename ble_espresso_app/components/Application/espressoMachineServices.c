@@ -21,6 +21,8 @@
 #define PUMP_PWR_OFF            0       /*0%*/
 
 #define TEMP_CTRL_PHI2_THR      1.0f
+#define I_BOOST_RECOVERY_FACTOR 2.0f    /*Ki x2 from brew end until boiler reaches target*/
+#define PROFILE_BOOST_STAGES    2U      /*Ki ramp spans pre-infusion + infusion*/
 
 #define STPFCN_HEATING_PWR      1000    /*100%*/
 #define STPFCN_TIMEBASE         0.1f                      /*seconds*/
@@ -81,12 +83,16 @@ typedef enum {
 } swtich_status_t;
 
 typedef struct{
+  bool            isPhase1;       /* brew boost active      */
+  bool            isPhase2;       /* recovery boost active  */
+  bool            isNormal;       /* Ki factor 1.0          */
+}i_boost_flags_t;
+
+typedef struct{
   uint16_t        heatingPwr;
   uint16_t        pumpPwr;
   uint32_t        svcStartT;
-  bool            is_boostI_phase1;
-  bool            is_boostI_phase2;
-  bool            is_normalI;
+  i_boost_flags_t iBoost;
   bool            max_time_reached;
   bool            is_active;
 }s_classic_data_t;
@@ -104,9 +110,9 @@ typedef struct{
   const uint16_t  noTabs;
   const float     *ptrTab;
   uint16_t        tabCnt;
-  bool            is_boostI_phase1;
-  bool            is_boostI_phase2;
-  bool            is_normalI;
+  float           kiFactor;
+  float           kiStepFactor;
+  i_boost_flags_t iBoost;
   bool            is_stopped;
   bool            max_time_reached;
   bool            profile_ended;
@@ -130,9 +136,7 @@ static StateMachineCtrl_Struct Profile_service_status_s = {PROFILE_IDLE,PROFILE_
 static StateMachineCtrl_Struct Stepfcn_service_status_s = {SF_IDLE,SF_IDLE,SF_IDLE};
 static s_classic_data_t Classic_data_s = {
                                       .pumpPwr=0,
-                                      .is_normalI=true,
-                                      .is_boostI_phase1=false,
-                                      .is_boostI_phase2=false
+                                      .iBoost={false,false,true}
                                       };
 
 static s_profile_data_t Profile_data_s = {
@@ -146,10 +150,10 @@ static s_profile_data_t Profile_data_s = {
                                                     0.60f,0.37f,0.25f,0.13f,0.09f,0.05f,0.03f,
                                                     0.02f,0.01f,0.00f,0.00f,0.00f,0.00f,0.00f
                                                     },
-                                      .noTabs = 10,
-                                      .is_normalI=true,
-                                      .is_boostI_phase1=false,
-                                      .is_boostI_phase2=false,
+                                      .noTabs = 10,   /* <= 14: exp_*_arr size */
+                                      .kiFactor=1.0f,
+                                      .kiStepFactor=0.0f,
+                                      .iBoost={false,false,true},
                                       .is_stopped=false,
                                       .max_time_reached=false,
                                       .profile_ended=false
@@ -168,7 +172,6 @@ static uint16_t app_pump_pwr;
 static uint16_t app_heat_pwr;
 static float    boiler_temp_degC;
 static float    boiler_target_temp_degC;
-static bool     is_phase2 = false;
 
 /*This variable controls the timing inside this module:
   1-  Delay for the step function start
@@ -182,6 +185,10 @@ static uint32_t stpfcn_tick_cnt;
 *
 ******************************************************************************/
 static uint32_t get_switch_state(void);
+static void start_i_boost(i_boost_flags_t *ptr_flags, float factor);
+static void start_i_recovery(i_boost_flags_t *ptr_flags);
+static void monitor_i_recovery(i_boost_flags_t *ptr_flags);
+static void step_profile_integral_boost(void);
 
 /******************************************************************************
 *
@@ -248,17 +255,8 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       NRF_LOG_FLUSH();
     #endif
   }else{}
-  /*Controller is running Phase2-I gain, now let's monitor Temp to return to main I gain. */
-  if(Classic_data_s.is_boostI_phase2 == true)
-  {
-    if( (float)(boiler_temp_degC + TEMP_CTRL_PHI2_THR) > (float)boiler_target_temp_degC )
-    {
-      /*When boiler temp. reach target temp controller revert to main gains. (I-gain)*/
-      Classic_data_s.is_boostI_phase2 = false;
-      Classic_data_s.is_normalI = true;
-      temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s,1.0f);
-    }else{}
-  }else{}
+  /*Recovery boost (Ki x2): return to Ki x1 once boiler reaches target. */
+  monitor_i_recovery(&Classic_data_s.iBoost);
 
   switch(Espresso_service_status_s.sRunning)
   {
@@ -266,22 +264,12 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         /*SWITCH Activation: Brew*/
         if(swBrew == AC_SWITCH_ASSERTED && !Classic_data_s.max_time_reached)
         {
-          /* M5 fix: revert phase2 recovery gain before applying a new I-boost.
-           * Prevents gain stacking when the user cycles brew ON/OFF rapidly
-           * before the boiler recovers to target temperature. */
-          if (Classic_data_s.is_boostI_phase2) {
-            temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s, 1.0f);
-            Classic_data_s.is_boostI_phase2 = false;
-            Classic_data_s.is_normalI = true;
-          }
           /*Save: Strating time & Reset extraction time*/
           Classic_data_s.svcStartT = service_tick;
           Classic_data_s.is_active = true;
           g_Espresso_user_config_s.extractionTimeMsecs = 0U;
-          /*ACTION: Increase I gain*/
-          temp_ctrl_set_operational_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s);
-          Classic_data_s.is_normalI=false;
-          Classic_data_s.is_boostI_phase1=true;
+          /*ACTION: Ki x pidIboostTerm (overrides any pending recovery boost)*/
+          start_i_boost(&Classic_data_s.iBoost, g_Espresso_user_config_s.pidIboostTerm);
           /*ACTION: Solenoid valve ON*/
           solenoid_ssr_on();
           /*ACTION: Pump ON */
@@ -330,10 +318,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
           #endif
-          temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s, 2.0f);
-          Classic_data_s.is_boostI_phase1 = false;
-          Classic_data_s.is_boostI_phase2 = true;
-          is_phase2 = true;
+          start_i_recovery(&Classic_data_s.iBoost);
           solenoid_ssr_off();
           Classic_data_s.max_time_reached = true;
           Classic_data_s.is_active = false;
@@ -352,11 +337,8 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
           #endif
-          /*ACTION: Decrease I gain to Ki*2 and set flag monitor*/
-          temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s,2.0f);
-          Classic_data_s.is_boostI_phase1=false;
-          Classic_data_s.is_boostI_phase2=true;
-          is_phase2 = true;
+          /*ACTION: Recovery boost Ki x2 until boiler reaches target*/
+          start_i_recovery(&Classic_data_s.iBoost);
           Classic_data_s.is_active = false;
           /*ACTION: Solenoid OFF */
           solenoid_ssr_off();
@@ -448,6 +430,10 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
         #endif
+        /*ACTION: entered from brew (MODE_1) -> start recovery boost*/
+        if (Classic_data_s.iBoost.isPhase1) {
+          start_i_recovery(&Classic_data_s.iBoost);
+        } else {}
         /*STATE JUMP [easy]: To idle, then this stage will take care of the switch state*/
         Espresso_service_status_s.sRunning= CLASSIC_IDLE;
         /*STATE JUMP: Mode2B*/
@@ -550,17 +536,8 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       NRF_LOG_FLUSH();
     #endif
   }else{}
-  /*Controller is running Phase2-I gain, now let's monitor Temp to return to main I gain. */
-  if(Profile_data_s.is_boostI_phase2 == true)
-  {
-    if( (float)(boiler_temp_degC + TEMP_CTRL_PHI2_THR) > (float)boiler_target_temp_degC )
-    {
-      /*When boiler temp. reach target temp controller revert to main gains. (I-gain)*/
-      Profile_data_s.is_boostI_phase2 = false;
-      Profile_data_s.is_normalI = true;
-      temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s,1.0f);
-    }else{}
-  }else{}
+  /*Recovery boost (Ki x2): return to Ki x1 once boiler reaches target. */
+  monitor_i_recovery(&Profile_data_s.iBoost);
 
   switch(Profile_service_status_s.sRunning)
   {
@@ -568,15 +545,11 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         /*SWITCH Activation: Brew*/
         if(swBrew == AC_SWITCH_ASSERTED )
         {
-          /* M5 fix: revert phase2 recovery gain before starting a new brew cycle. */
-          if (Profile_data_s.is_boostI_phase2) {
-            temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s, 1.0f);
-            Profile_data_s.is_boostI_phase2 = false;
-            Profile_data_s.is_normalI = true;
-          }
-          Profile_data_s.is_normalI=false;
-          Profile_data_s.is_boostI_phase1=true;
-          /*ACTION: Increase I gain*/
+          /*ACTION: Ki x1, linear ramp to x pidIboostTerm over pre-infusion + infusion tabs*/
+          Profile_data_s.kiFactor     = 1.0f;
+          Profile_data_s.kiStepFactor = (g_Espresso_user_config_s.pidIboostTerm - 1.0f)
+                                      / (float)(PROFILE_BOOST_STAGES * Profile_data_s.noTabs);
+          start_i_boost(&Profile_data_s.iBoost, Profile_data_s.kiFactor);
           /*LOAD: Data for Profiler state*/
           Profile_data_s.tickTabTarget = (uint16_t)(1000.0f*(g_Espresso_user_config_s.profPreInfuseTmr+0.999999f));
           Profile_data_s.tickTabTarget = (Profile_data_s.tickTabTarget / SERVICE_BASE_TIME_MSECS) / Profile_data_s.noTabs;
@@ -655,15 +628,15 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           Profile_data_s.tabCnt--;
           /*Load timer.*/
           Profile_data_s.tick = Profile_data_s.tickTabTarget;
-          /*ACTION: Increase I gain*/
           /*LOAD: next Data for Profiler*/
           /*Let's calculate new step power for the pump*/
           Profile_data_s.ptrTab++;
           Profile_data_s.pumpPwr = (uint16_t)(((float)Profile_data_s.delta_pumpPwr)*(*Profile_data_s.ptrTab));
           Profile_data_s.pumpPwr+= Profile_data_s.base_pumpPwr;
-          /*Action: Increment Integral Gain accordingly to pump PWR. e.g. 100%PWR Igain=I-boost & 0%PWR Igain=I*/
-          temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s,
-                                          (float)(1.0f+((float)Profile_data_s.pumpPwr/10.0f)) );
+          /*ACTION: Ki ramp step during pre-infusion/infusion; tapering keeps fixed x2*/
+          if (Profile_service_status_s.sNext != PROFILE_MODE_STOP) {
+            step_profile_integral_boost();
+          } else {}
           /*ACTION: Introduce new power value.*/
           #if SERVICE_PUMP_ACTION_EN == 1
             pump_ssr_pwr_update(Profile_data_s.pumpPwr);
@@ -701,7 +674,6 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       /*SWITCH deactivation: Brew*/
       if(swBrew == AC_SWITCH_ASSERTED )
       {
-        /*ACTION: Increase I gain*/
         /*LOAD: Data for Profiler state*/
         Profile_data_s.tickTabTarget = (uint16_t)(1000.0f*(g_Espresso_user_config_s.profInfuseTmr+0.999999f));
         Profile_data_s.tickTabTarget = (Profile_data_s.tickTabTarget / SERVICE_BASE_TIME_MSECS) / Profile_data_s.noTabs;
@@ -764,7 +736,8 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       /*SWITCH deactivation: Brew*/
       if(swBrew == AC_SWITCH_ASSERTED )
       {
-        /*ACTION: Increase I gain*/
+        /*ACTION: Tapering -> recovery boost Ki x2 until boiler reaches target*/
+        start_i_recovery(&Profile_data_s.iBoost);
         /*LOAD: Data for Profiler state*/
         Profile_data_s.tickTabTarget = (uint16_t)(1000.0f*(g_Espresso_user_config_s.profTaperingTmr+0.999999f));
         Profile_data_s.tickTabTarget = (Profile_data_s.tickTabTarget / SERVICE_BASE_TIME_MSECS) / Profile_data_s.noTabs;
@@ -827,9 +800,8 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         #endif
         /*ACTION: Solenoid OFF */
         solenoid_ssr_off();
-        Profile_data_s.is_boostI_phase1=false;
-        Profile_data_s.is_boostI_phase2=true;
-        temp_ctrl_scale_integral_gain((espresso_user_config_t*)&g_Espresso_user_config_s,2.0f);
+        /*ACTION: Ki x2 (kept if already set by tapering, skipped if already recovered)*/
+        start_i_recovery(&Profile_data_s.iBoost);
         g_Espresso_user_config_s.extractionTimeMsecs =
             (service_tick - Profile_data_s.svcStartT) * SERVICE_BASE_TIME_MSECS;
       }else{}
@@ -1192,6 +1164,61 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
 *		PRIVATE FUNCTIONS SECTION
 *
 ******************************************************************************/
+
+/*****************************************************************************
+ * Function: 	start_i_boost
+ * Description: Brew start: clear recovery phase and load the initial Ki factor.
+ *****************************************************************************/
+static void start_i_boost(i_boost_flags_t *ptr_flags, float factor)
+{
+  ptr_flags->isPhase1 = true;
+  ptr_flags->isPhase2 = false;
+  ptr_flags->isNormal = false;
+  (void)temp_ctrl_scale_integral_gain(factor);
+}
+
+/*****************************************************************************
+ * Function: 	start_i_recovery
+ * Description: Brew end: Ki x2 unless already recovered.
+ *              monitor_i_recovery() returns Ki to x1 once target is reached.
+ *****************************************************************************/
+static void start_i_recovery(i_boost_flags_t *ptr_flags)
+{
+  ptr_flags->isPhase1 = false;
+  if (!ptr_flags->isNormal) {
+    ptr_flags->isPhase2 = true;
+    (void)temp_ctrl_scale_integral_gain(I_BOOST_RECOVERY_FACTOR);
+  } else {}
+}
+
+/*****************************************************************************
+ * Function: 	monitor_i_recovery
+ * Description: Every tick: drop recovery boost to Ki x1 once boiler reaches target.
+ *****************************************************************************/
+static void monitor_i_recovery(i_boost_flags_t *ptr_flags)
+{
+  if ((ptr_flags->isPhase2) &&
+      ((boiler_temp_degC + TEMP_CTRL_PHI2_THR) > boiler_target_temp_degC)) {
+    ptr_flags->isPhase2 = false;
+    ptr_flags->isNormal = true;
+    (void)temp_ctrl_scale_integral_gain(1.0f);
+  } else {}
+}
+
+/*****************************************************************************
+ * Function: 	step_profile_integral_boost
+ * Description: Advance Ki one linear step toward pidIboostTerm
+ *              (pre-infusion + infusion, one step per tab rollover).
+ *              BLE writes are blocked by the app while a shot is in progress.
+ *****************************************************************************/
+static void step_profile_integral_boost(void)
+{
+  Profile_data_s.kiFactor += Profile_data_s.kiStepFactor;
+  if (Profile_data_s.kiFactor > g_Espresso_user_config_s.pidIboostTerm) {
+    Profile_data_s.kiFactor = g_Espresso_user_config_s.pidIboostTerm;
+  } else {}
+  (void)temp_ctrl_scale_integral_gain(Profile_data_s.kiFactor);
+}
 
 /*****************************************************************************
  * Function: 	get_switch_state
