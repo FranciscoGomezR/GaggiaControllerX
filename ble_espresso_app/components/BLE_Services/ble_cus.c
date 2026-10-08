@@ -92,14 +92,6 @@ static void on_write(ble_cus_t * p_cus, ble_evt_t const * p_ble_evt)
             p_cus->evt_handler(p_cus, &evt);
         }
     }
-    // Writing to this Custom Value Characteristic: BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT
-    else if (p_evt_write->handle == p_cus->boiler_temp_set_point_char_handles.value_handle)
-    {
-        evt.param_command.Boiler_temp_set_point_s.ptr_data  = p_evt_write->data;
-        evt.param_command.Boiler_temp_set_point_s.length    = p_evt_write->len;
-        evt.evt_type = BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT;
-        p_cus->evt_handler(p_cus, &evt);
-    }
     // Writing to this Custom Value Characteristic: BLE_CHAR_BREW_TEMP_UUID
     else if (p_evt_write->handle == p_cus->brew_temp_char_handles.value_handle)
     {
@@ -324,9 +316,9 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     if (err_code != NRF_SUCCESS)
     { return err_code;  }
 
-    /*<READ + WRITE>
-    Add Boilder SET POINT Temperature characteristic
-    TimeStamp: 51:45
+    /*<READ + NOTIFICATION>
+    Add Boilder SET POINT Temperature characteristic (active setpoint).
+    Set by BREW/STEAM switches, notified on change; app cannot write it.
     uint8_t boilerTargetTemp[4] = {'0','9','8','5'}; */
     float_to_chr_array(ptr_initVal->boilerTempSetpointDegC,(uint8_t*)&initValueChar[0],3,1);
     memset(&add_char_param, 0, sizeof(add_char_param));
@@ -336,13 +328,12 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     add_char_param.max_len          = 4;
     add_char_param.p_init_value     = (uint8_t*)initValueChar;   //init value
     add_char_param.char_props.read  = 1;                  //Enable Read
-    add_char_param.char_props.write = 1;                  //Enable write
-    add_char_param.char_props.notify= 0;
+    add_char_param.char_props.notify= 1;                  //Enable Notify
 
     add_char_param.read_access      = SEC_OPEN;
-    add_char_param.write_access     = SEC_OPEN;
+    add_char_param.cccd_write_access= SEC_OPEN;           //To be allow to enable or disable notification
 
-    err_code = characteristic_add(p_cus->service_handle, 
+    err_code = characteristic_add(p_cus->service_handle,
                                   &add_char_param,
                                   &p_cus->boiler_temp_set_point_char_handles);
     if (err_code != NRF_SUCCESS)
@@ -714,33 +705,23 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espr
 }
 
 /****************************************************************************
-* Function: 	ble_cus_notify_boiler_water_temp
-* Description:  This function update the temperature on the BLE: boiler_water_temp_char_handles Characteristic
-* Caveats:      Youtube-TimeStamp: 53:00
-* Parameters:	
-* Return:       
+* Function: 	ble_cus_notify_char
+* Description:  Send a NOTIFICATION for the characteristic at value_handle
+*               (boiler water temp 0x1402, active setpoint 0x1403).
 *****************************************************************************/
-uint32_t ble_cus_notify_boiler_water_temp(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle)
+uint32_t ble_cus_notify_char(ble_cus_t *ptr_cus, uint16_t value_handle, uint8_t *ptr_data,
+                             uint16_t len, uint16_t conn_handle)
 {
-    //NRF_LOG_INFO("BLE:  temp. update\r\n"); 
-    if (p_cus == NULL)
+    ble_gatts_hvx_params_t params;
+
+    if (ptr_cus == NULL)
     {
         return NRF_ERROR_NULL;
     }
-    uint32_t err_code = NRF_SUCCESS;
-    ble_gatts_hvx_params_t params;
-    uint16_t len = sizeof(ptr_waterTemp);
-
-    // Initialize value struct.
     memset(&params, 0, sizeof(params));
     params.type   = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = p_cus->boiler_water_temp_char_handles.value_handle;
-    params.p_data = ptr_waterTemp;
+    params.handle = value_handle;
+    params.p_data = ptr_data;
     params.p_len  = &len;
-
-    // Update database.
-    err_code = sd_ble_gatts_hvx(conn_handle, &params);
-    if (err_code != NRF_SUCCESS)
-    {  return err_code; }
-    return err_code;
+    return sd_ble_gatts_hvx(conn_handle, &params);
 }

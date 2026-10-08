@@ -67,9 +67,8 @@ typedef enum
     BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_ENABLED,  /**< Boiler water temp notification enabled event. */
     BLE_MACHINE_BOILER_TEMP_CHAR_NOTIFY_DISABLED, /**< Boiler water temp notification disabled event. */
     
-    /* RX_EVT entries (SET_POINT .. PID_I_BOOST) must stay contiguous and in
+    /* RX_EVT entries (BREW_TEMP .. PID_I_BOOST) must stay contiguous and in
        BLE_CFG_CHAR_arr order (bluetooth_drv.c) */
-    BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT,     /* write new set point for the Boiler temperature */
     BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT,            /* write to Brew preset setpoint for the Boiler */
     BLE_MACHINE_STEAM_TEMP_CHAR_RX_EVT,           /* write to Steam preset setpoint for the Boiler */
 
@@ -106,7 +105,6 @@ typedef struct
     ble_cus_evt_type_t evt_type;     /**< Type of event. */
     //add strucutre of data (string type)to be pass from mobile to BLe stack Youtube-TimeSTamp: 37:00
     union{
-      struct_CharData Boiler_temp_set_point_s;
       struct_CharData Brew_temp_s;      // data for Brew preset set point temp writes
       struct_CharData Steam_temp_s;      // data for Brew preset set point temp writes
 
@@ -213,18 +211,17 @@ uint32_t ble_cus_init(ble_cus_t * p_cus, const ble_cus_init_t * p_cus_init, espr
  */
 void ble_cus_on_ble_evt( ble_evt_t const * p_ble_evt, void * p_context);
 
-/**@brief Function for updating the custom value.
+/**@brief Send a NOTIFICATION for one characteristic of the Custom Service.
  *
- * @details The application calls this function when the cutom value should be updated. If
- *          notification has been enabled, the custom value characteristic is sent to the client.
- *
- * @note 
- *       
- * @param[in]   p_bas          Custom Service structure.
- * @param[in]   Custom value 
+ * @param[in]   ptr_cus       Custom Service structure.
+ * @param[in]   value_handle  GATT value handle of the characteristic.
+ * @param[in]   ptr_data      Value to send.
+ * @param[in]   len           Value length in bytes.
+ * @param[in]   conn_handle   Connection handle.
  *
  * @return      NRF_SUCCESS on success, otherwise an error code.
  */
-uint32_t ble_cus_notify_boiler_water_temp(ble_cus_t * p_cus, uint8_t * ptr_waterTemp, uint16_t conn_handle);
+uint32_t ble_cus_notify_char(ble_cus_t *ptr_cus, uint16_t value_handle, uint8_t *ptr_data,
+                             uint16_t len, uint16_t conn_handle);
 
 #endif // BLE_CUS_H__

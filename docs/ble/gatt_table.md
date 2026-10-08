@@ -43,24 +43,25 @@ The BLEspresso device exposes two custom GATT Primary Services. Both services sh
 | **S1+4** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1402` |
 | **S1+5** | **Characteristic Value** | `0x1402` | Read, Notify | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempDegC` | Boiler water temperature |
 | **S1+6** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Enables/disables temp notifications (1 s period) |
-| **S1+7** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1403` |
-| **S1+8** | **Characteristic Value** | `0x1403` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempSetpointDegC` | Active boiler setpoint |
-| **S1+9** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1404` |
-| **S1+10** | **Characteristic Value** | `0x1404` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `brewTempDegC` | Brew preset setpoint |
-| **S1+11** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1405` |
-| **S1+12** | **Characteristic Value** | `0x1405` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `steamTempDegC` | Steam preset setpoint |
-| **S1+13** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1406` |
-| **S1+14** | **Characteristic Value** | `0x1406` | Read, Write | 3 | `XXD` ASCII (D=tenth %) | `profPreInfusePwr` | Pre-infusion pump power |
-| **S1+15** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1407` |
-| **S1+16** | **Characteristic Value** | `0x1407` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profPreInfuseTmr` | Pre-infusion duration |
-| **S1+17** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1408` |
-| **S1+18** | **Characteristic Value** | `0x1408` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profInfusePwr` | Infusion pump power |
-| **S1+19** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1409` |
-| **S1+20** | **Characteristic Value** | `0x1409` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profInfuseTmr` | Infusion duration |
-| **S1+21** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140A` |
-| **S1+22** | **Characteristic Value** | `0x140A` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profTaperingPwr` | Declining pressure power |
-| **S1+23** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140B` |
-| **S1+24** | **Characteristic Value** | `0x140B` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profTaperingTmr` | Declining pressure duration |
+| **S1+7** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1403` |
+| **S1+8** | **Characteristic Value** | `0x1403` | Read, Notify | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempSetpointDegC` | Active boiler setpoint (set by BREW/STEAM switches) |
+| **S1+9** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Notified on BREW/STEAM switch-driven setpoint change |
+| **S1+10** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1404` |
+| **S1+11** | **Characteristic Value** | `0x1404` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `brewTempDegC` | Brew preset setpoint |
+| **S1+12** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1405` |
+| **S1+13** | **Characteristic Value** | `0x1405` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `steamTempDegC` | Steam preset setpoint |
+| **S1+14** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1406` |
+| **S1+15** | **Characteristic Value** | `0x1406` | Read, Write | 3 | `XXD` ASCII (D=tenth %) | `profPreInfusePwr` | Pre-infusion pump power |
+| **S1+16** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1407` |
+| **S1+17** | **Characteristic Value** | `0x1407` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profPreInfuseTmr` | Pre-infusion duration |
+| **S1+18** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1408` |
+| **S1+19** | **Characteristic Value** | `0x1408` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profInfusePwr` | Infusion pump power |
+| **S1+20** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1409` |
+| **S1+21** | **Characteristic Value** | `0x1409` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profInfuseTmr` | Infusion duration |
+| **S1+22** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140A` |
+| **S1+23** | **Characteristic Value** | `0x140A` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profTaperingPwr` | Declining pressure power |
+| **S1+24** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140B` |
+| **S1+25** | **Characteristic Value** | `0x140B` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profTaperingTmr` | Declining pressure duration |
 
 ### Characteristic Summary — Brew Service
 
@@ -68,15 +69,15 @@ The BLEspresso device exposes two custom GATT Primary Services. Both services sh
 |---|---|---|---|---|---|---|---|---|
 | `0x1401` | `BLE_CHAR_MACHINE_STATUS__UUID` | Machine Status | S1+1 | S1+2 | S1+3 | R, Ntf | 10 B | `"          "` (spaces) |
 | `0x1402` | `BLE_CHAR_BOILER_WATER_TEMP_UUID` | Boiler Water Temp | S1+4 | S1+5 | S1+6 | R, Ntf | 4 B | `"0000"` (0.0 °C) |
-| `0x1403` | `BLE_CHAR_BOILER_SET_POINT_TEMP_UUID` | Boiler Setpoint | S1+7 | S1+8 | — | R, W | 4 B | 95.5 °C |
-| `0x1404` | `BLE_CHAR_BREW_TEMP_UUID` | Brew Preset Temp | S1+9 | S1+10 | — | R, W | 4 B | 95.0 °C |
-| `0x1405` | `BLE_CHAR_STEAM_TEMP_UUID` | Steam Preset Temp | S1+11 | S1+12 | — | R, W | 4 B | 110.0 °C |
-| `0x1406` | `BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID` | Pre-Infusion Power | S1+13 | S1+14 | — | R, W | 3 B | 75.0 % |
-| `0x1407` | `BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID` | Pre-Infusion Time | S1+15 | S1+16 | — | R, W | 3 B | 8.0 s |
-| `0x1408` | `BLE_CHAR_BREW_INFUSION_POWER_UUID` | Infusion Power | S1+17 | S1+18 | — | R, W | 4 B | 100.0 % |
-| `0x1409` | `BLE_CHAR_BREW_INFUSION_TIME__UUID` | Infusion Time | S1+19 | S1+20 | — | R, W | 3 B | 8.0 s |
-| `0x140A` | `BLE_CHAR_BREW_DECLINING_PR_POWER_UUID` | Declining Power | S1+21 | S1+22 | — | R, W | 4 B | 85.0 % |
-| `0x140B` | `BLE_CHAR_BREW_DECLINING_PR_TIME__UUID` | Declining Time | S1+23 | S1+24 | — | R, W | 3 B | 8.0 s |
+| `0x1403` | `BLE_CHAR_BOILER_SET_POINT_TEMP_UUID` | Boiler Setpoint | S1+7 | S1+8 | S1+9 | R, Ntf | 4 B | 95.5 °C |
+| `0x1404` | `BLE_CHAR_BREW_TEMP_UUID` | Brew Preset Temp | S1+10 | S1+11 | — | R, W | 4 B | 95.0 °C |
+| `0x1405` | `BLE_CHAR_STEAM_TEMP_UUID` | Steam Preset Temp | S1+12 | S1+13 | — | R, W | 4 B | 110.0 °C |
+| `0x1406` | `BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID` | Pre-Infusion Power | S1+14 | S1+15 | — | R, W | 3 B | 75.0 % |
+| `0x1407` | `BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID` | Pre-Infusion Time | S1+16 | S1+17 | — | R, W | 3 B | 8.0 s |
+| `0x1408` | `BLE_CHAR_BREW_INFUSION_POWER_UUID` | Infusion Power | S1+18 | S1+19 | — | R, W | 4 B | 100.0 % |
+| `0x1409` | `BLE_CHAR_BREW_INFUSION_TIME__UUID` | Infusion Time | S1+20 | S1+21 | — | R, W | 3 B | 8.0 s |
+| `0x140A` | `BLE_CHAR_BREW_DECLINING_PR_POWER_UUID` | Declining Power | S1+22 | S1+23 | — | R, W | 4 B | 85.0 % |
+| `0x140B` | `BLE_CHAR_BREW_DECLINING_PR_TIME__UUID` | Declining Time | S1+24 | S1+25 | — | R, W | 3 B | 8.0 s |
 
 > **R** = Read · **W** = Write (Write Without Response not used) · **Ntf** = Notify
 > **CUDD** (Characteristic User Description, `0x2901`) — **not present** in this project (`char_user_desc` not set in `add_char_param`).
@@ -153,7 +154,7 @@ ble_cus.c: ble_cus_on_ble_evt() → on_write()
   - builds ble_cus_evt_t (data pointer + length), calls evt_handler
        ↓
 bluetooth_drv.c: cus_evt_handler()  (SoftDevice IRQ context)
-  - row = BLE_CFG_CHAR_arr[evt_type - BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT]
+  - row = BLE_CFG_CHAR_arr[evt_type - BLE_CFG_EVT_FIRST]  (BLE_CFG_EVT_FIRST = BREW_TEMP RX evt)
   - parse_ble_ascii_float(): length == int_digits+1, all '0'..'9', min <= value <= max
   - valid   -> write g_Espresso_user_config_s.*, set pending bit (SHOT / CTRL),
                restart save debounce (g_ble_cfg_quiet_secs = 0)
@@ -177,7 +178,6 @@ Config writes and NVM saves are logged with UUID + short name:
 
 | UUID | Log name | Field | NVM region |
 |---|---|---|---|
-| `0x1403` | Setpoint | `boilerTempSetpointDegC` | — (RAM only) |
 | `0x1404` | BrewTemp | `brewTempDegC` | SHOT |
 | `0x1405` | SteamTemp | `steamTempDegC` | SHOT |
 | `0x1406` | PreInfPwr | `profPreInfusePwr` | SHOT |
@@ -197,16 +197,29 @@ NVM save status: `STORED` (written + verified), `VERIFY_FAIL` (read-back mismatc
 next second), `ERROR` (invalid value or corrupt NVM key). Names are compiled only when
 `NRF_LOG_ENABLED == 1`.
 
-## BLE Notification Flow (TX Path — Temperature only)
+## BLE Notification Flow (TX Path)
 
 ```
 main.c: tf_ble_update flag (1000 ms period)
        ↓
 bluetooth_drv.c: ble_notify_boiler_water_temp(waterTemp)
-  - float → 4-char ASCII (XXXD) via float_to_chr_array()
-  - ble_cus_notify_boiler_water_temp() → sd_ble_gatts_hvx() on 0x1402 value handle
+  - float → 4-char ASCII (XXXD)
+  - ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1402 value handle
        ↓
 SoftDevice S132 → ATT Notification PDU → Mobile App
+```
+
+```
+espressoMachineServices.c: BREW/STEAM switch change (Classic + Profile)
+  - apply_boiler_setpoint() → temp_ctrl_set_boiler_setpoint() (copy brew/steam temp,
+    reset PID integral) + set setpoint-changed flag
+       ↓
+main.c loop: is_boiler_setpoint_changed() (read-and-clear)
+       ↓
+bluetooth_drv.c: ble_notify_boiler_setpoint(boilerTempSetpointDegC)
+  - float → 4-char ASCII (XXXD) via float_to_chr_array()
+  - sd_ble_gatts_value_set() on 0x1403 (READ stays current)
+  - if connected: ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1403 value handle
 ```
 
 ---
@@ -215,7 +228,7 @@ SoftDevice S132 → ATT Notification PDU → Mobile App
 
 1. **Single UUID base** — `ble_cus_init()` registers `CUSTOM_SERVICE_UUID_BASE` once; both services use it. `CUSTOM_PID_SERVICE_UUID_BASE` is dead code.
 2. **No Characteristic User Description (`0x2901`)** — not configured for any characteristic.
-3. **Two CCCDs only** — `0x1401` (Machine Status) and `0x1402` (Boiler Temp) have Notify; all other characteristics are Read + Write.
+3. **Three CCCDs** — `0x1401` (Machine Status), `0x1402` (Boiler Temp) and `0x1403` (Boiler Setpoint, read-only) have Notify; all other characteristics are Read + Write.
 4. **Write Without Response not used** — all writable characteristics use ATT Write Request + Response.
 5. **Handle values are runtime-assigned** — discover at runtime, or read `ble_gatts_char_handles_t` members (`value_handle`, `cccd_handle`, `decl_handle`).
 6. **Security** — all attributes `SEC_OPEN`; no bonding or encryption.

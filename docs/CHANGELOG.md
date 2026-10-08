@@ -10,6 +10,35 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-06 — Switch-driven boiler setpoint + 0x1403 READ/NOTIFY (STATUS TODO #23)
+
+Why: the 7 brew/steam setpoint changes in the Classic/Profile state machines wrote
+`boilerTempSetpointDegC` directly, bypassing `temp_ctrl_set_boiler_setpoint()`, so the
+PID integral reset (M1 fix) never ran: steam-level integral carried into brew (slow
+cool-down / ringing). The app could also overwrite the active setpoint over BLE and was
+never told when it changed.
+
+### Changed
+- `espressoMachineServices.c`: new private `apply_boiler_setpoint()` replaces the 7 direct
+  assignments; calls `temp_ctrl_set_boiler_setpoint()` (copy + integral reset) and flags a
+  notify. New public `is_boiler_setpoint_changed()` (read-and-clear).
+- `main.c`: notifies 0x1403 via `ble_notify_boiler_setpoint()` when the flag is set.
+- `ble_cus.c/.h`: 0x1403 is Read + Notify (CCCD added), write removed.
+  `ble_cus_notify_boiler_water_temp()` replaced by generic `ble_cus_notify_char()`.
+- `bluetooth_drv.c/.h`: new `ble_notify_boiler_setpoint()` (GATT value set + notify).
+  `BLE_CFG_EVT_FIRST` = `BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT`.
+
+### Removed
+- `BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT`, `Boiler_temp_set_point_s`, 0x1403 `on_write`
+  branch, 0x1403 row in `BLE_CFG_CHAR_arr` / `BLE_CFG_NAME_arr`.
+
+### Fixed
+- Water-temp notify length was `sizeof(pointer)` (4 by luck on 32-bit); now explicit.
+
+### Breaking
+- 0x1403 no longer writable. Brew-service attribute handles after 0x1403 shift +1 (new
+  CCCD). App update required: Android STATUS TODO #5. See `docs/ble/gatt_table.md`.
+
 ## 2026-10-04 — Remove dead phi1/phi2 PID blocks (STATUS TODO #25)
 
 Why: `Profile_ctrl_phi1_s` (Ki x6.5) and `Profile_ctrl_phi2_s` (Ki x2.0) were

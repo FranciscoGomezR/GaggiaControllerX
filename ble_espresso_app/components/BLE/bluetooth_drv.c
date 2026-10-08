@@ -19,7 +19,7 @@ BLE_CUS_DEF(m_cus);
 /*BLE_CUS_DEF(m_PIDcus);*/
 
 /* First/last config-write event; rows of BLE_CFG_CHAR_arr map 1:1 to this range */
-#define BLE_CFG_EVT_FIRST       BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT
+#define BLE_CFG_EVT_FIRST       BLE_MACHINE_BREW_TEMP_CHAR_RX_EVT
 #define BLE_CFG_EVT_LAST        PID_I_BOOST_CHAR_RX_EVT
 #define BLE_CFG_CHAR_CNT        ((uint32_t)BLE_CFG_EVT_LAST - (uint32_t)BLE_CFG_EVT_FIRST + 1U)
 /* Longest config payload: 3 integer digits + 1 decimal digit */
@@ -75,16 +75,13 @@ static ble_uuid_t m_adv_uuids[] =                                               
 };
 
 /** Lookup table for every writable config characteristic.
- *  Row index = (RX event type - BLE_MACHINE_BOILER_SET_POINT_CHAR_RX_EVT).
+ *  Row index = (RX event type - BLE_CFG_EVT_FIRST).
+ *  0x1403 active setpoint is READ/NOTIFY only: not in this table.
  *  Each row gives the target field, allowed range, ASCII width and which NVM
  *  region (SHOT / CTRL / NONE) must be saved when the field changes.
  *  Row order MUST match ble_cus_evt_type_t (checked by STATIC_ASSERT). */
 static const ble_cfg_char_t BLE_CFG_CHAR_arr[] =
 {
-  /* 0x1403 active boiler setpoint: RAM only, not stored in NVM */
-  { &g_Espresso_user_config_s.boilerTempSetpointDegC,
-    BOILER_SETPOINT_TEMP_MIN_DEGC, BOILER_SETPOINT_TEMP_MAX_DEGC,
-    BLE_CHAR_BOILER_SET_POINT_TEMP_UUID, 3U, BLE_CFG_PENDING_NONE },
   /* 0x1404 brew temperature preset */
   { &g_Espresso_user_config_s.brewTempDegC,
     BREW_TEMP_MIN_DEGC, BREW_TEMP_MAX_DEGC,
@@ -149,7 +146,7 @@ STATIC_ASSERT(ARRAY_SIZE(BLE_CFG_CHAR_arr) == BLE_CFG_CHAR_CNT);
  *  Compiled only when logging is on: release builds pay no flash. */
 static const char * const BLE_CFG_NAME_arr[] =
 {
-  "Setpoint", "BrewTemp", "SteamTemp", "PreInfPwr", "PreInfTime",
+  "BrewTemp", "SteamTemp", "PreInfPwr", "PreInfTime",
   "InfPwr", "InfTime", "TaperPwr", "TaperTime",
   "PID_P", "PID_I", "PID_Imax", "PID_D", "PID_Pboost", "PID_Iboost"
 };
@@ -889,5 +886,31 @@ void ble_notify_boiler_water_temp(float waterTemp)
             sbleTemp[3] = sTemp[3];
           break;
       }
-      err_code = ble_cus_notify_boiler_water_temp(&m_cus, sbleTemp, m_conn_handle);
+      err_code = ble_cus_notify_char(&m_cus, m_cus.boiler_water_temp_char_handles.value_handle,
+                                     sbleTemp, (uint16_t)sizeof(sbleTemp), m_conn_handle);
+}
+
+/*****************************************************************************
+* Function: 	ble_notify_boiler_setpoint
+* Description:  Update 0x1403 active boiler setpoint ("DDDd" ASCII) in the GATT
+*               table (READ stays current) and NOTIFY it when connected.
+*****************************************************************************/
+void ble_notify_boiler_setpoint(float setpoint_degC)
+{
+    uint8_t value_arr[BLE_CFG_PAYLOAD_MAX];
+    ble_gatts_value_t gatts_value;
+
+    float_to_chr_array(setpoint_degC, value_arr, 3, 1);
+    gatts_value.len     = BLE_CFG_PAYLOAD_MAX;
+    gatts_value.offset  = 0U;
+    gatts_value.p_value = value_arr;
+    (void)sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID,
+                                 m_cus.boiler_temp_set_point_char_handles.value_handle,
+                                 &gatts_value);
+    if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        /* Fails harmlessly (CCCD off) when the app has not subscribed */
+        (void)ble_cus_notify_char(&m_cus, m_cus.boiler_temp_set_point_char_handles.value_handle,
+                                  value_arr, BLE_CFG_PAYLOAD_MAX, m_conn_handle);
+    }
 }

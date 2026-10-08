@@ -172,6 +172,7 @@ static uint16_t app_pump_pwr;
 static uint16_t app_heat_pwr;
 static float    boiler_temp_degC;
 static float    boiler_target_temp_degC;
+static bool     is_setpoint_changed = false;
 
 /*This variable controls the timing inside this module:
   1-  Delay for the step function start
@@ -189,12 +190,24 @@ static void start_i_boost(i_boost_flags_t *ptr_flags, float factor);
 static void start_i_recovery(i_boost_flags_t *ptr_flags);
 static void monitor_i_recovery(i_boost_flags_t *ptr_flags);
 static void step_profile_integral_boost(void);
+static void apply_boiler_setpoint(tempCtrl_LoadSP_t setpoint);
 
 /******************************************************************************
 *
 *		PUBLIC FUNCTIONS SECTION
 *
 ******************************************************************************/
+/*****************************************************************************
+ * Function: 	is_boiler_setpoint_changed
+ * Description: Read-and-clear the setpoint-changed flag (BLE notify trigger).
+ *****************************************************************************/
+bool is_boiler_setpoint_changed(void)
+{
+  bool is_changed = is_setpoint_changed;
+  is_setpoint_changed = false;
+  return is_changed;
+}
+
 /*****************************************************************************
  * Function: 	fcn_service_EspressoApp
  * Prerequisite:fcn shall be called every 100ms
@@ -296,7 +309,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         if(swSteam == AC_SWITCH_ASSERTED )
         {
           /*ACTION: Setting new target temperatire for Steam generation*/
-          g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.steamTempDegC;
+          apply_boiler_setpoint(SET_POINT_STEAM);
           /*STATE JUMP: Mode2A*/
           Espresso_service_status_s.sRunning = CLASSIC_MODE_2;
           #if(NRF_LOG_ENABLED == 1)
@@ -367,7 +380,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           /*ACTION: Solenoid OFF */
           solenoid_ssr_off();
           /*ACTION: Setting new target temperatire for Steam generation*/
-          g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.steamTempDegC;
+          apply_boiler_setpoint(SET_POINT_STEAM);
           /*STATE JUMP: Mode2A*/
           Espresso_service_status_s.sRunning = CLASSIC_MODE_3;
           #if(NRF_LOG_ENABLED == 1)
@@ -407,7 +420,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
             pump_ssr_pwr_update(Classic_data_s.pumpPwr);
         #endif
         /*ACTION: Setting target temperature back to brew setpoint*/
-        g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.brewTempDegC;
+        apply_boiler_setpoint(SET_POINT_BREW);
         /*STATE JUMP: idle*/
         Espresso_service_status_s.sRunning= CLASSIC_IDLE;
         #if(NRF_LOG_ENABLED == 1)
@@ -449,7 +462,7 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if(swSteam == AC_SWITCH_ASSERTED )
       {}else{
         /*ACTION: Setting target temperature back to brew setpoint*/
-        g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.brewTempDegC;
+        apply_boiler_setpoint(SET_POINT_BREW);
         /*STATE JUMP [easy]: To idle, then this stage will take care of the switch state*/
         Espresso_service_status_s.sRunning= CLASSIC_IDLE;
         /*STATE JUMP: Mode1A*/
@@ -595,7 +608,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
         if(swSteam == AC_SWITCH_ASSERTED )
         {
           /*ACTION: Setting new target temperatire for Steam generation*/
-          g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.steamTempDegC;
+          apply_boiler_setpoint(SET_POINT_STEAM);
           /*STATE JUMP: Mode2A*/
           Profile_service_status_s.sRunning = PROFILE_MODE_STEAM;
           #if(NRF_LOG_ENABLED == 1)
@@ -895,7 +908,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
           pump_ssr_pwr_update(app_pump_pwr);
         #endif
         /*ACTION: Setting target temperature back to brew setpoint*/
-        g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.brewTempDegC;
+        apply_boiler_setpoint(SET_POINT_BREW);
         /*STATE JUMP: idle*/
         Profile_service_status_s.sRunning= PROFILE_IDLE;
         #if(NRF_LOG_ENABLED == 1)
@@ -932,7 +945,7 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       if(swSteam == AC_SWITCH_ASSERTED )
       {}else{
         /*ACTION: Setting target temperature back to brew setpoint*/
-        g_Espresso_user_config_s.boilerTempSetpointDegC = g_Espresso_user_config_s.brewTempDegC;
+        apply_boiler_setpoint(SET_POINT_BREW);
         /*STATE JUMP: Mode1A*/
         Profile_service_status_s.sRunning= PROFILE_IDLE;
         #if(NRF_LOG_ENABLED == 1)
@@ -1218,6 +1231,17 @@ static void step_profile_integral_boost(void)
     Profile_data_s.kiFactor = g_Espresso_user_config_s.pidIboostTerm;
   } else {}
   (void)temp_ctrl_scale_integral_gain(Profile_data_s.kiFactor);
+}
+
+/*****************************************************************************
+ * Function: 	apply_boiler_setpoint
+ * Description: Switch-driven setpoint change: load brew/steam temp, reset PID
+ *              integral (M1 fix) and flag a BLE notify of 0x1403.
+ *****************************************************************************/
+static void apply_boiler_setpoint(tempCtrl_LoadSP_t setpoint)
+{
+  (void)temp_ctrl_set_boiler_setpoint(&g_Espresso_user_config_s, setpoint);
+  is_setpoint_changed = true;
 }
 
 /*****************************************************************************

@@ -582,6 +582,12 @@ int main(void)
       }else{}
     }else{}
 
+    /* NOTIFY to BLE the active boiler setpoint (0x1403) after a BREW/STEAM switch change */
+    if( is_boiler_setpoint_changed() == true)
+    {
+      ble_notify_boiler_setpoint(g_Espresso_user_config_s.boilerTempSetpointDegC);
+    }else{}
+
     if( g_scheduler_flags_s.flag_ble_update == true)
     {
       /* NOTIFY to BLE the new read of the water temperature from the boiler  */

@@ -200,9 +200,46 @@ These items have not been commited
         docs/code_inventory/module_inventory.md (L268-269, L284-285) -> refresh later.
         CHANGELOG.md -> "2026-10-04 — Remove dead phi1/phi2 PID blocks (STATUS TODO #25)".
 
-- 23[]  machine service module shall pull the boilder-setpoint from either brewTempDegC and steamTempDegC from two
-        different conditions: the status of switches (BREW & STEAM) and from a CHAR write event 
-        (user write a new values into: brewTempDegC/steamTempDegC).
+- 23[x]  machine service module gets g_Espresso_user_config_s.boilerTempSetpointDegC from either 
+        g_Espresso_user_config_s.brewTempDegC or g_Espresso_user_config_s.steamTempDegC 
+        on switches BREW & STEAM status change to heat the water up to that temp; applicable to classic and profile mode. 
+        Also, machine shall notify g_Espresso_user_config_s.boilerTempSetpointDegC value to BLE application on switch status change.
+        UUID-0x1403 (boilder-setpoint) has to change to READ, NOTIFY to make it work.
+        Create a TODO item for the android application (status.md) on what will need to change to sync with this change.
+        Done: apply_boiler_setpoint() at the 7 switch sites (integral reset + notify flag);
+        0x1403 READ/NOTIFY; Android STATUS TODO #5 added.
+        CHANGELOG.md -> "2026-10-06 — Switch-driven boiler setpoint + 0x1403 READ/NOTIFY (STATUS TODO #23)".
+
+- 24[]  Follow-up of TODO #23: a brew/steam preset write over BLE (0x1404 brewTempDegC /
+        0x1405 steamTempDegC) is validated and saved to ext-NVM, but does not change
+        g_Espresso_user_config_s.boilerTempSetpointDegC. apply_boiler_setpoint() runs only on a
+        BREW/STEAM switch change, so while idle the PID keeps the old target and no 0x1403
+        notify is sent -> app boilerTemperatureProgressIndicator shows the old setpoint.
+        Fix: machine service tracks the active preset (brew/steam); each service tick
+        (Classic + Profile) compares that preset with boilerTempSetpointDegC and, on mismatch,
+        calls apply_boiler_setpoint() (copy + PID integral reset + 0x1403 notify).
+        Skipped while a shot is active (is_active); applied right after the shot ends.
+        No app change; 0x1401 not needed.
+
+- 25[]  machine service module shall notify its current status using UUID-0x1401, current config is 10bytes.
+        Propose a efficient for BLE device and android app to manages notifications.
+        Machine notification are for (Classic Mode):
+        - heating
+        - Ready [idle]
+        - Brewing
+        - steaming
+        Machine notification are for (Profile Mode):
+        - heating
+        - Ready [idle]
+        - Brewing [pre-infuse]
+        - Brewing [infuse]
+        - Brewing [tapering]
+        - Brewing [auto-stop]
+        - steaming
+        Machine notification are for (STEP Mode):
+        - Step mode OFF
+        - Step mode ON
+        android app will read status and will present info and icons in the screen.
 
 - []  Extend Profile/Classic boost to P gain (pidPboostTerm), same logic as I-boost.
         - tempController: replace temp_ctrl_scale_integral_gain() with

@@ -315,4 +315,7 @@ Description:
 */
 void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam);
 
+/** Read-and-clear: true once after a switch-driven boiler setpoint change. */
+bool is_boiler_setpoint_changed(void);
+
 #endif // ESPRESSOMACHINESERVICES_H__
