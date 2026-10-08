@@ -38,7 +38,7 @@ The BLEspresso device exposes two custom GATT Primary Services. Both services sh
 |---|---|---|---|---|---|---|---|
 | S1+0 | Primary Service Declaration (`0x2800`) | `0x1400` | — | 2 | UUID | — | Service boundary |
 | **S1+1** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1401` |
-| **S1+2** | **Characteristic Value** | `0x1401` | Read, Notify | 10 | ASCII string (space-padded) | — (status string) | Machine status string |
+| **S1+2** | **Characteristic Value** | `0x1401` | Read, Notify | 2 | binary `{mode, state}` (see [0x1401 payload](#0x1401-machine-status-payload)) | `machine_status_arr` | Machine status, notified on change |
 | **S1+3** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Enables/disables notifications for `0x1401` |
 | **S1+4** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1402` |
 | **S1+5** | **Characteristic Value** | `0x1402` | Read, Notify | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempDegC` | Boiler water temperature |
@@ -67,7 +67,7 @@ The BLEspresso device exposes two custom GATT Primary Services. Both services sh
 
 | UUID | `ble_cus.h` macro | Name | Char Decl | Char Value | CCCD | Properties | Val Len | Default (NVM validate) |
 |---|---|---|---|---|---|---|---|---|
-| `0x1401` | `BLE_CHAR_MACHINE_STATUS__UUID` | Machine Status | S1+1 | S1+2 | S1+3 | R, Ntf | 10 B | `"          "` (spaces) |
+| `0x1401` | `BLE_CHAR_MACHINE_STATUS__UUID` | Machine Status | S1+1 | S1+2 | S1+3 | R, Ntf | 2 B | `{0x00, 0x00}` (CLASSIC, HEATING_ON) |
 | `0x1402` | `BLE_CHAR_BOILER_WATER_TEMP_UUID` | Boiler Water Temp | S1+4 | S1+5 | S1+6 | R, Ntf | 4 B | `"0000"` (0.0 °C) |
 | `0x1403` | `BLE_CHAR_BOILER_SET_POINT_TEMP_UUID` | Boiler Setpoint | S1+7 | S1+8 | S1+9 | R, Ntf | 4 B | 95.5 °C |
 | `0x1404` | `BLE_CHAR_BREW_TEMP_UUID` | Brew Preset Temp | S1+10 | S1+11 | — | R, W | 4 B | 95.0 °C |
@@ -128,7 +128,8 @@ The BLEspresso device exposes two custom GATT Primary Services. Both services sh
 
 ## Data Format Reference
 
-All characteristic values are **ASCII char arrays** (not raw binary floats). Conversions:
+All characteristic values are **ASCII char arrays** (not raw binary floats), except
+`0x1401` (2 B binary, see below). Conversions:
 - `float_to_chr_array(value, buf, int_digits, dec_digits)` — float → ASCII (used at init)
 - `chr_array_to_float(buf, int_digits, dec_digits)` — ASCII → float (on RX in `cus_evt_handler`)
 
@@ -136,9 +137,46 @@ All characteristic values are **ASCII char arrays** (not raw binary floats). Con
 |---|---|---|---|---|
 | `XXD` | 3 | `(2, 1)` | `"356"` → 35.6 | 0.0 – 99.9 |
 | `XXXD` | 4 | `(3, 1)` | `"0985"` → 98.5 | 0.0 – 999.9 |
-| status string | 10 | — | `"BREW      "` | ASCII |
+| `{mode, state}` | 2 | — | `01 05` → PROFILE, BREW_INFUSE | binary, see below |
 
-> No decimal-point character is on the wire. Last digit is the first decimal place (×10 encoding), except the status string.
+> No decimal-point character is on the wire. Last digit is the first decimal place (×10 encoding).
+
+### 0x1401 Machine Status Payload
+
+2 B binary `[mode, state]`, READ + NOTIFY, notified **on change only**.
+Source: `status_mode_t` / `status_state_t` (`espressoMachineServices.h`).
+Diagram: [ble_0x1401_payload.drawio](ble_0x1401_payload.drawio) · HTML view: [gatt_table.html](gatt_table.html)
+
+| Payload (hex) | Mode | State | Firmware condition |
+|---|---|---|---|
+| `00 00` | CLASSIC | HEATING_ON | `CLASSIC_IDLE`, temp − setpoint < −2.0 degC |
+| `00 01` | CLASSIC | HEATING_OFF | `CLASSIC_IDLE`, temp − setpoint > +2.0 degC |
+| `00 02` | CLASSIC | READY | `CLASSIC_IDLE`, temp within ±1.0 degC of setpoint |
+| `00 03` | CLASSIC | BREWING | `CLASSIC_MODE_1` |
+| `00 08` | CLASSIC | STEAMING | `CLASSIC_MODE_2` / `CLASSIC_MODE_3` |
+| `01 00` | PROFILE | HEATING_ON | `PROFILE_IDLE`, temp − setpoint < −2.0 degC |
+| `01 01` | PROFILE | HEATING_OFF | `PROFILE_IDLE`, temp − setpoint > +2.0 degC |
+| `01 02` | PROFILE | READY | `PROFILE_IDLE`, temp within ±1.0 degC of setpoint |
+| `01 04` | PROFILE | BREW_PREINFUSE | `RAMP_STEP` with `sNext = INFUSE` |
+| `01 05` | PROFILE | BREW_INFUSE | `INFUSE`, or `RAMP_STEP` with `sNext = DECLINE` |
+| `01 06` | PROFILE | BREW_TAPER | `DECLINE`, or `RAMP_STEP` with `sNext = STOP` |
+| `01 07` | PROFILE | BREW_AUTOSTOP | `PROFILE_MODE_STOP` (profile ended, 120 s limit, or brew released) |
+| `01 08` | PROFILE | STEAMING | `PROFILE_MODE_STEAM` / `PROFILE_MODE_STEAM_BREW` |
+| `02 10` | STEP | STEP_OFF | `SF_IDLE` |
+| `02 11` | STEP | STEP_ON | `SF_MODE_1` / `SF_MODE_2A` / `SF_MODE_2B` / `SF_MODE_MAX` |
+
+**Hysteresis** (idle only, `e = boilerTempDegC − boilerTempSetpointDegC`):
+
+| Condition | State | Define |
+|---|---|---|
+| `e < −2.0` | HEATING_ON | `STATUS_HEAT_ON_BAND_DEGC` |
+| `e > +2.0` | HEATING_OFF | `STATUS_HEAT_OFF_BAND_DEGC` |
+| `\|e\| ≤ 1.0` | READY | `STATUS_READY_BAND_DEGC` |
+| `1.0 < \|e\| ≤ 2.0` | keep last state (dead band) | — |
+
+- Unused codes: `0x09`–`0x0F`, `0x12`–`0xFF` → app shows "—".
+- Boot GATT value `00 00`; replaced by the real state on the first service tick.
+- `main.c` currently runs only `service_profile_mode()` → `00 xx` payloads are not reachable in the current build.
 
 ---
 
@@ -220,6 +258,18 @@ bluetooth_drv.c: ble_notify_boiler_setpoint(boilerTempSetpointDegC)
   - float → 4-char ASCII (XXXD) via float_to_chr_array()
   - sd_ble_gatts_value_set() on 0x1403 (READ stays current)
   - if connected: ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1403 value handle
+```
+
+```
+espressoMachineServices.c: end of each service tick (Classic / Profile / Step)
+  - map sRunning (+ hysteresis temp status when idle) → set_machine_status(mode, state)
+  - flag set only when {mode, state} differs from last value
+       ↓
+main.c loop: is_machine_status_changed(arr) (read-and-clear), checked AFTER 0x1403
+       ↓
+bluetooth_drv.c: ble_notify_machine_status(arr)
+  - sd_ble_gatts_value_set() on 0x1401 (READ stays current)
+  - if connected: ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1401 value handle
 ```
 
 ---

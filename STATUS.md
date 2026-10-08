@@ -215,25 +215,22 @@ These items have not been commited
         g_Espresso_user_config_s.boilerTempSetpointDegC. apply_boiler_setpoint() runs only on a
         BREW/STEAM switch change, so while idle the PID keeps the old target and no 0x1403
         notify is sent -> app boilerTemperatureProgressIndicator shows the old setpoint.
-        Fix: machine service tracks the active preset (brew/steam); each service tick
-        (Classic + Profile) compares that preset with boilerTempSetpointDegC and, on mismatch,
-        calls apply_boiler_setpoint() (copy + PID integral reset + 0x1403 notify).
-        Skipped while a shot is active (is_active); applied right after the shot ends.
-        No app change; 0x1401 not needed.
         Done: active_setpoint tracked in apply_boiler_setpoint(); sync_boiler_setpoint() each
         Classic/Profile tick (skipped while is_active). espressoMachineServices.c only.
         CHANGELOG.md -> "2026-10-08 — Live boiler setpoint on BLE preset write (STATUS TODO #24)".
 
-- 25[]  machine service module shall notify its current status using UUID-0x1401, current config is 10bytes; but this can be modify 
+- 25[x]  machine service module shall notify its current status using UUID-0x1401, current config is 10bytes; but this can be modify 
         to whatever makes more sense or suits better in terms of BLe efficieny
         Propose a efficient for BLE device and android app to manages notifications.
         Machine notification are for (Classic Mode):
         - heating
+        - heating OFF
         - Ready [idle]
         - Brewing
         - steaming
         Machine notification are for (Profile Mode):
-        - heating
+        - heating ON
+        - heating OFF
         - Ready [idle]
         - Brewing [pre-infuse]
         - Brewing [infuse]
@@ -243,7 +240,12 @@ These items have not been commited
         Machine notification are for (STEP Mode):
         - Step mode OFF
         - Step mode ON
+        add hysteresis to stop notification flickering, add #defines to modify hysterisis values. starting with READY -> |temp - setpoint| <= 1.0 degC, HEATING ON when < 2.0 degC and HEATING OFF when > 2.0 degC.
         android app will read status and will present info and icons in the screen.
+        Generate a TODO item #6 and pass the info & data the app will need to update the code to read 0x1401
+        Done: 0x1401 = 2 B binary {mode, state}, notify on change; HEATING_ON/OFF/READY
+        hysteresis (STATUS_*_BAND_DEGC); Android STATUS TODO #6 added.
+        CHANGELOG.md -> "2026-10-08 — 0x1401 machine status notify (STATUS TODO #25)".
 
 - []  Extend Profile/Classic boost to P gain (pidPboostTerm), same logic as I-boost.
         - tempController: replace temp_ctrl_scale_integral_gain() with

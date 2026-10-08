@@ -265,17 +265,16 @@ static uint32_t ble_cus_espresso_char_add(ble_cus_t * p_cus, const ble_cus_init_
     ble_add_char_params_t add_char_param;
     static uint8_t initValueChar[5] = {'0'}; 
     
-    /*<NOTIFICATION + READ> 
-    Add BLE_CHAR_BLESPRESSO_STATUS characteristic
-    TODO
+    /*<NOTIFICATION + READ>
+    Add BLE_CHAR_BLESPRESSO_STATUS characteristic: 2 B binary {mode, state}
     */
-    uint8_t blespressoStatus[10] = {' '};
+    uint8_t blespressoStatus[MACHINE_STATUS_LEN] = {STATUS_MODE_CLASSIC, STATUS_HEATING_ON};
     memset(&add_char_param, 0, sizeof(add_char_param));
     add_char_param.uuid             = BLE_CHAR_MACHINE_STATUS__UUID;   //set UUID
     add_char_param.uuid_type        = p_cus->uuid_type;
 
-    add_char_param.init_len         = 10;                      //init 5 bytes        
-    add_char_param.max_len          = 10;
+    add_char_param.init_len         = MACHINE_STATUS_LEN;
+    add_char_param.max_len          = MACHINE_STATUS_LEN;
     add_char_param.p_init_value     = (uint8_t*)blespressoStatus;        //init value
 
     add_char_param.char_props.read  = 1;                      //Enable Read

@@ -914,3 +914,26 @@ void ble_notify_boiler_setpoint(float setpoint_degC)
                                   value_arr, BLE_CFG_PAYLOAD_MAX, m_conn_handle);
     }
 }
+
+/*****************************************************************************
+* Function: 	ble_notify_machine_status
+* Description:  Update 0x1401 machine status (2 B binary {mode, state}) in the
+*               GATT table (READ stays current) and NOTIFY it when connected.
+*****************************************************************************/
+void ble_notify_machine_status(uint8_t *ptr_status_arr)
+{
+    ble_gatts_value_t gatts_value;
+
+    gatts_value.len     = MACHINE_STATUS_LEN;
+    gatts_value.offset  = 0U;
+    gatts_value.p_value = ptr_status_arr;
+    (void)sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID,
+                                 m_cus.machine_status_char_handles.value_handle,
+                                 &gatts_value);
+    if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        /* Fails harmlessly (CCCD off) when the app has not subscribed */
+        (void)ble_cus_notify_char(&m_cus, m_cus.machine_status_char_handles.value_handle,
+                                  ptr_status_arr, MACHINE_STATUS_LEN, m_conn_handle);
+    }
+}

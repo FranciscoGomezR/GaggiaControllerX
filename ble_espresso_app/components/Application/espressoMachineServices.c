@@ -21,6 +21,11 @@
 #define PUMP_PWR_OFF            0       /*0%*/
 
 #define TEMP_CTRL_PHI2_THR      1.0f
+/* 0x1401 temp status hysteresis, error = boiler temp - setpoint.
+ * READY band shall be smaller than HEAT bands (dead band in between). */
+#define STATUS_READY_BAND_DEGC     1.0f
+#define STATUS_HEAT_ON_BAND_DEGC   2.0f
+#define STATUS_HEAT_OFF_BAND_DEGC  2.0f
 #define I_BOOST_RECOVERY_FACTOR 2.0f    /*Ki x2 from brew end until boiler reaches target*/
 #define PROFILE_BOOST_STAGES    2U      /*Ki ramp spans pre-infusion + infusion*/
 
@@ -174,6 +179,10 @@ static float    boiler_temp_degC;
 static float    boiler_target_temp_degC;
 static bool     is_setpoint_changed = false;
 static tempCtrl_LoadSP_t active_setpoint = SET_POINT_BREW;  /* matches main.c boot load */
+/* 0x1401 last {mode, state}; state 0xFF forces the first notify */
+static uint8_t  machine_status_arr[MACHINE_STATUS_LEN] = {STATUS_MODE_CLASSIC, 0xFFU};
+static bool     is_status_changed = false;
+static status_state_t temp_status = STATUS_HEATING_ON;
 
 /*This variable controls the timing inside this module:
   1-  Delay for the step function start
@@ -193,6 +202,8 @@ static void monitor_i_recovery(i_boost_flags_t *ptr_flags);
 static void step_profile_integral_boost(void);
 static void apply_boiler_setpoint(tempCtrl_LoadSP_t setpoint);
 static void sync_boiler_setpoint(bool is_shot_active);
+static void set_machine_status(status_mode_t mode, status_state_t state);
+static status_state_t get_temp_status(void);
 
 /******************************************************************************
 *
@@ -207,6 +218,20 @@ bool is_boiler_setpoint_changed(void)
 {
   bool is_changed = is_setpoint_changed;
   is_setpoint_changed = false;
+  return is_changed;
+}
+
+/*****************************************************************************
+ * Function: 	is_machine_status_changed
+ * Description: Read-and-clear the 0x1401 status-changed flag (BLE notify
+ *              trigger). Copies {mode, state} into ptr_status_arr.
+ *****************************************************************************/
+bool is_machine_status_changed(uint8_t *ptr_status_arr)
+{
+  bool is_changed = is_status_changed;
+  is_status_changed = false;
+  ptr_status_arr[0] = machine_status_arr[0];
+  ptr_status_arr[1] = machine_status_arr[1];
   return is_changed;
 }
 
@@ -483,6 +508,21 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
     case CLASSIC_MODE_MAX:
       Espresso_service_status_s.sRunning= CLASSIC_IDLE;
       Classic_data_s.is_active = false;
+    break;
+  }
+
+  /*0x1401: derive status from the state machine (notify on change only)*/
+  switch(Espresso_service_status_s.sRunning)
+  {
+    case CLASSIC_MODE_1:
+      set_machine_status(STATUS_MODE_CLASSIC, STATUS_BREWING);
+    break;
+    case CLASSIC_MODE_2:
+    case CLASSIC_MODE_3:
+      set_machine_status(STATUS_MODE_CLASSIC, STATUS_STEAMING);
+    break;
+    default:
+      set_machine_status(STATUS_MODE_CLASSIC, get_temp_status());
     break;
   }
 }
@@ -968,6 +1008,37 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
       Profile_data_s.is_active = false;
     break;
   }
+
+  /*0x1401: derive status from the state machine (notify on change only)*/
+  switch(Profile_service_status_s.sRunning)
+  {
+    case PROFILE_MODE_RAMP_STEP:
+      /*Ramp stage is named by the stage that follows it*/
+      if (Profile_service_status_s.sNext == PROFILE_MODE_INFUSE) {
+        set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_PREINFUSE);
+      } else if (Profile_service_status_s.sNext == PROFILE_MODE_DECLINE) {
+        set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_INFUSE);
+      } else {
+        set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_TAPER);
+      }
+    break;
+    case PROFILE_MODE_INFUSE:
+      set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_INFUSE);
+    break;
+    case PROFILE_MODE_DECLINE:
+      set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_TAPER);
+    break;
+    case PROFILE_MODE_STOP:
+      set_machine_status(STATUS_MODE_PROFILE, STATUS_BREW_AUTOSTOP);
+    break;
+    case PROFILE_MODE_STEAM:
+    case PROFILE_MODE_STEAM_BREW:
+      set_machine_status(STATUS_MODE_PROFILE, STATUS_STEAMING);
+    break;
+    default:
+      set_machine_status(STATUS_MODE_PROFILE, get_temp_status());
+    break;
+  }
 }
 
 
@@ -1176,6 +1247,11 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam)
     break;
 
   }
+
+  /*0x1401: step mode ON while any step state is running*/
+  set_machine_status(STATUS_MODE_STEP,
+                     (Stepfcn_service_status_s.sRunning == SF_IDLE) ?
+                     STATUS_STEP_OFF : STATUS_STEP_ON);
 }
 
 /******************************************************************************
@@ -1271,6 +1347,42 @@ static void sync_boiler_setpoint(bool is_shot_active)
   if (preset_degC != g_Espresso_user_config_s.boilerTempSetpointDegC) {
     apply_boiler_setpoint(active_setpoint);
   } else {}
+}
+
+/*****************************************************************************
+ * Function: 	set_machine_status
+ * Description: Store 0x1401 {mode, state}; flag a BLE notify only on change.
+ *****************************************************************************/
+static void set_machine_status(status_mode_t mode, status_state_t state)
+{
+  if ((machine_status_arr[0] != (uint8_t)mode) ||
+      (machine_status_arr[1] != (uint8_t)state)) {
+    machine_status_arr[0] = (uint8_t)mode;
+    machine_status_arr[1] = (uint8_t)state;
+    is_status_changed = true;
+  } else {}
+}
+
+/*****************************************************************************
+ * Function: 	get_temp_status
+ * Description: Idle temp status with hysteresis (error = temp - setpoint):
+ *              e < -HEAT_ON band -> HEATING_ON, e > HEAT_OFF band -> HEATING_OFF,
+ *              |e| <= READY band -> READY, otherwise keep last (dead band).
+ *****************************************************************************/
+static status_state_t get_temp_status(void)
+{
+  float error_degC = g_Espresso_user_config_s.boilerTempDegC
+                   - g_Espresso_user_config_s.boilerTempSetpointDegC;
+
+  if (error_degC < -STATUS_HEAT_ON_BAND_DEGC) {
+    temp_status = STATUS_HEATING_ON;
+  } else if (error_degC > STATUS_HEAT_OFF_BAND_DEGC) {
+    temp_status = STATUS_HEATING_OFF;
+  } else if ((error_degC <= STATUS_READY_BAND_DEGC) &&
+             (error_degC >= -STATUS_READY_BAND_DEGC)) {
+    temp_status = STATUS_READY;
+  } else {}
+  return temp_status;
 }
 
 /*****************************************************************************

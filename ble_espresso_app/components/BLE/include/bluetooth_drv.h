@@ -168,6 +168,7 @@ void ble_restart_without_whitelist(void);
 
 void ble_notify_boiler_water_temp(float waterTemp);
 void ble_notify_boiler_setpoint(float setpoint_degC);
+void ble_notify_machine_status(uint8_t *ptr_status_arr);
 
 #ifdef __cplusplus
 }

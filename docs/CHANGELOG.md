@@ -10,6 +10,30 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-08 — 0x1401 machine status notify (STATUS TODO #25)
+
+Why: 0x1401 was declared (10 B, spaces) but never written or notified; app had no way
+to show machine state.
+
+### Changed
+- `0x1401` value: 10 B ASCII -> **2 B binary** `{mode, state}`, READ + NOTIFY.
+  mode: 0 CLASSIC, 1 PROFILE, 2 STEP. state: 0x00 HEATING_ON, 0x01 HEATING_OFF,
+  0x02 READY, 0x03 BREWING, 0x04 BREW_PREINFUSE, 0x05 BREW_INFUSE, 0x06 BREW_TAPER,
+  0x07 BREW_AUTOSTOP, 0x08 STEAMING, 0x10 STEP_OFF, 0x11 STEP_ON.
+
+### Added
+- `espressoMachineServices.h`: `MACHINE_STATUS_LEN`, `status_mode_t`, `status_state_t`,
+  `is_machine_status_changed()`.
+- `espressoMachineServices.c`: status derived from `sRunning` at end of each service tick;
+  `set_machine_status()` flags notify on change only. Idle temp status with hysteresis
+  (`STATUS_READY_BAND_DEGC` 1.0, `STATUS_HEAT_ON_BAND_DEGC` 2.0,
+  `STATUS_HEAT_OFF_BAND_DEGC` 2.0; dead band keeps last state).
+- `bluetooth_drv.c`: `ble_notify_machine_status()` (value_set + notify).
+- `main.c`: 0x1401 notify after 0x1403 notify.
+
+### Migration
+- App update required: Android STATUS TODO #6. GATT handles unchanged (length only).
+
 ## 2026-10-08 — Live boiler setpoint on BLE preset write (STATUS TODO #24)
 
 Why: BLE writes to 0x1404/0x1405 updated `brewTempDegC`/`steamTempDegC` only.

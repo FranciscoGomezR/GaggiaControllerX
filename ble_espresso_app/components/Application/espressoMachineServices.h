@@ -208,6 +208,29 @@ typedef enum {
   ESPRESSO_MODE__AUTOMATIC
 } machine_mode_t;
 
+/* 0x1401 machine status payload: {status_mode_t, status_state_t}, 2 B binary */
+#define MACHINE_STATUS_LEN      2U
+
+typedef enum {
+  STATUS_MODE_CLASSIC = 0,
+  STATUS_MODE_PROFILE,
+  STATUS_MODE_STEP
+} status_mode_t;
+
+typedef enum {
+  STATUS_HEATING_ON     = 0x00,
+  STATUS_HEATING_OFF    = 0x01,
+  STATUS_READY          = 0x02,
+  STATUS_BREWING        = 0x03,
+  STATUS_BREW_PREINFUSE = 0x04,
+  STATUS_BREW_INFUSE    = 0x05,
+  STATUS_BREW_TAPER     = 0x06,
+  STATUS_BREW_AUTOSTOP  = 0x07,
+  STATUS_STEAMING       = 0x08,
+  STATUS_STEP_OFF       = 0x10,
+  STATUS_STEP_ON        = 0x11
+} status_state_t;
+
 //*****************************************************************************
 //
 //			PUBLIC VARIABLES PROTOTYPE
@@ -317,5 +340,8 @@ void service_step_function(acInput_status_t swBrew, acInput_status_t swSteam);
 
 /** Read-and-clear: true once after a switch-driven boiler setpoint change. */
 bool is_boiler_setpoint_changed(void);
+
+/** Read-and-clear: true once after a 0x1401 status change; copies {mode, state}. */
+bool is_machine_status_changed(uint8_t *ptr_status_arr);
 
 #endif // ESPRESSOMACHINESERVICES_H__

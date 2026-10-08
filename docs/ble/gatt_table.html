@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GATT Table — BLEspresso</title>
+<style>
+  :root { --bg:#ffffff; --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --code:#f6f8fa; --link:#0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#3d444d; --code:#161b22; --link:#4493f8; }
+  }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--link); }
+  h1,h2 { border-bottom:1px solid var(--line); padding-bottom:.3em; }
+  table { border-collapse:collapse; display:block; overflow-x:auto; margin:12px 0; }
+  th,td { border:1px solid var(--line); padding:5px 10px; vertical-align:top; }
+  th { background:var(--code); }
+  code,pre { background:var(--code); border-radius:4px; font-family:Consolas,monospace; font-size:13px; }
+  code { padding:1px 4px; }
+  pre { padding:12px; overflow-x:auto; }
+  pre code { padding:0; }
+  blockquote { margin:0; padding:0 1em; color:var(--muted); border-left:4px solid var(--line); }
+  .diagram { border:1px solid var(--line); border-radius:6px; padding:8px; margin:12px 0;
+              background:#ffffff; overflow-x:auto; }
+  .diagram-cap { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <article id="doc">Loading…</article>
+</main>
+
+<template id="diagram-tpl">
+  <div class="diagram"><div class="mxgraph" data-mxgraph="{&quot;xml&quot;: &quot;&lt;mxfile host=\&quot;app.diagrams.net\&quot;&gt;&lt;diagram id=\&quot;p1401\&quot; name=\&quot;0x1401 payload\&quot;&gt;&lt;mxGraphModel grid=\&quot;1\&quot; gridSize=\&quot;10\&quot; pageWidth=\&quot;700\&quot; pageHeight=\&quot;600\&quot;&gt;&lt;root&gt;&lt;mxCell id=\&quot;0\&quot;/&gt;&lt;mxCell id=\&quot;1\&quot; parent=\&quot;0\&quot;/&gt;&lt;mxCell id=\&quot;c2\&quot; value=\&quot;0x1401 Machine Status \u2014 2 B [mode, state], READ + NOTIFY on change\&quot; style=\&quot;text;html=1;fontStyle=1;fontSize=14;align=left;verticalAlign=middle;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;20\&quot; width=\&quot;620\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c3\&quot; value=\&quot;Payload (hex)\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#333333;fontColor=#ffffff;fontStyle=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;60\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c4\&quot; value=\&quot;Mode\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#333333;fontColor=#ffffff;fontStyle=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;60\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c5\&quot; value=\&quot;State\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#333333;fontColor=#ffffff;fontStyle=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;60\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c6\&quot; value=\&quot;Firmware condition\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#333333;fontColor=#ffffff;fontStyle=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;60\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c7\&quot; value=\&quot;00 00\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;88\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c8\&quot; value=\&quot;CLASSIC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;88\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c9\&quot; value=\&quot;HEATING_ON\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;88\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c10\&quot; value=\&quot;CLASSIC_IDLE, e &amp;lt; -2.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;88\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c11\&quot; value=\&quot;00 01\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;116\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c12\&quot; value=\&quot;CLASSIC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;116\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c13\&quot; value=\&quot;HEATING_OFF\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;116\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c14\&quot; value=\&quot;CLASSIC_IDLE, e &amp;gt; +2.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;116\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c15\&quot; value=\&quot;00 02\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;144\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c16\&quot; value=\&quot;CLASSIC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;144\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c17\&quot; value=\&quot;READY\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;144\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c18\&quot; value=\&quot;CLASSIC_IDLE, |e| &amp;lt;= 1.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;144\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c19\&quot; value=\&quot;00 03\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;172\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c20\&quot; value=\&quot;CLASSIC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;172\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c21\&quot; value=\&quot;BREWING\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;172\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c22\&quot; value=\&quot;CLASSIC_MODE_1\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;172\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c23\&quot; value=\&quot;00 08\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;200\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c24\&quot; value=\&quot;CLASSIC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;200\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c25\&quot; value=\&quot;STEAMING\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;200\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c26\&quot; value=\&quot;CLASSIC_MODE_2 / CLASSIC_MODE_3\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#dae8fc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;200\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c27\&quot; value=\&quot;01 00\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;228\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c28\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;228\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c29\&quot; value=\&quot;HEATING_ON\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;228\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c30\&quot; value=\&quot;PROFILE_IDLE, e &amp;lt; -2.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;228\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c31\&quot; value=\&quot;01 01\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;256\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c32\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;256\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c33\&quot; value=\&quot;HEATING_OFF\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;256\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c34\&quot; value=\&quot;PROFILE_IDLE, e &amp;gt; +2.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;256\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c35\&quot; value=\&quot;01 02\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;284\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c36\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;284\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c37\&quot; value=\&quot;READY\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;284\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c38\&quot; value=\&quot;PROFILE_IDLE, |e| &amp;lt;= 1.0 degC\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;284\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c39\&quot; value=\&quot;01 04\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;312\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c40\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;312\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c41\&quot; value=\&quot;BREW_PREINFUSE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;312\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c42\&quot; value=\&quot;RAMP_STEP, sNext = INFUSE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;312\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c43\&quot; value=\&quot;01 05\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;340\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c44\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;340\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c45\&quot; value=\&quot;BREW_INFUSE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;340\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c46\&quot; value=\&quot;INFUSE / RAMP_STEP, sNext = DECLINE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;340\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c47\&quot; value=\&quot;01 06\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;368\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c48\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;368\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c49\&quot; value=\&quot;BREW_TAPER\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;368\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c50\&quot; value=\&quot;DECLINE / RAMP_STEP, sNext = STOP\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;368\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c51\&quot; value=\&quot;01 07\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;396\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c52\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;396\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c53\&quot; value=\&quot;BREW_AUTOSTOP\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;396\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c54\&quot; value=\&quot;PROFILE_MODE_STOP\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;396\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c55\&quot; value=\&quot;01 08\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;424\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c56\&quot; value=\&quot;PROFILE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;424\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c57\&quot; value=\&quot;STEAMING\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;424\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c58\&quot; value=\&quot;PROFILE_MODE_STEAM / STEAM_BREW\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#d5e8d4;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;424\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c59\&quot; value=\&quot;02 10\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;452\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c60\&quot; value=\&quot;STEP\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;452\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c61\&quot; value=\&quot;STEP_OFF\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;452\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c62\&quot; value=\&quot;SF_IDLE\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;452\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c63\&quot; value=\&quot;02 11\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;480\&quot; width=\&quot;110\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c64\&quot; value=\&quot;STEP\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;130\&quot; y=\&quot;480\&quot; width=\&quot;90\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c65\&quot; value=\&quot;STEP_ON\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;220\&quot; y=\&quot;480\&quot; width=\&quot;140\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c66\&quot; value=\&quot;SF_MODE_1 / 2A / 2B / MAX\&quot; style=\&quot;rounded=0;whiteSpace=wrap;html=1;fontFamily=Courier New;fontSize=12;strokeColor=#666666;fillColor=#fff2cc;align=left;spacingLeft=6;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;360\&quot; y=\&quot;480\&quot; width=\&quot;280\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;mxCell id=\&quot;c67\&quot; value=\&quot;e = boilerTempDegC - boilerTempSetpointDegC; 1.0 &amp;lt; |e| &amp;lt;= 2.0 keeps last state (hysteresis). Unused codes 0x09-0x0F, 0x12-0xFF.\&quot; style=\&quot;text;html=1;fontSize=11;align=left;verticalAlign=middle;whiteSpace=wrap;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;&lt;mxGeometry x=\&quot;20\&quot; y=\&quot;520\&quot; width=\&quot;620\&quot; height=\&quot;28\&quot; as=\&quot;geometry\&quot;/&gt;&lt;/mxCell&gt;&lt;/root&gt;&lt;/mxGraphModel&gt;&lt;/diagram&gt;&lt;/mxfile&gt;\n&quot;, &quot;toolbar&quot;: &quot;zoom&quot;, &quot;nav&quot;: true, &quot;lightbox&quot;: false, &quot;highlight&quot;: &quot;#0000ff&quot;}"></div></div>
+  <div class="diagram-cap">Source: <a href="ble_0x1401_payload.drawio">ble_0x1401_payload.drawio</a>
+    (open in draw.io / diagrams.net)</div>
+</template>
+
+<script type="text/markdown" id="md"># GATT Attribute Table — BLEspresso Controller
+
+> **Source files:** `ble_espresso_app/components/BLE_Services/ble_cus.c/.h`
+> **UUID registration + service creation:** `ble_cus_init()` in `ble_cus.c`
+> **Data hub:** `volatile espresso_user_config_t g_Espresso_user_config_s` (see [modules.md](../architecture/modules/modules.md))
+
+---
+
+## Overview
+
+The BLEspresso device exposes two custom GATT Primary Services. Both services share **one** 128-bit vendor-specific UUID base, registered once with the SoftDevice S132 in `ble_cus_init()` via a single `sd_ble_uuid_vs_add(CUSTOM_SERVICE_UUID_BASE, ...)` call. Both `sd_ble_gatts_service_add()` calls use the same `p_cus->uuid_type`.
+
+| Property | Value |
+|---|---|
+| Device Name | `"BLEspresso"` (`DEVICE_NAME`, `bluetooth_drv.h`) |
+| Manufacturer | `"PaxsElectronics"` (`MANUFACTURER_NAME`, `bluetooth_drv.h`) |
+| UUID Base (both services) | `f364adc9-b000-xxxx-ba50-05ca45bf8abc` (`CUSTOM_SERVICE_UUID_BASE`) |
+| ATT Handle Assignment | Dynamic — assigned by SoftDevice S132 during `ble_cus_init()` |
+| Security | All attributes: `SEC_OPEN` (no pairing required) |
+| Char add helper | `characteristic_add()` (nRF5 SDK `ble_srv_common`) |
+
+> **Dead code:** `CUSTOM_PID_SERVICE_UUID_BASE` is defined in `ble_cus.h` but never used. The PID service is built on `CUSTOM_SERVICE_UUID_BASE`, same as the Brew service.
+
+> **Handle notation:** Handles are dynamic. This table uses relative offsets from each service's Primary Service Declaration handle (`Sn+0`). Read actual values via GATT discovery.
+
+---
+
+## Service 1 — BLEspresso Machine / Brew Service
+
+**Service UUID:** `0x1400` (`BLE_SERVICE_ESPRESSO_MACHINE_UUID`)
+**Full UUID:** `f364adc9-b000-**1400**-ba50-05ca45bf8abc`
+**Built in:** `ble_cus_init()` → `ble_cus_espresso_char_add()`
+**Number of characteristics:** 11
+
+### Service Attribute Table
+
+| Handle Offset | Attribute Type | UUID | Properties | Len (bytes) | Data Format | `g_Espresso_user_config_s` Field | Notes |
+|---|---|---|---|---|---|---|---|
+| S1+0 | Primary Service Declaration (`0x2800`) | `0x1400` | — | 2 | UUID | — | Service boundary |
+| **S1+1** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1401` |
+| **S1+2** | **Characteristic Value** | `0x1401` | Read, Notify | 2 | binary `{mode, state}` (see [0x1401 payload](#0x1401-machine-status-payload)) | `machine_status_arr` | Machine status, notified on change |
+| **S1+3** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Enables/disables notifications for `0x1401` |
+| **S1+4** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1402` |
+| **S1+5** | **Characteristic Value** | `0x1402` | Read, Notify | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempDegC` | Boiler water temperature |
+| **S1+6** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Enables/disables temp notifications (1 s period) |
+| **S1+7** | Characteristic Declaration (`0x2803`) | — | Read, Notify | 5 | Props + Handle + UUID | — | Declares `0x1403` |
+| **S1+8** | **Characteristic Value** | `0x1403` | Read, Notify | 4 | `XXXD` ASCII (D=tenth °C) | `boilerTempSetpointDegC` | Active boiler setpoint (set by BREW/STEAM switches) |
+| **S1+9** | Client Characteristic Configuration (`0x2902`) | — | Read, Write | 2 | `0x0000`=off `0x0001`=notify | — | Notified on BREW/STEAM switch-driven setpoint change |
+| **S1+10** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1404` |
+| **S1+11** | **Characteristic Value** | `0x1404` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `brewTempDegC` | Brew preset setpoint |
+| **S1+12** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1405` |
+| **S1+13** | **Characteristic Value** | `0x1405` | Read, Write | 4 | `XXXD` ASCII (D=tenth °C) | `steamTempDegC` | Steam preset setpoint |
+| **S1+14** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1406` |
+| **S1+15** | **Characteristic Value** | `0x1406` | Read, Write | 3 | `XXD` ASCII (D=tenth %) | `profPreInfusePwr` | Pre-infusion pump power |
+| **S1+16** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1407` |
+| **S1+17** | **Characteristic Value** | `0x1407` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profPreInfuseTmr` | Pre-infusion duration |
+| **S1+18** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1408` |
+| **S1+19** | **Characteristic Value** | `0x1408` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profInfusePwr` | Infusion pump power |
+| **S1+20** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1409` |
+| **S1+21** | **Characteristic Value** | `0x1409` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profInfuseTmr` | Infusion duration |
+| **S1+22** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140A` |
+| **S1+23** | **Characteristic Value** | `0x140A` | Read, Write | 4 | `XXXD` ASCII (D=tenth %) | `profTaperingPwr` | Declining pressure power |
+| **S1+24** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x140B` |
+| **S1+25** | **Characteristic Value** | `0x140B` | Read, Write | 3 | `XXD` ASCII (D=tenth s) | `profTaperingTmr` | Declining pressure duration |
+
+### Characteristic Summary — Brew Service
+
+| UUID | `ble_cus.h` macro | Name | Char Decl | Char Value | CCCD | Properties | Val Len | Default (NVM validate) |
+|---|---|---|---|---|---|---|---|---|
+| `0x1401` | `BLE_CHAR_MACHINE_STATUS__UUID` | Machine Status | S1+1 | S1+2 | S1+3 | R, Ntf | 2 B | `{0x00, 0x00}` (CLASSIC, HEATING_ON) |
+| `0x1402` | `BLE_CHAR_BOILER_WATER_TEMP_UUID` | Boiler Water Temp | S1+4 | S1+5 | S1+6 | R, Ntf | 4 B | `"0000"` (0.0 °C) |
+| `0x1403` | `BLE_CHAR_BOILER_SET_POINT_TEMP_UUID` | Boiler Setpoint | S1+7 | S1+8 | S1+9 | R, Ntf | 4 B | 95.5 °C |
+| `0x1404` | `BLE_CHAR_BREW_TEMP_UUID` | Brew Preset Temp | S1+10 | S1+11 | — | R, W | 4 B | 95.0 °C |
+| `0x1405` | `BLE_CHAR_STEAM_TEMP_UUID` | Steam Preset Temp | S1+12 | S1+13 | — | R, W | 4 B | 110.0 °C |
+| `0x1406` | `BLE_CHAR_BREW_PRE_INFUSION_POWER_UUID` | Pre-Infusion Power | S1+14 | S1+15 | — | R, W | 3 B | 75.0 % |
+| `0x1407` | `BLE_CHAR_BREW_PRE_INFUSION_TIME__UUID` | Pre-Infusion Time | S1+16 | S1+17 | — | R, W | 3 B | 8.0 s |
+| `0x1408` | `BLE_CHAR_BREW_INFUSION_POWER_UUID` | Infusion Power | S1+18 | S1+19 | — | R, W | 4 B | 100.0 % |
+| `0x1409` | `BLE_CHAR_BREW_INFUSION_TIME__UUID` | Infusion Time | S1+20 | S1+21 | — | R, W | 3 B | 8.0 s |
+| `0x140A` | `BLE_CHAR_BREW_DECLINING_PR_POWER_UUID` | Declining Power | S1+22 | S1+23 | — | R, W | 4 B | 85.0 % |
+| `0x140B` | `BLE_CHAR_BREW_DECLINING_PR_TIME__UUID` | Declining Time | S1+24 | S1+25 | — | R, W | 3 B | 8.0 s |
+
+> **R** = Read · **W** = Write (Write Without Response not used) · **Ntf** = Notify
+> **CUDD** (Characteristic User Description, `0x2901`) — **not present** in this project (`char_user_desc` not set in `add_char_param`).
+
+> **Known code issue:** in `on_write()` the branch for `0x1405` (steam) compares against `brew_temp_char_handles.value_handle` a second time instead of `steam_temp_char_handles.value_handle`, so `BLE_MACHINE_STEAM_TEMP_CHAR_RX_EVT` is unreachable via that path.
+
+---
+
+## Service 2 — PID / Controller Service
+
+**Service UUID:** `0x1500` (`BLE_SERVICE_CONTROLLER_UUID`)
+**Full UUID:** `f364adc9-b000-**1500**-ba50-05ca45bf8abc` (same base as Service 1)
+**Built in:** `ble_cus_init()` → `ble_cus_controller_char_add()`
+**Number of characteristics:** 6
+
+### Service Attribute Table
+
+| Handle Offset | Attribute Type | UUID | Properties | Len (bytes) | Data Format | `g_Espresso_user_config_s` Field | Notes |
+|---|---|---|---|---|---|---|---|
+| S2+0 | Primary Service Declaration (`0x2800`) | `0x1500` | — | 2 | UUID | — | Service boundary |
+| **S2+1** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1501` |
+| **S2+2** | **Characteristic Value** | `0x1501` | Read, Write | 4 | `XXXD` ASCII (D=tenth) | `pidPTerm` | Proportional gain |
+| **S2+3** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1502` |
+| **S2+4** | **Characteristic Value** | `0x1502` | Read, Write | 3 | `XXD` ASCII (D=tenth) | `pidITerm` | Integral gain |
+| **S2+5** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1503` |
+| **S2+6** | **Characteristic Value** | `0x1503` | Read, Write | 4 | `XXXD` ASCII (D=tenth) | `pidImaxTerm` | Integral limit |
+| **S2+7** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1504` |
+| **S2+8** | **Characteristic Value** | `0x1504` | Read, Write | 3 | `XXD` ASCII (D=tenth) | `pidDTerm` | Derivative gain |
+| **S2+9** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1505` |
+| **S2+10** | **Characteristic Value** | `0x1505` | Read, Write | 3 | `XXD` ASCII (D=tenth) | `pidPboostTerm` | Phase-1 P-gain boost multiplier |
+| **S2+11** | Characteristic Declaration (`0x2803`) | — | Read, Write | 5 | Props + Handle + UUID | — | Declares `0x1506` |
+| **S2+12** | **Characteristic Value** | `0x1506` | Read, Write | 3 | `XXD` ASCII (D=tenth) | `pidIboostTerm` | Phase-1 I-gain boost multiplier |
+
+### Characteristic Summary — PID Service
+
+| UUID | `ble_cus.h` macro | Name | Char Decl | Char Value | Properties | Val Len | Default (NVM validate) |
+|---|---|---|---|---|---|---|---|
+| `0x1501` | `BLE_CHAR_PID_P_TERM_UUID` | P Term | S2+1 | S2+2 | R, W | 4 B | 9.5 |
+| `0x1502` | `BLE_CHAR_PID_I_TERM_UUID` | I Term | S2+3 | S2+4 | R, W | 3 B | 0.3 |
+| `0x1503` | `BLE_CHAR_PID_I_MAX_TERM_UUID` | I Max | S2+5 | S2+6 | R, W | 4 B | 100.0 |
+| `0x1504` | `BLE_CHAR_PID_D_TERM_UUID` | D Term | S2+7 | S2+8 | R, W | 3 B | 0.0 |
+| `0x1505` | `BLE_CHAR_PID_P_BOOST_UUID` | P Boost | S2+9 | S2+10 | R, W | 3 B | 1.0 |
+| `0x1506` | `BLE_CHAR_PID_I_BOOST_UUID` | I Boost | S2+11 | S2+12 | R, W | 3 B | 6.5 |
+
+> **CUDD** — **not present** in either service.
+
+---
+
+## Data Format Reference
+
+All characteristic values are **ASCII char arrays** (not raw binary floats), except
+`0x1401` (2 B binary, see below). Conversions:
+- `float_to_chr_array(value, buf, int_digits, dec_digits)` — float → ASCII (used at init)
+- `chr_array_to_float(buf, int_digits, dec_digits)` — ASCII → float (on RX in `cus_evt_handler`)
+
+| Format | Bytes | `float_to_chr_array` digits | Example | Range |
+|---|---|---|---|---|
+| `XXD` | 3 | `(2, 1)` | `"356"` → 35.6 | 0.0 – 99.9 |
+| `XXXD` | 4 | `(3, 1)` | `"0985"` → 98.5 | 0.0 – 999.9 |
+| `{mode, state}` | 2 | — | `01 05` → PROFILE, BREW_INFUSE | binary, see below |
+
+> No decimal-point character is on the wire. Last digit is the first decimal place (×10 encoding).
+
+### 0x1401 Machine Status Payload
+
+2 B binary `[mode, state]`, READ + NOTIFY, notified **on change only**.
+Source: `status_mode_t` / `status_state_t` (`espressoMachineServices.h`).
+Diagram: [ble_0x1401_payload.drawio](ble_0x1401_payload.drawio) · HTML view: [gatt_table.html](gatt_table.html)
+
+| Payload (hex) | Mode | State | Firmware condition |
+|---|---|---|---|
+| `00 00` | CLASSIC | HEATING_ON | `CLASSIC_IDLE`, temp − setpoint < −2.0 degC |
+| `00 01` | CLASSIC | HEATING_OFF | `CLASSIC_IDLE`, temp − setpoint > +2.0 degC |
+| `00 02` | CLASSIC | READY | `CLASSIC_IDLE`, temp within ±1.0 degC of setpoint |
+| `00 03` | CLASSIC | BREWING | `CLASSIC_MODE_1` |
+| `00 08` | CLASSIC | STEAMING | `CLASSIC_MODE_2` / `CLASSIC_MODE_3` |
+| `01 00` | PROFILE | HEATING_ON | `PROFILE_IDLE`, temp − setpoint < −2.0 degC |
+| `01 01` | PROFILE | HEATING_OFF | `PROFILE_IDLE`, temp − setpoint > +2.0 degC |
+| `01 02` | PROFILE | READY | `PROFILE_IDLE`, temp within ±1.0 degC of setpoint |
+| `01 04` | PROFILE | BREW_PREINFUSE | `RAMP_STEP` with `sNext = INFUSE` |
+| `01 05` | PROFILE | BREW_INFUSE | `INFUSE`, or `RAMP_STEP` with `sNext = DECLINE` |
+| `01 06` | PROFILE | BREW_TAPER | `DECLINE`, or `RAMP_STEP` with `sNext = STOP` |
+| `01 07` | PROFILE | BREW_AUTOSTOP | `PROFILE_MODE_STOP` (profile ended, 120 s limit, or brew released) |
+| `01 08` | PROFILE | STEAMING | `PROFILE_MODE_STEAM` / `PROFILE_MODE_STEAM_BREW` |
+| `02 10` | STEP | STEP_OFF | `SF_IDLE` |
+| `02 11` | STEP | STEP_ON | `SF_MODE_1` / `SF_MODE_2A` / `SF_MODE_2B` / `SF_MODE_MAX` |
+
+**Hysteresis** (idle only, `e = boilerTempDegC − boilerTempSetpointDegC`):
+
+| Condition | State | Define |
+|---|---|---|
+| `e < −2.0` | HEATING_ON | `STATUS_HEAT_ON_BAND_DEGC` |
+| `e > +2.0` | HEATING_OFF | `STATUS_HEAT_OFF_BAND_DEGC` |
+| `\|e\| ≤ 1.0` | READY | `STATUS_READY_BAND_DEGC` |
+| `1.0 < \|e\| ≤ 2.0` | keep last state (dead band) | — |
+
+- Unused codes: `0x09`–`0x0F`, `0x12`–`0xFF` → app shows "—".
+- Boot GATT value `00 00`; replaced by the real state on the first service tick.
+- `main.c` currently runs only `service_profile_mode()` → `00 xx` payloads are not reachable in the current build.
+
+---
+
+## BLE Write Flow (RX Path)
+
+```
+Mobile App writes char value
+       ↓
+SoftDevice S132 → BLE_GATTS_EVT_WRITE
+       ↓
+ble_cus.c: ble_cus_on_ble_evt() → on_write()
+  - matches p_evt_write->handle to a known value_handle / cccd_handle
+  - builds ble_cus_evt_t (data pointer + length), calls evt_handler
+       ↓
+bluetooth_drv.c: cus_evt_handler()  (SoftDevice IRQ context)
+  - row = BLE_CFG_CHAR_arr[evt_type - BLE_CFG_EVT_FIRST]  (BLE_CFG_EVT_FIRST = BREW_TEMP RX evt)
+  - parse_ble_ascii_float(): length == int_digits+1, all '0'..'9', min <= value <= max
+  - valid   -> write g_Espresso_user_config_s.*, set pending bit (SHOT / CTRL),
+               restart save debounce (g_ble_cfg_quiet_secs = 0)
+  - invalid -> keep old value, restore it in the GATT table (restore_gatt_value())
+       ↓
+main.c: 1 s BLE task
+  - pending && quiet >= BLE_CFG_SAVE_DEBOUNCE_SECS (2 s) && brew switch off
+  - storage_save_user_config(): one sector erase + page write + read-back verify
+  - reload load_new_pump_parameters() (SHOT) / temp_ctrl_set_pid_config() (CTRL)
+```
+
+## Debug Log Format (RTT / UART)
+
+Config writes and NVM saves are logged with UUID + short name:
+```
+<info> app: BLE 0x1408 InfPwr = 100.00
+<warning> app: BLE 0x1408 InfPwr rejected (len 2)
+<info> app: NVM save [SHOT] -> STORED
+<warning> app: NVM save [SHOT|CTRL] -> VERIFY_FAIL
+```
+
+| UUID | Log name | Field | NVM region |
+|---|---|---|---|
+| `0x1404` | BrewTemp | `brewTempDegC` | SHOT |
+| `0x1405` | SteamTemp | `steamTempDegC` | SHOT |
+| `0x1406` | PreInfPwr | `profPreInfusePwr` | SHOT |
+| `0x1407` | PreInfTime | `profPreInfuseTmr` | SHOT |
+| `0x1408` | InfPwr | `profInfusePwr` | SHOT |
+| `0x1409` | InfTime | `profInfuseTmr` | SHOT |
+| `0x140A` | TaperPwr | `profTaperingPwr` | SHOT |
+| `0x140B` | TaperTime | `profTaperingTmr` | SHOT |
+| `0x1501` | PID_P | `pidPTerm` | CTRL |
+| `0x1502` | PID_I | `pidITerm` | CTRL |
+| `0x1503` | PID_Imax | `pidImaxTerm` | CTRL |
+| `0x1504` | PID_D | `pidDTerm` | CTRL |
+| `0x1505` | PID_Pboost | `pidPboostTerm` | CTRL |
+| `0x1506` | PID_Iboost | `pidIboostTerm` | CTRL |
+
+NVM save status: `STORED` (written + verified), `VERIFY_FAIL` (read-back mismatch, retried
+next second), `ERROR` (invalid value or corrupt NVM key). Names are compiled only when
+`NRF_LOG_ENABLED == 1`.
+
+## BLE Notification Flow (TX Path)
+
+```
+main.c: tf_ble_update flag (1000 ms period)
+       ↓
+bluetooth_drv.c: ble_notify_boiler_water_temp(waterTemp)
+  - float → 4-char ASCII (XXXD)
+  - ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1402 value handle
+       ↓
+SoftDevice S132 → ATT Notification PDU → Mobile App
+```
+
+```
+espressoMachineServices.c: BREW/STEAM switch change (Classic + Profile)
+  - apply_boiler_setpoint() → temp_ctrl_set_boiler_setpoint() (copy brew/steam temp,
+    reset PID integral) + set setpoint-changed flag
+       ↓
+main.c loop: is_boiler_setpoint_changed() (read-and-clear)
+       ↓
+bluetooth_drv.c: ble_notify_boiler_setpoint(boilerTempSetpointDegC)
+  - float → 4-char ASCII (XXXD) via float_to_chr_array()
+  - sd_ble_gatts_value_set() on 0x1403 (READ stays current)
+  - if connected: ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1403 value handle
+```
+
+```
+espressoMachineServices.c: end of each service tick (Classic / Profile / Step)
+  - map sRunning (+ hysteresis temp status when idle) → set_machine_status(mode, state)
+  - flag set only when {mode, state} differs from last value
+       ↓
+main.c loop: is_machine_status_changed(arr) (read-and-clear), checked AFTER 0x1403
+       ↓
+bluetooth_drv.c: ble_notify_machine_status(arr)
+  - sd_ble_gatts_value_set() on 0x1401 (READ stays current)
+  - if connected: ble_cus_notify_char() → sd_ble_gatts_hvx() on 0x1401 value handle
+```
+
+---
+
+## Notes
+
+1. **Single UUID base** — `ble_cus_init()` registers `CUSTOM_SERVICE_UUID_BASE` once; both services use it. `CUSTOM_PID_SERVICE_UUID_BASE` is dead code.
+2. **No Characteristic User Description (`0x2901`)** — not configured for any characteristic.
+3. **Three CCCDs** — `0x1401` (Machine Status), `0x1402` (Boiler Temp) and `0x1403` (Boiler Setpoint, read-only) have Notify; all other characteristics are Read + Write.
+4. **Write Without Response not used** — all writable characteristics use ATT Write Request + Response.
+5. **Handle values are runtime-assigned** — discover at runtime, or read `ble_gatts_char_handles_t` members (`value_handle`, `cccd_handle`, `decl_handle`).
+6. **Security** — all attributes `SEC_OPEN`; no bonding or encryption.
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+  /* Generated from gatt_table.md + ble_0x1401_payload.drawio; regenerate after editing either. */
+  const doc = document.getElementById('doc');
+  doc.innerHTML = marked.parse(document.getElementById('md').textContent);
+  /* Insert the drawio table right under the 0x1401 payload heading */
+  const h = [...doc.querySelectorAll('h3')].find(e => e.textContent.includes('0x1401'));
+  if (h) {
+    h.id = '0x1401-machine-status-payload';
+    h.after(document.getElementById('diagram-tpl').content.cloneNode(true));
+  }
+  const s = document.createElement('script');
+  s.src = 'https://viewer.diagrams.net/js/viewer-static.min.js';
+  document.body.appendChild(s);
+</script>
+</body>
+</html>

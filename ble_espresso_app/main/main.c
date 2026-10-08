@@ -543,6 +543,7 @@ int main(void)
   /* Start Boiler Temperature controller */
   /* -------------------------------------------------------------------------- */
   temp_ctrl_start_sampling_timer();
+  uint8_t machine_status_arr[MACHINE_STATUS_LEN] = {0U, 0U};
   for (;;)
   {
 
@@ -586,6 +587,12 @@ int main(void)
     if( is_boiler_setpoint_changed() == true)
     {
       ble_notify_boiler_setpoint(g_Espresso_user_config_s.boilerTempSetpointDegC);
+    }else{}
+
+    /* NOTIFY to BLE the machine status (0x1401) on change; after 0x1403 on purpose */
+    if( is_machine_status_changed(machine_status_arr) == true)
+    {
+      ble_notify_machine_status(machine_status_arr);
     }else{}
 
     if( g_scheduler_flags_s.flag_ble_update == true)
