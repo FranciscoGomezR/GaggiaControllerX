@@ -10,6 +10,19 @@ Categories: `Added` `Changed` `Removed` `Fixed` `Docs` `Breaking`.
 
 ---
 
+## 2026-10-08 — Live boiler setpoint on BLE preset write (STATUS TODO #24)
+
+Why: BLE writes to 0x1404/0x1405 updated `brewTempDegC`/`steamTempDegC` only.
+`boilerTempSetpointDegC` changed only on a switch edge, so idle PID kept the old target
+and 0x1403 was not notified.
+
+### Fixed
+- `espressoMachineServices.c`: `apply_boiler_setpoint()` records `active_setpoint`.
+  New private `sync_boiler_setpoint()` runs every Classic/Profile tick and re-applies the
+  active preset on mismatch (copy + integral reset + 0x1403 notify). It is skipped while a
+  shot is active and applied on the first tick after the shot ends.
+- No app, header or `main.c` change.
+
 ## 2026-10-06 — Switch-driven boiler setpoint + 0x1403 READ/NOTIFY (STATUS TODO #23)
 
 Why: the 7 brew/steam setpoint changes in the Classic/Profile state machines wrote

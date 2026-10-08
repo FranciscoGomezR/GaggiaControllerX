@@ -173,6 +173,7 @@ static uint16_t app_heat_pwr;
 static float    boiler_temp_degC;
 static float    boiler_target_temp_degC;
 static bool     is_setpoint_changed = false;
+static tempCtrl_LoadSP_t active_setpoint = SET_POINT_BREW;  /* matches main.c boot load */
 
 /*This variable controls the timing inside this module:
   1-  Delay for the step function start
@@ -191,6 +192,7 @@ static void start_i_recovery(i_boost_flags_t *ptr_flags);
 static void monitor_i_recovery(i_boost_flags_t *ptr_flags);
 static void step_profile_integral_boost(void);
 static void apply_boiler_setpoint(tempCtrl_LoadSP_t setpoint);
+static void sync_boiler_setpoint(bool is_shot_active);
 
 /******************************************************************************
 *
@@ -240,6 +242,8 @@ void service_classic_mode(acInput_status_t swBrew, acInput_status_t swSteam)
   }
 
   service_tick++;
+  /*BLE preset write: re-apply active preset (skipped during a shot)*/
+  sync_boiler_setpoint(Classic_data_s.is_active);
   if( !(service_tick % SERVICE_MONITOR_TICK))
   {
     /* Get Boiler Temperature
@@ -522,6 +526,8 @@ void service_profile_mode(acInput_status_t swBrew, acInput_status_t swSteam)
   }
 
   service_tick++;
+  /*BLE preset write: re-apply active preset (skipped during a shot)*/
+  sync_boiler_setpoint(Profile_data_s.is_active);
   if( !(service_tick % SERVICE_MONITOR_TICK))
   {
     /* Get Boiler Temperature
@@ -1235,13 +1241,36 @@ static void step_profile_integral_boost(void)
 
 /*****************************************************************************
  * Function: 	apply_boiler_setpoint
- * Description: Switch-driven setpoint change: load brew/steam temp, reset PID
- *              integral (M1 fix) and flag a BLE notify of 0x1403.
+ * Description: Load brew/steam temp, reset PID integral (M1 fix), flag a BLE
+ *              notify of 0x1403 and remember which preset is active.
  *****************************************************************************/
 static void apply_boiler_setpoint(tempCtrl_LoadSP_t setpoint)
 {
   (void)temp_ctrl_set_boiler_setpoint(&g_Espresso_user_config_s, setpoint);
+  active_setpoint = setpoint;
   is_setpoint_changed = true;
+}
+
+/*****************************************************************************
+ * Function: 	sync_boiler_setpoint
+ * Description: BLE preset write (0x1404/0x1405) changes brewTempDegC /
+ *              steamTempDegC only. Re-apply the active preset when it no longer
+ *              matches the live setpoint. Skipped during a shot (no integral
+ *              reset mid-extraction); applied on first tick after it ends.
+ *****************************************************************************/
+static void sync_boiler_setpoint(bool is_shot_active)
+{
+  float preset_degC;
+
+  if (is_shot_active) {
+    return;
+  } else {}
+  preset_degC = (active_setpoint == SET_POINT_STEAM) ?
+                g_Espresso_user_config_s.steamTempDegC :
+                g_Espresso_user_config_s.brewTempDegC;
+  if (preset_degC != g_Espresso_user_config_s.boilerTempSetpointDegC) {
+    apply_boiler_setpoint(active_setpoint);
+  } else {}
 }
 
 /*****************************************************************************

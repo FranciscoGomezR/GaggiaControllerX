@@ -210,7 +210,7 @@ These items have not been commited
         0x1403 READ/NOTIFY; Android STATUS TODO #5 added.
         CHANGELOG.md -> "2026-10-06 — Switch-driven boiler setpoint + 0x1403 READ/NOTIFY (STATUS TODO #23)".
 
-- 24[]  Follow-up of TODO #23: a brew/steam preset write over BLE (0x1404 brewTempDegC /
+- 24[x]  Follow-up of TODO #23: a brew/steam preset write over BLE (0x1404 brewTempDegC /
         0x1405 steamTempDegC) is validated and saved to ext-NVM, but does not change
         g_Espresso_user_config_s.boilerTempSetpointDegC. apply_boiler_setpoint() runs only on a
         BREW/STEAM switch change, so while idle the PID keeps the old target and no 0x1403
@@ -220,8 +220,12 @@ These items have not been commited
         calls apply_boiler_setpoint() (copy + PID integral reset + 0x1403 notify).
         Skipped while a shot is active (is_active); applied right after the shot ends.
         No app change; 0x1401 not needed.
+        Done: active_setpoint tracked in apply_boiler_setpoint(); sync_boiler_setpoint() each
+        Classic/Profile tick (skipped while is_active). espressoMachineServices.c only.
+        CHANGELOG.md -> "2026-10-08 — Live boiler setpoint on BLE preset write (STATUS TODO #24)".
 
-- 25[]  machine service module shall notify its current status using UUID-0x1401, current config is 10bytes.
+- 25[]  machine service module shall notify its current status using UUID-0x1401, current config is 10bytes; but this can be modify 
+        to whatever makes more sense or suits better in terms of BLe efficieny
         Propose a efficient for BLE device and android app to manages notifications.
         Machine notification are for (Classic Mode):
         - heating
